@@ -94,5 +94,6 @@ export const productos = [
     precio: 15000,
     imagen: "img/cartuchera.jpg",
     descripcion: "Cartuchera con cierre"
+    //holla
   }
 ];
