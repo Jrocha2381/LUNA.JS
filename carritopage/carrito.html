@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carrito de Compras | Papelería</title>
+
+  <!-- CSS DEL CARRITO -->
+  <link rel="stylesheet" href="stylecarrito.css">
+</head>
+
+<body>
+
+  <!-- =========================
+       HEADER
+  ========================== -->
+  <header>
+    <h1>🛒 Carrito de Compras</h1>
+    <a href="../index.html">← Volver a la tienda</a>
+  </header>
+
+  <!-- 
+       CONTENIDO PRINCIPAL
+   -->
+  <main>
+    <section id="carrito"></section>
+  </main>
+
+  <!-- =========================
+       JAVASCRIPT
+  ========================== -->
+  <script type="module">
+    import { activarEventosCarrito } from "./js/carrito.js";
+    activarEventosCarrito();
+  </script>
+
+</body>
+</html>
