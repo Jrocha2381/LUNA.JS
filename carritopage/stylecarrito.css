@@ -135,20 +135,34 @@ header a:hover {
   color: white;
 }
 
-/* TOTAL
- */
-
-#carrito h3 {
-  margin-top: 50px;
-  font-size: 2.2rem; /* Tamaño de tu .titulo */
-  font-weight: 500;
-  text-align: right;
-  color: var(--color-texto);
+.item-carrito {
+  background: var(--color-blanco);
+  padding: 25px;
+  border-radius: var(--radio);
+  margin-bottom: 35px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: var(--sombra-suave);
+  transition: 0.3s ease;
+}
+.img-carrito {
+  width: 80px;           /* Tamaño de la miniatura */
+  height: 80px;
+  object-fit: cover;     /* No deforma la imagen */
+  border-radius: 10px;
 }
 
-/*
-   RESPONSIVE
-*/
+.info-carrito {
+  flex-grow: 1;          /* Empuja los controles a la derecha */
+}
+
+.controles-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
 
 @media (max-width: 768px) {
   body {

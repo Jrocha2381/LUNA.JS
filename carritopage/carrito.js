@@ -54,18 +54,16 @@ export function agregarAlCarrito(id) {
     }
   }
 
-  // Si no existe, lo agregamos
-  if (!existe) {
-    let nuevoProducto = {
+ if (!existe) {
+    carrito.push({
       id: producto.id,
       nombre: producto.nombre,
       precio: producto.precio,
+      imagen: producto.imagen, // <-- Línea clave para la imagen
       cantidad: 1
-    };
-
-    carrito.push(nuevoProducto);
+    });
   }
-
+  
   guardarCarrito();
   renderCarrito();
 }
@@ -151,30 +149,34 @@ function renderCarrito() {
 
     let p = carrito[i];
 
+    const rutaImagen = p.imagen.includes('img/') ? `../${p.imagen}` : `../img/${p.imagen}`;
+
     html += `
       <div class="item-carrito">
-        <h4>${p.nombre}</h4>
+        <img src="${rutaImagen}" alt="${p.nombre}" class="img-carrito">
+        
+        <div class="info-carrito">
+            <h4>${p.nombre}</h4>
+            <p>Precio: $${p.precio.toLocaleString()}</p>
+            <p><strong>Subtotal: $${(p.precio * p.cantidad).toLocaleString()}</strong></p>
+        </div>
 
-        <input 
-          type="number"
-          value="${p.cantidad}"
-          min="1"
-          data-id="${p.id}"
-        >
-
-        <p>Precio: $${p.precio}</p>
-        <p>Subtotal: $${p.precio * p.cantidad}</p>
-
-        <button class="eliminar" data-id="${p.id}">
-          Eliminar
-        </button>
+        <div class="controles-item">
+            <input 
+              type="number"
+              value="${p.cantidad}"
+              min="1"
+              data-id="${p.id}"
+            >
+            <button class="eliminar" data-id="${p.id}">Eliminar</button>
+        </div>
       </div>
     `;
   }
 
   html += `
     <hr>
-    <h3>Total: $${calcularTotal()}</h3>
+    <h3>Total: $${calcularTotal().toLocaleString()}</h3>
   `;
 
   contenedor.innerHTML = html;
