@@ -1,0 +1,144 @@
+/* ===== SECCIÓN ===== */
+/* ============================= */
+/* HEADER */
+/* ============================= */
+
+.header {
+    background: #ffffff;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+/* Contenedor interno */
+.header__container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 18px 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+/* LOGO */
+.header__logo h1 {
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: #8a9b2f;
+    letter-spacing: 1px;
+    padding-right: 1.5rem;
+}
+
+/* MENÚ */
+.header__menu {
+    display: flex;
+    gap: 35px;
+    list-style: none;
+    
+}
+
+.header__menu a {
+    text-decoration: none;
+    color: #333;
+    font-weight: 550;
+    transition: 0.3s;
+    font-size: 1.3rem;
+    letter-spacing: 1px;
+    padding: 1.8rem;
+}
+
+.header__menu a:hover {
+    color: #8a9b2f;
+}
+
+/* ICONOS */
+.header__icons {
+    display: flex;
+    gap: 20px;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+.header__icons span {
+    transition: 0.3s;
+}
+
+.header__icons span:hover {
+    transform: scale(1.2);
+}
+
+.categorias {
+    text-align: center;
+    padding: 90px 0;
+    background: #f7f7f4;
+}
+
+/* ===== TITULOS ===== */
+.titulo {
+    font-size: 2.2rem;
+    font-weight: 500;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.subtitulo {
+    font-size: 1.2rem;
+    color: #666;
+    margin-bottom: 50px;
+}
+
+/* ===== GRID CARDS ===== */
+.cartas {
+    display: flex;
+    justify-content: center;
+    gap: 35px;
+    flex-wrap: wrap;
+    margin-bottom: 40px;
+}
+
+/* ===== CARD ===== */
+.carta {
+    width: 230px;
+    height: 220px;
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 40px 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    transition: 0.3s ease;
+    cursor: pointer;
+}
+
+.carta img {
+    width: 150px;
+    margin-bottom: 25px;
+}
+
+.carta h3 {
+    color: #8a9b2f;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+/* Hover elegante */
+.carta:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.12);
+}
+
+/* ===== BOTON ===== */
+.btn-ver {
+    background: #8a9b2f;
+    color: white;
+    padding: 12px 35px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-ver:hover {
+    background: #6f7d25;
+}
