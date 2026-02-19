@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Papel y Luna</title>
+
+    <link rel="stylesheet" href="styleoficina.css" />
+  </head>
+
+  <body>
+    <!-- ================= HEADER ================= -->
+
+    <header class="header">
+      <div class="header__container">
+        <div class="header__logo">
+          <h1>Papel y Luna</h1>
+        </div>
+
+        <nav class="header__nav">
+          <ul class="header__menu">
+            <li><a href="../../index.html">Inicio</a></li>
+            <li><a href="../escolar/escolar.html">Escolar</a></li>
+            <li><a href="./oficina.html">Oficina</a></li>
+            <li><a href="../arte/arte.html">Arte</a></li>
+            <li><a href="../papeleria/papeleria.html">Papelería</a></li>
+          </ul>
+        </nav>
+
+        <div class="header__icons">
+          <span>🔍</span>
+          <span><a class="carro" href="carritopage/carrito.html">🛒</a></span>
+          <span>👤</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ================= PRODUCTOS OFICINA ================= -->
+
+    <section class="productos">
+      <div class="productos__container">
+        <!-- Producto ID 6 -->
+        <div class="card">
+          <img src="../../images/carpeta.png" alt="Carpeta Plástica" />
+          <h3>Carpeta Plástica</h3>
+          <p class="precio">$5.000</p>
+          <button
+            class="btn-carrito"
+            data-id="6"
+            data-nombre="Carpeta Plástica"
+            data-precio="5000"
+          >
+            Añadir al carrito
+          </button>
+        </div>
+
+        <!-- Producto ID 10 -->
+        <div class="card">
+          <img src="../../images/calculadora.webp" alt="Calculadora Básica" />
+          <h3>Calculadora Básica</h3>
+          <p class="precio">$25.000</p>
+          <button
+            class="btn-carrito"
+            data-id="10"
+            data-nombre="Calculadora Básica"
+            data-precio="25000"
+          >
+            Añadir al carrito
+          </button>
+        </div>
+
+        <!-- Producto ID 11 -->
+        <div class="card">
+          <img src="../../images/agenda.png" alt="Agenda 2026" />
+          <h3>Agenda 2026</h3>
+          <p class="precio">$18.000</p>
+          <button
+            class="btn-carrito"
+            data-id="11"
+            data-nombre="Agenda 2026"
+            data-precio="18000"
+          >
+            Añadir al carrito
+          </button>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>
