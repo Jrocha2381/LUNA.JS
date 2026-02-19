@@ -1,18 +1,18 @@
 import { productos } from "./data.js";
-import { agregarAlCarrito } from "./carrito.js";
+import { agregaralCarro } from "./carrito.js";//viene desde carrito
 
-document.addEventListener("DOMContentLoaded", function () {
-  const contenedor = document.getElementById("catalogo");
+document.addEventListener("DOMContentLoaded", function () { //empieza a correr cuando esta en html
+  const contenedor = document.getElementById("catalogo");//se muestran los prodcutos aqui
   const buscador = document.getElementById("buscador");
 
-  if (!contenedor) return;
+  if (!contenedor) return; // Si no se encuentra el contenedor, no hacer nada
 
-  // render inicial
+  // render inicial<
   mostrarProductos(productos);
 
   if (buscador) {
     buscador.addEventListener("input", function (e) {
-      const texto = (e.target.value || "").toLowerCase();
+      const texto = (e.target.value || "").toLowerCase(); 
 
       const filtrados = productos.filter(function (producto) {
         const nombre = (producto.nombre || "").toLowerCase();
@@ -25,15 +25,15 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   contenedor.addEventListener("click", function (e) {
-    const boton = e.target.closest(".btn-agregar");
+    const boton = e.target.closest(".btn-agregar"); //boton que hace que agrege al carrito 
     if (!boton) return;
     if (!contenedor.contains(boton)) return;
 
     const id = Number(boton.dataset.id);
     if (Number.isNaN(id)) return;
 
-    agregarAlCarrito(id);
-  });
+    agregaralCarro(id);
+  }); 
 
 
   function mostrarProductos(lista) {
