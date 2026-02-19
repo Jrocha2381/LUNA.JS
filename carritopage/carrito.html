@@ -19,10 +19,9 @@
     <a href="../index.html">← Volver a la tienda</a>
   </header>
 
-  <!-- 
-       CONTENIDO PRINCIPAL
-   -->
+  <!-- CONTENIDO PRINCIPAL -->
   <main>
+    <!-- ESTE ID ES EL QUE USA carrito.js -->
     <section id="carrito"></section>
   </main>
 
@@ -30,8 +29,13 @@
        JAVASCRIPT
   ========================== -->
   <script type="module">
-    import { activarEventosCarrito } from "./js/carrito.js";
+  // Al estar en la misma carpeta, solo usamos "./"
+  import { activarEventosCarrito } from "./carrito.js"; 
+
+  document.addEventListener("DOMContentLoaded", () => {
     activarEventosCarrito();
+  });
+</script>
   </script>
 
 </body>

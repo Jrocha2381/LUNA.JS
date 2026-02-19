@@ -1,68 +1,45 @@
+// js/catalogo.js
 import { productos } from "./data.js";
-import { agregaralCarro } from "./carrito.js";//viene desde carrito
+import { agregarAlCarrito } from "../carritopage/js/carrito.js";
 
-document.addEventListener("DOMContentLoaded", function () { //empieza a correr cuando esta en html
-  const contenedor = document.getElementById("catalogo");//se muestran los prodcutos aqui
-  const buscador = document.getElementById("buscador");
+const contenedor = document.querySelector(".productos__container");
 
-  if (!contenedor) return; // Si no se encuentra el contenedor, no hacer nada
+function renderizarProductos() {
+  if (!contenedor) return;
+  contenedor.innerHTML = "";
 
-  // render inicial<
-  mostrarProductos(productos);
+  productos.forEach(producto => {
+    contenedor.innerHTML += `
+      <div class="card">
+        <img src="${producto.imagen}" alt="${producto.nombre}" />
+        <h3>${producto.nombre}</h3>
+        <p class="precio">$${producto.precio.toLocaleString()}</p>
+        <button class="btn-agregar" data-id="${producto.id}">
+          Añadir al carrito
+        </button>
+      </div>
+    `;
+  });
 
-  if (buscador) {
-    buscador.addEventListener("input", function (e) {
-      const texto = (e.target.value || "").toLowerCase(); 
+  activarBotones();
+}
 
-      const filtrados = productos.filter(function (producto) {
-        const nombre = (producto.nombre || "").toLowerCase();
-        const categoria = (producto.categoria || "").toLowerCase();
-        return nombre.includes(texto) || categoria.includes(texto);
-      });
+function activarBotones() {
+  const botones = document.querySelectorAll(".btn-agregar");
 
-      mostrarProductos(filtrados);
-    });
-  }
-
-  contenedor.addEventListener("click", function (e) {
-    const boton = e.target.closest(".btn-agregar"); //boton que hace que agrege al carrito 
-    if (!boton) return;
-    if (!contenedor.contains(boton)) return;
-
-    const id = Number(boton.dataset.id);
-    if (Number.isNaN(id)) return;
-
-    agregaralCarro(id);
-  }); 
-
-
-  function mostrarProductos(lista) {
-    if (!Array.isArray(lista) || lista.length === 0) {
-      contenedor.innerHTML = "<p>No hay productos disponibles</p>";
-      return;
-    }
-
-    contenedor.innerHTML = lista.map(function (producto) {
-      var imagen = producto.imagen || "img/placeholder.png";
-      var nombre = producto.nombre || "Sin nombre";
-      var descripcion = producto.descripcion || "";
-      var precioTexto = "";
-      if (typeof producto.precio === "number") {
-        precioTexto = producto.precio.toLocaleString();
-      } else {
-        precioTexto = producto.precio || "";
+  botones.forEach(boton => {
+    boton.addEventListener("click", () => {
+      const id = Number(boton.dataset.id);
+      
+      // BUSCAMOS EL OBJETO COMPLETO
+      const productoParaAgregar = productos.find(p => p.id === id);
+      
+      if (productoParaAgregar) {
+        agregarAlCarrito(productoParaAgregar);
       }
+    });
+  });
+}
 
-      return (
-        '<div class="card">' +
-          '<img src="' + imagen + '" alt="' + nombre + '">' +
-          '<h3>' + nombre + '</h3>' +
-          '<p>' + descripcion + '</p>' +
-          '<p><strong>$' + precioTexto + '</strong></p>' +
-          '<button type="button" class="btn-agregar" data-id="' + producto.id + '">Agregar al carrito</button>' +
-        '</div>'
-      );
-    }).join("");
-  }
-
-});
+// Inicializar
+renderizarProductos();
