@@ -1,6 +1,10 @@
+/* ============================= */
+/* HEADER */
+/* ============================= */
+
 .header {
     background: #ffffff;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    box-shadow: 0 0.25rem 0.9rem rgba(0,0,0,0.05);
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -8,13 +12,17 @@
 
 /* Contenedor interno */
 .header__container {
-    max-width: 1200px;
+    max-width: 75rem; /* 1200px */
     margin: auto;
-    padding: 18px 40px;
+    padding: 1.1rem 2.5rem;
 
     display: flex;
     align-items: center;
     justify-content: space-around;
+    flex-wrap: wrap;
+}
+.carro{
+    text-decoration: none;
 }
 
 /* LOGO */
@@ -22,16 +30,16 @@
     font-size: 2.2rem;
     font-weight: 600;
     color: #8a9b2f;
-    letter-spacing: 1px;
+    letter-spacing: 0.06rem;
     padding-right: 1.5rem;
 }
 
 /* MENÚ */
 .header__menu {
     display: flex;
-    gap: 35px;
+    gap: 2.2rem;
     list-style: none;
-    
+    padding: 0;
 }
 
 .header__menu a {
@@ -39,9 +47,9 @@
     color: #333;
     font-weight: 550;
     transition: 0.3s;
-    font-size: 1.3rem;
-    letter-spacing: 1px;
-    padding: 1.8rem;
+    font-size: 1.2rem;
+    letter-spacing: 0.06rem;
+    padding: 1.2rem 1rem;
 }
 
 .header__menu a:hover {
@@ -51,7 +59,7 @@
 /* ICONOS */
 .header__icons {
     display: flex;
-    gap: 20px;
+    gap: 1.2rem;
     font-size: 1.2rem;
     cursor: pointer;
 }
@@ -64,8 +72,26 @@
     transform: scale(1.2);
 }
 
+/* ============================= */
+/* SECCIÓN CATEGORÍAS */
+/* ============================= */
+
 .categorias {
     text-align: center;
-    padding: 90px 0;
+    padding: 6rem 0;
     background: #f7f7f4;
+}
+
+/* TITULOS */
+.titulo {
+    font-size: 2.2rem;
+    font-weight: 500;
+    margin-bottom: 0.6rem;
+    color: #333;
+}
+
+.subtitulo {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 3rem;
 }

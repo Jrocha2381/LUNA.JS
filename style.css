@@ -21,6 +21,9 @@
     justify-content: space-around;
     flex-wrap: wrap;
 }
+.carro{
+    text-decoration: none;
+}
 
 /* LOGO */
 .header__logo h1 {
