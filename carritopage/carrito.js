@@ -46,7 +46,7 @@ export function activarEventosCarrito() {
     renderCarrito();
 }
 
-function renderCarrito() {
+export function renderCarrito() {
     const contenedor = document.getElementById("carrito");
     if (!contenedor) return;
 
@@ -105,7 +105,7 @@ function renderCarrito() {
     asignarEventosBotones();
 }
 
-function asignarEventosBotones() {
+export function asignarEventosBotones() {
     const carrito = obtenerCarrito();
 
     document.querySelectorAll(".btn-qty").forEach(btn => {

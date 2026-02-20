@@ -21,6 +21,24 @@
 
   <!-- CONTENIDO PRINCIPAL -->
   <main>
+    <!-- BUSCADOR -->
+    <div class="buscador-container">
+      <div class="buscador-wrapper">
+        <input 
+          type="text" 
+          id="input-buscar" 
+          class="input-buscar" 
+          placeholder="🔍 Busca un producto..."
+          autocomplete="off"
+        >
+        <button id="btn-buscar" class="btn-buscar" title="Buscar">
+          🔍
+        </button>
+        <button id="btn-limpiar" class="btn-limpiar" title="Limpiar búsqueda">✕</button>
+      </div>
+      <p id="resultados-busqueda" class="resultados-busqueda"></p>
+    </div>
+
     <!-- ESTE ID ES EL QUE USA carrito.js -->
     <section id="carrito"></section>
   </main>
@@ -29,14 +47,14 @@
        JAVASCRIPT
   ========================== -->
   <script type="module">
-  // Al estar en la misma carpeta, solo usamos "./"
   import { activarEventosCarrito } from "./carrito.js"; 
+  import { activarBuscadorCarrito } from "../js/buscador.js";
 
   document.addEventListener("DOMContentLoaded", () => {
     activarEventosCarrito();
+    activarBuscadorCarrito();
   });
 </script>
-  </script>
 
 </body>
 </html>
