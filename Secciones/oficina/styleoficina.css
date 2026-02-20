@@ -137,3 +137,26 @@
     background: #8a9b2f;
     color: white;
 }
+
+/* Cuando la tarjeta no tiene stock, se ve grisácea */
+.card.agotado {
+    opacity: 0.6;
+    filter: grayscale(1);
+}
+
+/* Texto informativo del stock disponible */
+.stock-info {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+/* Estilo del botón cuando está desactivado */
+.btn-agregar:disabled {
+    background-color: #ccc !important;
+    border-color: #ccc !important;
+    color: #666 !important;
+    cursor: not-allowed;
+    transform: none !important; /* Evita que se mueva al pasar el mouse */
+}

@@ -179,3 +179,53 @@ header a:hover {
     padding: 20px;
   }
 }
+
+.controles-cantidad {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.btn-qty {
+    background: #8a9b2f;
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.input-cantidad {
+    width: 40px;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.carrito-total {
+    margin-top: 30px;
+    text-align: right;
+}
+
+.btn-finalizar {
+    background: #8a9b2f;
+    color: white;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.btn-vaciar {
+    background: #eee;
+    color: #333;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
