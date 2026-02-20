@@ -28,7 +28,10 @@
         </nav>
 
         <div class="header__icons">
-          <span>🔍</span>
+          <div class="buscador-header">
+            <input type="text" id="input-buscar-header" class="input-buscar-header" placeholder="Busca un producto...">
+            <button id="btn-buscar-header" class="btn-buscar-header">🔍</button>
+          </div>
           <a class="carro" href="../../carritopage/carrito.html">🛒</a>
           <span>👤</span>
         </div>
@@ -67,6 +70,15 @@
         </div>
       </div>
     </section>
+
+    <section id="resultados-busqueda" class="resultados-busqueda-container"></section>
+
+    <script type="module">
+      import { activarBuscadorHeader } from "../../js/buscador.js";
+      document.addEventListener("DOMContentLoaded", () => {
+        activarBuscadorHeader();
+      });
+    </script>
     <script type="module" src="../../js/conectarBotones.js"></script>
   </body>
 </html>
