@@ -322,3 +322,28 @@ header a:hover {
     border-radius: 8px;
     cursor: pointer;
 }
+
+/* Estilos para la sección de pago */
+.seccion-pago {
+    background: var(--color-blanco);
+    padding: 25px;
+    border-radius: var(--radio);
+    margin-bottom: 30px;
+    box-shadow: var(--sombra-suave);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.seccion-pago select, 
+.seccion-pago input {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--color-borde);
+    font-size: 1rem;
+}
+
+#grupo-efectivo {
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}

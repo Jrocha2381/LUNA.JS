@@ -39,6 +39,24 @@
       <p id="resultados-busqueda" class="resultados-busqueda"></p>
     </div>
 
+    <div class="seccion-pago">
+    <label for="metodoPago">Método de Pago:</label>
+    <select id="metodoPago">
+        <option value="Efectivo">Efectivo</option>
+        <option value="Nequi">Nequi</option>
+        <option value="Debe">Debe</option>
+    </select>
+
+    <div id="grupo-efectivo">
+        <label for="valorRecibido">Efectivo Recibido:</label>
+        <input type="number" id="valorRecibido" placeholder="0" min="0">
+        <div id="display-cambio" style="margin-top: 10px; font-weight: bold; color: #8a9b2f;">
+            Cambio: $0
+        </div>
+    </div>
+</div>
+   
+   
     <!-- ESTE ID ES EL QUE USA carrito.js -->
     <section id="carrito"></section>
   </main>
