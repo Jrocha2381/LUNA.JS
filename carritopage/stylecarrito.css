@@ -322,3 +322,127 @@ header a:hover {
     border-radius: 8px;
     cursor: pointer;
 }
+.admin-productos {
+  background: var(--color-blanco);
+  padding: 24px;
+  border-radius: var(--radio);
+  box-shadow: var(--sombra-suave);
+  margin-bottom: 32px;
+}
+
+.admin-productos h2 {
+  color: var(--color-primario);
+  margin-bottom: 16px;
+}
+
+.producto-form h3 {
+  margin-bottom: 12px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.form-grid label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.92rem;
+  gap: 6px;
+}
+
+.form-grid input[type="text"],
+.form-grid input[type="number"] {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 0.95rem;
+}
+
+.checkbox-label {
+  justify-content: flex-end;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+}
+
+.btn-admin-primario,
+.btn-admin-secundario,
+.btn-admin {
+  border: none;
+  border-radius: 8px;
+  padding: 9px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-admin-primario {
+  background: var(--color-primario);
+  color: #fff;
+}
+
+.btn-admin-secundario {
+  background: #f3f4f6;
+  color: #1f2937;
+}
+
+.tabla-wrapper {
+  overflow-x: auto;
+  margin-top: 18px;
+}
+
+.tabla-productos {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 860px;
+}
+
+.tabla-productos th,
+.tabla-productos td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 10px;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.tabla-productos th {
+  background: #f9fafb;
+  color: #374151;
+}
+
+.btn-editar {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.btn-eliminar-admin {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.item-carrito-inactivo {
+  border: 1px solid #fca5a5;
+}
+
+.estado-inactivo {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .btn-admin-primario,
+  .btn-admin-secundario {
+    width: 100%;
+  }
+}

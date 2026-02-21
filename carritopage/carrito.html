@@ -1,60 +1,146 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Carrito de Compras | Papelería</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Carrito de Compras | Papeleria</title>
 
-  <!-- CSS DEL CARRITO -->
-  <link rel="stylesheet" href="stylecarrito.css">
-</head>
+    <link rel="stylesheet" href="stylecarrito.css" />
+  </head>
 
-<body>
+  <body>
+    <header>
+      <h1>Carrito de Compras</h1>
+      <a href="../index.html">Volver a la tienda</a>
+    </header>
 
-  <!-- =========================
-       HEADER
-  ========================== -->
-  <header>
-    <h1>🛒 Carrito de Compras</h1>
-    <a href="../index.html">← Volver a la tienda</a>
-  </header>
-
-  <!-- CONTENIDO PRINCIPAL -->
-  <main>
-    <!-- BUSCADOR -->
-    <div class="buscador-container">
-      <div class="buscador-wrapper">
-        <input 
-          type="text" 
-          id="input-buscar" 
-          class="input-buscar" 
-          placeholder="🔍 Busca un producto..."
-          autocomplete="off"
-        >
-        <button id="btn-buscar" class="btn-buscar" title="Buscar">
-          🔍
-        </button>
-        <button id="btn-limpiar" class="btn-limpiar" title="Limpiar búsqueda">✕</button>
+    <main>
+      <div class="buscador-container">
+        <div class="buscador-wrapper">
+          <input
+            type="text"
+            id="input-buscar"
+            class="input-buscar"
+            placeholder="Busca un producto..."
+            autocomplete="off"
+          />
+          <button id="btn-buscar" class="btn-buscar" title="Buscar">
+            Buscar
+          </button>
+          <button id="btn-limpiar" class="btn-limpiar" title="Limpiar busqueda">
+            Limpiar
+          </button>
+        </div>
+        <p id="resultados-busqueda" class="resultados-busqueda"></p>
       </div>
-      <p id="resultados-busqueda" class="resultados-busqueda"></p>
-    </div>
 
-    <!-- ESTE ID ES EL QUE USA carrito.js -->
-    <section id="carrito"></section>
-  </main>
+      <section class="admin-productos">
+        <h2>Panel administrativo de productos</h2>
 
-  <!-- =========================
-       JAVASCRIPT
-  ========================== -->
-  <script type="module">
-  import { activarEventosCarrito } from "./carrito.js"; 
-  import { activarBuscadorCarrito } from "../js/buscador.js";
+        <form id="producto-form" class="producto-form">
+          <h3 id="producto-form-title">Crear producto</h3>
 
-  document.addEventListener("DOMContentLoaded", () => {
-    activarEventosCarrito();
-    activarBuscadorCarrito();
-  });
-</script>
+          <div class="form-grid">
+            <label>
+              Nombre *
+              <input type="text" name="nombre" required />
+            </label>
 
-</body>
+            <label>
+              Categoria *
+              <input type="text" name="categoria" required />
+            </label>
+
+            <label>
+              Precio de venta *
+              <input
+                type="number"
+                name="precioVenta"
+                min="0"
+                step="0.01"
+                required
+              />
+            </label>
+
+            <label>
+              Costo *
+              <input type="number" name="costo" min="0" step="0.01" required />
+            </label>
+
+            <label class="checkbox-label">
+              <input type="checkbox" name="seguimientoInventario" checked />
+              Seguimiento de inventario
+            </label>
+
+            <label>
+              Stock
+              <input type="number" name="stock" min="0" step="1" value="0" />
+            </label>
+
+            <label>
+              URL imagen
+              <input
+                type="text"
+                name="imagen"
+                placeholder="../../images/archivo.png"
+              />
+            </label>
+
+            <label>
+              Descripcion
+              <input type="text" name="descripcion" />
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button
+              id="producto-submit"
+              type="submit"
+              class="btn-admin-primario"
+            >
+              Guardar producto
+            </button>
+            <button
+              id="producto-cancelar"
+              type="button"
+              class="btn-admin-secundario"
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
+
+        <div class="tabla-wrapper">
+          <table class="tabla-productos">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Codigo interno</th>
+                <th>Nombre</th>
+                <th>Categoria</th>
+                <th>Venta</th>
+                <th>Costo</th>
+                <th>Stock</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="admin-productos-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="carrito"></section>
+    </main>
+
+    <script type="module">
+      import { activarEventosCarrito } from "./carrito.js";
+      import { activarBuscadorCarrito } from "../js/buscador.js";
+
+      document.addEventListener("DOMContentLoaded", () => {
+        activarEventosCarrito();
+        activarBuscadorCarrito();
+      });
+    </script>
+  </body>
 </html>
