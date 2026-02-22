@@ -8,6 +8,8 @@ import {
   eliminarProducto
 } from "../js/data.js";
 
+import { registrarVenta } from "../js/ventas.js";
+
 let adminListenersActivos = false;
 let productoEnEdicionId = null;
 
@@ -357,9 +359,140 @@ export function asignarEventosBotones() {
         return;
       }
 
+      // Abrir modal de pago
+      mostrarModalPago(carritoActual);
+    };
+  }
+}
+
+function mostrarModalPago(carrito) {
+  // Calcular total
+  const totalGeneral = carrito.reduce((sum, item) => {
+    const producto = getProductoActual(item.id);
+    const precio = producto ? precioProducto(producto) : precioProducto(item);
+    return sum + (precio * (item.cantidad || 1));
+  }, 0);
+
+  const modalHTML = `
+    <div id="modal-pago-overlay" style="${getModalPagoStyles()}">
+      <div id="modal-pago-contenido" style="${getModalPagoContenidoStyles()}">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+          <h2 style="margin:0; color:#333;">💳 Método de Pago</h2>
+          <button onclick="document.getElementById('modal-pago-overlay').remove()" style="background:none; border:none; font-size:24px; cursor:pointer;">✕</button>
+        </div>
+
+        <div style="background:#f5f5f5; padding:15px; border-radius:8px; margin-bottom:20px; text-align:center;">
+          <p style="margin:0 0 5px 0; color:#666; font-size:14px;">Total a pagar:</p>
+          <p style="margin:0; font-size:28px; font-weight:bold; color:#8a9b2f;">${formatearMoneda(totalGeneral)}</p>
+        </div>
+
+        <div style="display:grid; gap:10px; margin-bottom:20px;">
+          <button class="btn-metodo-pago" data-metodo="Efectivo" style="${getBtnMetodoPagoStyles()}">
+            💵 Efectivo
+          </button>
+          <button class="btn-metodo-pago" data-metodo="Tarjeta Credito" style="${getBtnMetodoPagoStyles()}">
+            💳 Tarjeta de crédito
+          </button>
+          <button class="btn-metodo-pago" data-metodo="Tarjeta Debito" style="${getBtnMetodoPagoStyles()}">
+            🏦 Tarjeta de débito
+          </button>
+          <button class="btn-metodo-pago" data-metodo="Transferencia" style="${getBtnMetodoPagoStyles()}">
+            📱 Transferencia
+          </button>
+        </div>
+
+        <div id="div-efectivo" style="display:none; margin-bottom:20px; padding:15px; background:#fff3cd; border-radius:8px;">
+          <label style="display:block; margin-bottom:8px; font-weight:600;">Valor recibido:</label>
+          <input type="number" id="valor-recibido" placeholder="Ingresa el valor" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; font-size:14px;">
+          <p id="cambio-calculado" style="margin:10px 0 0 0; font-size:13px; color:#666;"></p>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          <button id="btn-cancelar-pago" style="flex:1; padding:12px; border:1px solid #ddd; background:white; border-radius:8px; cursor:pointer; font-weight:600;">Cancelar</button>
+          <button id="btn-confirmar-pago" style="flex:1; padding:12px; background:#8a9b2f; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600;">Confirmar Pago</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML("beforeend", modalHTML);
+
+  const overlay = document.getElementById("modal-pago-overlay");
+  const btnCancelar = document.getElementById("btn-cancelar-pago");
+  const btnConfirmar = document.getElementById("btn-confirmar-pago");
+  const btnMetodosPago = document.querySelectorAll(".btn-metodo-pago");
+  const divEfectivo = document.getElementById("div-efectivo");
+  const inputValorRecibido = document.getElementById("valor-recibido");
+
+  let metodoPagoSeleccionado = null;
+
+  // Cerrar modal al hacer clic en overlay
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) {
+      overlay.remove();
+    }
+  });
+
+  // Cerrar modal con botón cancelar
+  if (btnCancelar) {
+    btnCancelar.onclick = () => overlay.remove();
+  }
+
+  // Seleccionar método de pago
+  btnMetodosPago.forEach(btn => {
+    btn.onclick = () => {
+      btnMetodosPago.forEach(b => b.style.background = "white");
+      btn.style.background = "#e8f5e9";
+      metodoPagoSeleccionado = btn.dataset.metodo;
+
+      if (metodoPagoSeleccionado === "Efectivo") {
+        divEfectivo.style.display = "block";
+      } else {
+        divEfectivo.style.display = "none";
+      }
+    };
+  });
+
+  // Calcular cambio
+  if (inputValorRecibido) {
+    inputValorRecibido.addEventListener("input", (e) => {
+      const valorRecibido = Number(e.target.value) || 0;
+      const cambio = valorRecibido - totalGeneral;
+      const cambioP = document.getElementById("cambio-calculado");
+      if (cambio >= 0) {
+        cambioP.textContent = `Cambio: ${formatearMoneda(cambio)}`;
+        cambioP.style.color = "#28a745";
+      } else {
+        cambioP.textContent = `Falta: ${formatearMoneda(Math.abs(cambio))}`;
+        cambioP.style.color = "#dc3545";
+      }
+    });
+  }
+
+  // Confirmar pago
+  if (btnConfirmar) {
+    btnConfirmar.onclick = () => {
+      if (!metodoPagoSeleccionado) {
+        mostrarToast("error", "Selecciona metodo", "Por favor selecciona un método de pago");
+        return;
+      }
+
+      let valorRecibido = 0;
+      if (metodoPagoSeleccionado === "Efectivo") {
+        valorRecibido = Number(inputValorRecibido.value) || 0;
+        if (valorRecibido < totalGeneral) {
+          mostrarToast("error", "Monto insuficiente", "El monto recibido es menor al total");
+          return;
+        }
+      }
+
+      // Registrar venta
+      const venta = registrarVenta(carrito, totalGeneral, metodoPagoSeleccionado, valorRecibido);
+
+      // Actualizar stock
       const productosActuales = obtenerProductos();
       const nuevosProductos = productosActuales.map((producto) => {
-        const itemComprado = carritoActual.find((item) => Number(item.id) === Number(producto.id));
+        const itemComprado = carrito.find((item) => Number(item.id) === Number(producto.id));
         if (!itemComprado) return producto;
         if (!producto.seguimientoInventario) return producto;
 
@@ -370,15 +503,58 @@ export function asignarEventosBotones() {
       });
 
       guardarProductos(nuevosProductos);
-      mostrarToast("success", "Compra exitosa", "El stock fue actualizado. Redirigiendo...", 2500);
+
+      // Limpiar carrito y cerrar modal
+      overlay.remove();
       guardarCarrito([]);
       renderAdminProductos();
 
+      mostrarToast("success", "Compra exitosa", "Redirigiendo a factura...", 2000);
+
       setTimeout(() => {
-        window.location.href = "../index.html";
-      }, 2500);
+        window.location.href = `factura.html?id=${venta.id}`;
+      }, 2000);
     };
   }
+}
+
+function getModalPagoStyles() {
+  return `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+  `;
+}
+
+function getModalPagoContenidoStyles() {
+  return `
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  `;
+}
+
+function getBtnMetodoPagoStyles() {
+  return `
+    padding: 15px;
+    border: 2px solid #ddd;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  `;
 }
 
 function obtenerVentasPasadas() {
