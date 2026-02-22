@@ -1,14 +1,27 @@
 document.addEventListener("DOMContentLoaded", () => {
-
     const params = new URLSearchParams(window.location.search);
     const idVenta = params.get("id");
+    const tabla = document.getElementById("lista-productos");
+
+    if (!idVenta) {
+        if (tabla) {
+            tabla.innerHTML = `<tr><td colspan="2" style="text-align:center; padding: 20px; color: red;"><strong>Error:</strong> No se especificó un ID de factura.</td></tr>`;
+        }
+        console.error("No se proveyó un ID de venta en la URL.");
+        return;
+    }
 
     const ventas = JSON.parse(localStorage.getItem("ventas")) || [];
 
-    const venta = ventas.find(v => v.id.toString() === idVenta);
+    // Se usa '==' para comparar el string de la URL con el número del ID sin problemas de tipo.
+    // Se añade 'v &&' para evitar errores si hay entradas nulas en el array de ventas.
+    const venta = ventas.find(v => v && v.id == idVenta);
 
     if (!venta) {
         console.error("Venta no encontrada:", idVenta);
+        if (tabla) {
+            tabla.innerHTML = `<tr><td colspan="2" style="text-align:center; padding: 20px; color: red;"><strong>Error:</strong> Factura con ID #${idVenta} no encontrada.</td></tr>`;
+        }
         return;
     }
 
@@ -30,8 +43,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // ================================
     // PRODUCTOS
     // ================================
-    const tabla = document.getElementById("lista-productos");
-
     if (tabla) {
         tabla.innerHTML = "";
 
@@ -59,11 +70,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
             fila.innerHTML = `
                 <td style="padding:5px 0;">
-                    ${cantidad}x ${nombre}<br>
-                    <small style="color:#555;">${descripcion}</small>
+                    <strong>${nombre}</strong><br>
+                    <small style="color:#555;">${cantidad} x $${precio.toLocaleString()}</small>
                 </td>
                 <td style="text-align:right; vertical-align:top;">
-                    $${subtotal.toLocaleString()}
+                    <strong>$${subtotal.toLocaleString()}</strong>
                 </td>
             `;
 
