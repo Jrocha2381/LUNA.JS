@@ -189,6 +189,20 @@ function formatearMoneda(valor) {
   return `$${Number(valor).toLocaleString()}`;
 }
 
+function resolverRutaImagenCarrito(ruta) {
+  const valor = String(ruta || "").trim();
+  if (!valor) return "";
+  if (/^(data:|https?:|blob:|file:)/i.test(valor)) return valor;
+
+  if (valor.startsWith("../../")) {
+    return valor.replace(/^(\.\.\/){2}/, "../");
+  }
+  if (valor.startsWith("images/") || valor.startsWith("img/")) {
+    return `../${valor}`;
+  }
+  return valor;
+}
+
 function agregarAlCarrito(producto) {
   let carrito = obtenerCarrito();
   const existe = carrito.find((item) => Number(item.id) === Number(producto.id));
@@ -258,9 +272,10 @@ function renderCarrito() {
     const subtotal = precioActual * Number(item.cantidad || 0);
     totalGeneral += subtotal;
 
+    const imagen = resolverRutaImagenCarrito(item.imagen || productoActual?.imagen || "");
     html += `
       <div class="item-carrito ${inactivo ? "item-carrito-inactivo" : ""}">
-        <img src="${item.imagen || productoActual?.imagen || ""}" alt="${item.nombre}" class="img-carrito">
+        <img src="${imagen}" alt="${item.nombre}" class="img-carrito">
         <div class="info-carrito">
           <h4>${item.nombre}</h4>
           <p>Precio: ${formatearMoneda(precioActual)}</p>
@@ -594,7 +609,26 @@ function productoApareceEnVentas(idProducto) {
   });
 }
 
-function leerPayloadFormulario(formulario) {
+function archivoADataUrl(archivo) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("No se pudo leer el archivo de imagen."));
+    reader.readAsDataURL(archivo);
+  });
+}
+
+async function leerPayloadFormulario(formulario) {
+  const imagenUrl = formulario.imagen.value.trim();
+  const archivo = formulario.imagenArchivo?.files?.[0] || null;
+  let imagenFinal = imagenUrl;
+
+  if (archivo) {
+    imagenFinal = await archivoADataUrl(archivo);
+  } else if (!imagenUrl) {
+    imagenFinal = undefined;
+  }
+
   return {
     nombre: formulario.nombre.value.trim(),
     categoria: formulario.categoria.value.trim(),
@@ -602,7 +636,7 @@ function leerPayloadFormulario(formulario) {
     costo: formulario.costo.value,
     seguimientoInventario: formulario.seguimientoInventario.checked,
     stock: formulario.stock.value,
-    imagen: formulario.imagen.value.trim(),
+    imagen: imagenFinal,
     descripcion: formulario.descripcion.value.trim()
   };
 }
@@ -689,9 +723,15 @@ function activarEventosAdmin() {
 
   if (!formulario || !tabla) return;
 
-  formulario.addEventListener("submit", (event) => {
+  formulario.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const payload = leerPayloadFormulario(formulario);
+    let payload;
+    try {
+      payload = await leerPayloadFormulario(formulario);
+    } catch (error) {
+      mostrarToast("error", "Imagen invalida", "No se pudo procesar la imagen seleccionada.");
+      return;
+    }
 
     const respuesta = productoEnEdicionId
       ? actualizarProducto(productoEnEdicionId, payload)

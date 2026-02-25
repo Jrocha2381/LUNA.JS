@@ -75,7 +75,15 @@
         </a>
       </div>
 
-      <button class="btn-ver">Ver más productos</button>
+      <button id="btn-ver-productos" class="btn-ver" type="button">Ver más productos</button>
+    </section>
+
+    <section id="seccion-productos-inicio" class="productos-inicio" style="display:none;">
+      <div class="productos-inicio__container">
+        <h2 class="titulo">Todos los productos</h2>
+        <p class="subtitulo">Catalogo completo disponible actualmente</p>
+        <div class="productos__container"></div>
+      </div>
     </section>
 
     <section id="resultados-busqueda" class="resultados-busqueda-container"></section>
@@ -84,11 +92,20 @@
     <script src="js/ventas.js"></script>
     <script src="carritopage/carrito.js"></script>
     <script src="js/catalogo.js"></script>
-    <script src="js/conectarBotones.js"></script>
     <script src="js/buscador.js"></script>
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         if (window.activarBuscadorHeader) window.activarBuscadorHeader();
+        const btnVerProductos = document.getElementById("btn-ver-productos");
+        const seccionProductos = document.getElementById("seccion-productos-inicio");
+
+        if (btnVerProductos && seccionProductos) {
+          btnVerProductos.addEventListener("click", () => {
+            seccionProductos.style.display = "block";
+            btnVerProductos.style.display = "none";
+            seccionProductos.scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+        }
       });
     </script>
     

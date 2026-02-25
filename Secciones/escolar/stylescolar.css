@@ -362,7 +362,7 @@
     font-weight: 600;
 }
 
-.btn-carrito:hover {
+.btn-agregar:hover:not(:disabled) {
     background: #8a9b2f;
     color: white;
 }

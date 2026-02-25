@@ -428,6 +428,82 @@
 }
 
 /* ============================= */
+/* PRODUCTOS INICIO */
+/* ============================= */
+.productos-inicio {
+    background: #f7f7f4;
+    padding: 1rem 0 5rem;
+}
+
+.productos-inicio__container {
+    max-width: 75rem;
+    margin: 0 auto;
+    padding: 0 2rem;
+    text-align: center;
+}
+
+.productos__container {
+    margin-top: 2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.4rem;
+}
+
+.card {
+    background: #fff;
+    border-radius: 0.9rem;
+    padding: 1rem;
+    box-shadow: 0 0.4rem 1rem rgba(0,0,0,0.08);
+    text-align: center;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0.7rem 1.3rem rgba(0,0,0,0.12);
+}
+
+.card img {
+    width: 100%;
+    height: 170px;
+    object-fit: contain;
+    margin-bottom: 0.8rem;
+}
+
+.card h3 {
+    font-size: 1rem;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.card .precio {
+    font-size: 1.1rem;
+    color: #8a9b2f;
+    font-weight: 700;
+}
+
+.card .stock {
+    font-size: 0.88rem;
+    color: #666;
+    margin-bottom: 0.8rem;
+}
+
+.card .btn-agregar {
+    width: 100%;
+    background: #8a9b2f;
+    color: #fff;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.65rem 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.card .btn-agregar:hover:not(:disabled) {
+    background: #6f7d25;
+}
+
+/* ============================= */
 /* MEDIA QUERIES */
 /* ============================= */
 

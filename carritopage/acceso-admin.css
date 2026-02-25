@@ -119,6 +119,16 @@ input:focus {
 .btn-link {
   margin-top: 14px;
   color: var(--color-primario);
+  border: 1px solid #d7dcc4;
+  background: #f7f7f4;
+  transition: all 0.2s ease;
+}
+
+.btn-link:hover {
+  background: var(--color-primario);
+  color: #fff;
+  border-color: var(--color-primario);
+  transform: translateY(-1px);
 }
 
 .mensaje-error {

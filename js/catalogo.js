@@ -20,6 +20,25 @@ function obtenerCategoriaPaginaActual() {
   return null;
 }
 
+function resolverRutaImagenCatalogo(ruta) {
+  const valor = String(ruta || "").trim();
+  if (!valor) return "";
+  if (/^(data:|https?:|blob:|file:)/i.test(valor)) return valor;
+
+  const path = window.location.pathname.toLowerCase().replace(/\\/g, "/");
+  const enSeccion = path.includes("/secciones/");
+
+  if (enSeccion) {
+    if (valor.startsWith("../../") || valor.startsWith("../")) return valor;
+    if (valor.startsWith("images/") || valor.startsWith("img/")) return `../../${valor}`;
+    return valor;
+  }
+
+  if (valor.startsWith("../../")) return valor.replace(/^(\.\.\/){2}/, "");
+  if (valor.startsWith("../")) return valor.replace(/^\.\.\//, "");
+  return valor;
+}
+
 function obtenerProductosActivos() {
   const categoriaPagina = obtenerCategoriaPaginaActual();
   const activos = obtenerProductos().filter((producto) => producto.activo !== false);
@@ -41,7 +60,7 @@ function renderizarProductos(productosFiltrados = obtenerProductosActivos()) {
 
     contenedor.innerHTML += `
       <div class="card" style="${!tieneStock ? "opacity: 0.6;" : ""}">
-        <img src="${producto.imagen}" alt="${producto.nombre}" />
+        <img src="${resolverRutaImagenCatalogo(producto.imagen)}" alt="${producto.nombre}" />
         <h3>${producto.nombre}</h3>
         <p class="precio">$${producto.precioVenta.toLocaleString()}</p>
         <p class="stock">${producto.seguimientoInventario ? `Disponibles: ${producto.stock}` : "Inventario libre"}</p>

@@ -6,6 +6,20 @@ let ventasActuales = [];
 let ordenAscendente = false;
 let ventaAEliminar = null;
 
+function obtenerFechaVenta(venta) {
+    const desdeId = new Date(Number(venta?.id));
+    if (!Number.isNaN(desdeId.getTime())) return desdeId;
+
+    const desdeTexto = new Date(venta?.fecha);
+    if (!Number.isNaN(desdeTexto.getTime())) return desdeTexto;
+
+    return new Date(0);
+}
+
+function inicioDelDia(fecha) {
+    return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+}
+
 function formatearMoneda(valor) {
     return `$${Number(valor).toLocaleString()}`;
 }
@@ -191,9 +205,9 @@ function filtrarVentas(terminoBusqueda) {
 function ordenarVentas(ventas) {
     return [...ventas].sort((a, b) => {
         if (ordenAscendente) {
-            return new Date(a.fecha) - new Date(b.fecha);
+            return obtenerFechaVenta(a) - obtenerFechaVenta(b);
         } else {
-            return new Date(b.fecha) - new Date(a.fecha);
+            return obtenerFechaVenta(b) - obtenerFechaVenta(a);
         }
     });
 }
@@ -291,14 +305,13 @@ function aplicarFiltrosAvanzados(ventas, filtros) {
     return ventas.filter(venta => {
         // Filtro por rango de fechas
         if (filtros.fechaDesde || filtros.fechaHasta) {
-            const fechaVenta = new Date(venta.fecha);
+            const fechaVenta = inicioDelDia(obtenerFechaVenta(venta));
             if (filtros.fechaDesde) {
-                const fechaDesde = new Date(filtros.fechaDesde);
+                const fechaDesde = inicioDelDia(new Date(`${filtros.fechaDesde}T00:00:00`));
                 if (fechaVenta < fechaDesde) return false;
             }
             if (filtros.fechaHasta) {
-                const fechaHasta = new Date(filtros.fechaHasta);
-                fechaHasta.setHours(23, 59, 59, 999); // Incluye todo el día
+                const fechaHasta = inicioDelDia(new Date(`${filtros.fechaHasta}T00:00:00`));
                 if (fechaVenta > fechaHasta) return false;
             }
         }
