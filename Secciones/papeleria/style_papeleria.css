@@ -65,6 +65,11 @@
     align-items: center;
 }
 
+.header__icons a {
+    text-decoration: none;
+    color: inherit;
+}
+
 /* BUSCADOR EN HEADER */
 .buscador-header {
     display: flex;

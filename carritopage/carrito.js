@@ -381,6 +381,8 @@ window.activarEventosCarrito = activarEventosCarrito;
 window.renderCarrito = renderCarrito;
 window.asignarEventosBotones = asignarEventosBotones;
 window.updateCartBadge = updateCartBadge;
+window.renderAdminProductos = renderAdminProductos;
+window.activarEventosAdmin = activarEventosAdmin;
 
 document.addEventListener("DOMContentLoaded", () => {
   try { updateCartBadge(); } catch (e) {}

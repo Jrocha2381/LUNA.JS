@@ -1,0 +1,59 @@
+﻿<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cuenta | Papel y Luna</title>
+    <link rel="stylesheet" href="acceso-admin.css" />
+  </head>
+  <body>
+    <main class="acceso-wrapper">
+      <section class="acceso-card" id="login-card">
+        <p class="eyebrow">Papel y Luna</p>
+        <h1>Acceso de cuenta</h1>
+        <p class="descripcion">Ingresa con usuario y contrasena para abrir el menu administrativo.</p>
+
+        <form id="login-form" class="login-form" autocomplete="off">
+          <label>
+            Usuario
+            <input id="usuario" name="usuario" type="text" required />
+          </label>
+          <label>
+            Contrasena
+            <input id="contrasena" name="contrasena" type="password" required />
+          </label>
+          <button type="submit" class="btn-primario">Entrar</button>
+          <p id="login-error" class="mensaje-error"></p>
+        </form>
+
+        <p class="credenciales">Demo: usuario <strong>admin</strong> y contrasena <strong>luna123</strong>.</p>
+        <a class="btn-link" href="../index.html">Volver a la tienda</a>
+      </section>
+
+      <section class="acceso-card menu-card oculto" id="menu-card">
+        <p class="eyebrow">Sesion iniciada</p>
+        <h2>Menu administrativo</h2>
+        <p class="descripcion">Selecciona la funcionalidad que quieres abrir.</p>
+
+        <div class="menu-grid">
+          <a href="admin.html" class="menu-item">
+            <h3>CRUD Productos</h3>
+            <p>Crear, editar, inactivar y eliminar productos.</p>
+          </a>
+
+          <a href="historial.html" class="menu-item">
+            <h3>Historial de ventas</h3>
+            <p>Consultar ventas, descargar reportes y ver facturas.</p>
+          </a>
+        </div>
+
+        <div class="acciones-finales">
+          <button id="btn-cerrar-sesion" class="btn-secundario">Cerrar sesion</button>
+          <a class="btn-link" href="../index.html">Volver a la tienda</a>
+        </div>
+      </section>
+    </main>
+
+    <script src="acceso-admin.js"></script>
+  </body>
+</html>
