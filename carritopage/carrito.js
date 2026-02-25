@@ -669,6 +669,9 @@ function renderAdminProductos() {
           <td>${estado}</td>
           <td>
             <button class="btn-admin btn-editar" data-id="${producto.id}">Editar</button>
+            ${producto.activo === false
+              ? `<button class="btn-admin btn-reactivar-admin" data-id="${producto.id}">Reactivar</button>`
+              : ""}
             <button class="btn-admin btn-eliminar-admin" data-id="${producto.id}">Eliminar</button>
           </td>
         </tr>
@@ -729,9 +732,28 @@ function activarEventosAdmin() {
       return;
     }
 
+    if (target.classList.contains("btn-reactivar-admin")) {
+      const resultado = reactivarProducto(id);
+      if (!resultado.ok) {
+        mostrarToast("error", "Error", resultado.errores.join(" "));
+        return;
+      }
+
+      mostrarToast("success", "Producto reactivado", "El producto vuelve a estar disponible para la venta.");
+      renderAdminProductos();
+      renderCarrito();
+      return;
+    }
+
     if (target.classList.contains("btn-eliminar-admin")) {
       mostrarConfirmacion("Deseas eliminar este producto?", () => {
+        const productoActual = getProductoActual(id);
         const tieneVentas = productoApareceEnVentas(id);
+        if (tieneVentas && productoActual?.activo === false) {
+          mostrarToast("info", "Producto inactivo", "Este producto tiene ventas pasadas y ya esta inactivo.");
+          return;
+        }
+
         const resultado = tieneVentas ? inactivarProducto(id) : eliminarProducto(id);
 
         if (!resultado.ok) {

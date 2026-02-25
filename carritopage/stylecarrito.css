@@ -353,11 +353,13 @@ header a:hover {
 }
 
 .form-grid input[type="text"],
-.form-grid input[type="number"] {
+.form-grid input[type="number"],
+.form-grid select {
   border: 1px solid #d1d5db;
   border-radius: 8px;
   padding: 10px;
   font-size: 0.95rem;
+  background: #fff;
 }
 
 .checkbox-label {
@@ -425,6 +427,11 @@ header a:hover {
 .btn-eliminar-admin {
   background: #fee2e2;
   color: #991b1b;
+}
+
+.btn-reactivar-admin {
+  background: #dcfce7;
+  color: #166534;
 }
 
 .item-carrito-inactivo {

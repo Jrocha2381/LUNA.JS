@@ -1,6 +1,7 @@
 // js/data.js
 const STORAGE_PRODUCTOS_KEY = "productos";
 const STORAGE_CODIGO_CONTADOR_KEY = "productosCodigoContador";
+const CATEGORIAS_PERMITIDAS = ["Escolar", "Oficina", "Arte", "Papeleria"];
 
 const productosIniciales = [
   { id: 1, nombre: "Cuaderno Profesional", categoria: "Escolar", precioVenta: 12000, costo: 7000, imagen: "../../images/cuaderno.png", descripcion: "Cuaderno argollado profesional", seguimientoInventario: true, stock: 15, activo: true },
@@ -19,6 +20,21 @@ const productosIniciales = [
 
 function limpiarTexto(valor) {
   return String(valor || "").trim();
+}
+
+function textoNormalizado(valor) {
+  return limpiarTexto(valor)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function normalizarCategoriaPermitida(categoria) {
+  const entrada = textoNormalizado(categoria);
+  return (
+    CATEGORIAS_PERMITIDAS.find((cat) => textoNormalizado(cat) === entrada) ||
+    ""
+  );
 }
 
 function toNumber(valor) {
@@ -67,7 +83,7 @@ function normalizarProducto(producto, listaExistente = []) {
   const precioVenta = toNumber(producto.precioVenta ?? producto.precio);
   const seguimientoInventario = Boolean(producto.seguimientoInventario ?? true);
   const stock = seguimientoInventario ? Math.max(0, toNumber(producto.stock)) : 0;
-  const categoria = limpiarTexto(producto.categoria) || "General";
+  const categoria = normalizarCategoriaPermitida(producto.categoria) || CATEGORIAS_PERMITIDAS[0];
   const codigoInterno = limpiarTexto(producto.codigoInterno) || generarCodigoInterno(categoria, listaExistente);
 
   return {
@@ -117,14 +133,14 @@ if (!localStorage.getItem(STORAGE_PRODUCTOS_KEY)) {
 function validarProducto(input) {
   const errores = [];
   const nombre = limpiarTexto(input.nombre);
-  const categoria = limpiarTexto(input.categoria);
+  const categoria = normalizarCategoriaPermitida(input.categoria);
   const precioVenta = toNumber(input.precioVenta);
   const costo = toNumber(input.costo);
   const seguimientoInventario = Boolean(input.seguimientoInventario);
   const stock = toNumber(input.stock);
 
   if (!nombre) errores.push("El nombre es obligatorio.");
-  if (!categoria) errores.push("La categoria es obligatoria.");
+  if (!categoria) errores.push("La categoria debe ser Escolar, Oficina, Arte o Papeleria.");
   if (!Number.isFinite(precioVenta) || precioVenta < 0) errores.push("El precio de venta debe ser un numero no negativo.");
   if (!Number.isFinite(costo) || costo < 0) errores.push("El costo debe ser un numero no negativo.");
   if (seguimientoInventario && (!Number.isFinite(stock) || stock < 0)) {
@@ -181,6 +197,10 @@ function inactivarProducto(id) {
   return actualizarProducto(id, { activo: false });
 }
 
+function reactivarProducto(id) {
+  return actualizarProducto(id, { activo: true });
+}
+
 function eliminarProducto(id) {
   const listaActual = obtenerProductos();
   const nuevaLista = listaActual.filter((p) => Number(p.id) !== Number(id));
@@ -199,4 +219,6 @@ window.validarProducto = validarProducto;
 window.crearProducto = crearProducto;
 window.actualizarProducto = actualizarProducto;
 window.inactivarProducto = inactivarProducto;
+window.reactivarProducto = reactivarProducto;
 window.eliminarProducto = eliminarProducto;
+window.CATEGORIAS_PERMITIDAS = CATEGORIAS_PERMITIDAS;

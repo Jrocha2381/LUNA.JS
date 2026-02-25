@@ -3,8 +3,33 @@
 const contenedor = document.querySelector(".productos__container");
 const buscador = document.querySelector("#buscador");
 
+function normalizarCategoria(valor) {
+  return String(valor || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function obtenerCategoriaPaginaActual() {
+  const path = window.location.pathname.toLowerCase().replace(/\\/g, "/");
+  if (path.includes("/secciones/escolar/")) return "Escolar";
+  if (path.includes("/secciones/oficina/")) return "Oficina";
+  if (path.includes("/secciones/arte/")) return "Arte";
+  if (path.includes("/secciones/papeleria/")) return "Papeleria";
+  return null;
+}
+
 function obtenerProductosActivos() {
-  return obtenerProductos().filter((producto) => producto.activo !== false);
+  const categoriaPagina = obtenerCategoriaPaginaActual();
+  const activos = obtenerProductos().filter((producto) => producto.activo !== false);
+
+  if (!categoriaPagina) return activos;
+
+  const categoriaNormalizada = normalizarCategoria(categoriaPagina);
+  return activos.filter(
+    (producto) => normalizarCategoria(producto.categoria) === categoriaNormalizada
+  );
 }
 
 function renderizarProductos(productosFiltrados = obtenerProductosActivos()) {
