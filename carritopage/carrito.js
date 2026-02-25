@@ -1,14 +1,5 @@
 // carritopage/carrito.js
-import {
-  obtenerProductos,
-  guardarProductos,
-  crearProducto,
-  actualizarProducto,
-  inactivarProducto,
-  eliminarProducto
-} from "../js/data.js";
-
-import { registrarVenta } from "../js/ventas.js";
+// Usar funciones globales definidas en ../js/data.js y ../js/ventas.js
 
 let adminListenersActivos = false;
 let productoEnEdicionId = null;
@@ -159,6 +150,25 @@ function obtenerCarrito() {
 function guardarCarrito(nuevoCarrito) {
   localStorage.setItem("carrito", JSON.stringify(nuevoCarrito));
   renderCarrito();
+  // Actualizar el badge del header si existe
+  try {
+    updateCartBadge();
+  } catch (e) {
+    // noop
+  }
+}
+
+function updateCartBadge() {
+  const carrito = obtenerCarrito();
+  const badge = document.getElementById("badge-carrito");
+  if (!badge) return;
+  const cantidad = carrito.reduce((s, it) => s + (Number(it.cantidad) || 0), 0);
+  if (cantidad > 0) {
+    badge.textContent = String(cantidad);
+    badge.style.display = "inline-block";
+  } else {
+    badge.style.display = "none";
+  }
 }
 
 function getProductoActual(idProducto) {
@@ -179,7 +189,7 @@ function formatearMoneda(valor) {
   return `$${Number(valor).toLocaleString()}`;
 }
 
-export function agregarAlCarrito(producto) {
+function agregarAlCarrito(producto) {
   let carrito = obtenerCarrito();
   const existe = carrito.find((item) => Number(item.id) === Number(producto.id));
 
@@ -215,13 +225,13 @@ export function agregarAlCarrito(producto) {
   guardarCarrito(carrito);
 }
 
-export function activarEventosCarrito() {
+function activarEventosCarrito() {
   renderCarrito();
   renderAdminProductos();
   activarEventosAdmin();
 }
 
-export function renderCarrito() {
+function renderCarrito() {
   const contenedor = document.getElementById("carrito");
   if (!contenedor) return;
 
@@ -297,7 +307,7 @@ function validarCarritoParaCompra(carrito) {
   return "";
 }
 
-export function asignarEventosBotones() {
+function asignarEventosBotones() {
   const carrito = obtenerCarrito();
 
   document.querySelectorAll(".btn-qty").forEach((btn) => {
@@ -364,6 +374,17 @@ export function asignarEventosBotones() {
     };
   }
 }
+
+// Exponer en global para uso sin módulos
+window.agregarAlCarrito = agregarAlCarrito;
+window.activarEventosCarrito = activarEventosCarrito;
+window.renderCarrito = renderCarrito;
+window.asignarEventosBotones = asignarEventosBotones;
+window.updateCartBadge = updateCartBadge;
+
+document.addEventListener("DOMContentLoaded", () => {
+  try { updateCartBadge(); } catch (e) {}
+});
 
 function mostrarModalPago(carrito) {
   // Calcular total

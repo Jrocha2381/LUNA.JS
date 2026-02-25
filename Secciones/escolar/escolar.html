@@ -74,12 +74,15 @@
       class="resultados-busqueda-container"
     ></section>
     <!-- CONEXIÓN AL CARRITO -->
-    <script type="module">
-      import { activarBuscadorHeader } from "../../js/buscador.js";
+    <script src="../../js/data.js"></script>
+    <script src="../../js/ventas.js"></script>
+    <script src="../../carritopage/carrito.js"></script>
+    <script src="../../js/conectarBotones.js"></script>
+    <script src="../../js/buscador.js"></script>
+    <script>
       document.addEventListener("DOMContentLoaded", () => {
-        activarBuscadorHeader();
+        if (window.activarBuscadorHeader) window.activarBuscadorHeader();
       });
     </script>
-    <script type="module" src="../../js/conectarBotones.js"></script>
   </body>
 </html>

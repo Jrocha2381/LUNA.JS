@@ -1,6 +1,5 @@
 // js/buscador.js
-import { obtenerProductos } from "./data.js";
-import { agregarAlCarrito, asignarEventosBotones, renderCarrito } from "../carritopage/carrito.js";
+// Usar funciones globales (definidas en data.js y carritopage/carrito.js)
 
 function listaBuscable() {
   return obtenerProductos().filter((p) => p.activo !== false);
@@ -10,7 +9,7 @@ function precioVenta(producto) {
   return Number(producto.precioVenta ?? producto.precio ?? 0);
 }
 
-export function filtrarProductos(textoBusqueda) {
+function filtrarProductos(textoBusqueda) {
   if (!textoBusqueda.trim()) {
     return [];
   }
@@ -25,7 +24,7 @@ export function filtrarProductos(textoBusqueda) {
   );
 }
 
-export function activarBuscadorHeader() {
+function activarBuscadorHeader() {
   const inputBuscar = document.getElementById("input-buscar-header");
   const btnBuscar = document.getElementById("btn-buscar-header");
   const resultadosContainer = document.getElementById("resultados-busqueda");
@@ -46,7 +45,7 @@ export function activarBuscadorHeader() {
 
     let html = `
       <div class="resultados-header">
-        <h3>Se encontraron ${productosFiltrados.length} producto(s)</h3>
+        <h3>Resultados para "${textoBusqueda}" — ${productosFiltrados.length} producto(s)</h3>
         <button id="cerrar-resultados" class="btn-cerrar-resultados">Cerrar</button>
       </div>
       <div class="resultados-grid">
@@ -121,7 +120,7 @@ export function activarBuscadorHeader() {
   });
 }
 
-export function activarBuscadorCarrito() {
+function activarBuscadorCarrito() {
   const inputBuscar = document.getElementById("input-buscar");
   const btnBuscar = document.getElementById("btn-buscar");
   const btnLimpiar = document.getElementById("btn-limpiar");
@@ -196,7 +195,7 @@ export function activarBuscadorCarrito() {
       return;
     }
 
-    resultadosBusqueda.textContent = `Se encontraron ${productosFiltrados.length} producto(s)`;
+    resultadosBusqueda.textContent = `Resultados para "${textoBusqueda}": ${productosFiltrados.length} producto(s)`;
     renderCarritoFiltrado(productosFiltrados);
   }
 
@@ -236,4 +235,9 @@ export function activarBuscadorCarrito() {
     }
   });
 }
+
+// Exponer en global
+window.filtrarProductos = filtrarProductos;
+window.activarBuscadorHeader = activarBuscadorHeader;
+window.activarBuscadorCarrito = activarBuscadorCarrito;
 

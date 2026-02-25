@@ -1,6 +1,6 @@
 // carritopage/historial.js
 
-import { obtenerVentas } from "../js/ventas.js";
+// Usar funciones globales definidas en ../js/ventas.js
 
 let ventasActuales = [];
 let ordenAscendente = false;
@@ -341,7 +341,7 @@ function mostrarFiltrosActivos(filtros) {
     }
 }
 
-export function inicializarHistorial() {
+function inicializarHistorial() {
     ventasActuales = obtenerVentas();
 
     // Ordenar por defecto de más recientes a más antiguos
@@ -483,3 +483,6 @@ export function inicializarHistorial() {
         });
     }
 }
+
+// Exponer en global
+window.inicializarHistorial = inicializarHistorial;

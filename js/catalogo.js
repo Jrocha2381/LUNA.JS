@@ -1,6 +1,4 @@
-// js/catalogo.js
-import { obtenerProductos } from "./data.js";
-import { agregarAlCarrito } from "../carritopage/carrito.js";
+// js/catalogo.js (usa funciones globales definidas en data.js y carrito.js)
 
 const contenedor = document.querySelector(".productos__container");
 const buscador = document.querySelector("#buscador");

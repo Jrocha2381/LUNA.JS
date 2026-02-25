@@ -90,13 +90,15 @@ function obtenerSiguienteId(lista) {
   return lista.length ? Math.max(...lista.map((p) => Number(p.id) || 0)) + 1 : 1;
 }
 
-export function obtenerProductos() {
+function obtenerProductos() {
   return productos;
 }
 
-export function guardarProductos(nuevosProductos = productos) {
+function guardarProductos(nuevosProductos = productos) {
   productos = nuevosProductos.map((item) => normalizarProducto(item, nuevosProductos));
   localStorage.setItem(STORAGE_PRODUCTOS_KEY, JSON.stringify(productos));
+  // Mantener referencia global actualizada
+  window.productos = productos;
   return productos;
 }
 
@@ -106,13 +108,13 @@ function cargarProductos() {
   return base.map((item) => normalizarProducto(item, base));
 }
 
-export let productos = cargarProductos();
+var productos = cargarProductos();
 
 if (!localStorage.getItem(STORAGE_PRODUCTOS_KEY)) {
   guardarProductos(productos);
 }
 
-export function validarProducto(input) {
+function validarProducto(input) {
   const errores = [];
   const nombre = limpiarTexto(input.nombre);
   const categoria = limpiarTexto(input.categoria);
@@ -132,7 +134,7 @@ export function validarProducto(input) {
   return errores;
 }
 
-export function crearProducto(input) {
+function crearProducto(input) {
   const errores = validarProducto(input);
   if (errores.length) {
     return { ok: false, errores };
@@ -154,7 +156,7 @@ export function crearProducto(input) {
   return { ok: true, producto: nuevo, productos: nuevaLista };
 }
 
-export function actualizarProducto(id, cambios) {
+function actualizarProducto(id, cambios) {
   const listaActual = obtenerProductos();
   const index = listaActual.findIndex((p) => Number(p.id) === Number(id));
   if (index < 0) {
@@ -175,11 +177,11 @@ export function actualizarProducto(id, cambios) {
   return { ok: true, producto: actualizado, productos: nuevaLista };
 }
 
-export function inactivarProducto(id) {
+function inactivarProducto(id) {
   return actualizarProducto(id, { activo: false });
 }
 
-export function eliminarProducto(id) {
+function eliminarProducto(id) {
   const listaActual = obtenerProductos();
   const nuevaLista = listaActual.filter((p) => Number(p.id) !== Number(id));
   if (nuevaLista.length === listaActual.length) {
@@ -188,3 +190,13 @@ export function eliminarProducto(id) {
   guardarProductos(nuevaLista);
   return { ok: true, productos: nuevaLista };
 }
+
+// Exponer en global para uso sin módulos
+window.obtenerProductos = obtenerProductos;
+window.guardarProductos = guardarProductos;
+window.productos = productos;
+window.validarProducto = validarProducto;
+window.crearProducto = crearProducto;
+window.actualizarProducto = actualizarProducto;
+window.inactivarProducto = inactivarProducto;
+window.eliminarProducto = eliminarProducto;

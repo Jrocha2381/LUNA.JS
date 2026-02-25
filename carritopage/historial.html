@@ -115,10 +115,12 @@
         </div>
     </div>
 
-    <script type="module">
-        import { inicializarHistorial } from "./historial.js";
+    <script src="../js/data.js"></script>
+    <script src="../js/ventas.js"></script>
+    <script src="historial.js"></script>
+    <script>
         document.addEventListener("DOMContentLoaded", () => {
-            inicializarHistorial();
+            if (window.inicializarHistorial) window.inicializarHistorial();
         });
     </script>
 </body>

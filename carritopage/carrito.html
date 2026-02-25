@@ -133,13 +133,14 @@
       <section id="carrito"></section>
     </main>
 
-    <script type="module">
-      import { activarEventosCarrito } from "./carrito.js";
-      import { activarBuscadorCarrito } from "../js/buscador.js";
-
+    <script src="../js/data.js"></script>
+    <script src="../js/ventas.js"></script>
+    <script src="carrito.js"></script>
+    <script src="../js/buscador.js"></script>
+    <script>
       document.addEventListener("DOMContentLoaded", () => {
-        activarEventosCarrito();
-        activarBuscadorCarrito();
+        if (window.activarEventosCarrito) window.activarEventosCarrito();
+        if (window.activarBuscadorCarrito) window.activarBuscadorCarrito();
       });
     </script>
   </body>

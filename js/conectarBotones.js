@@ -1,5 +1,4 @@
-import { agregarAlCarrito } from "../carritopage/carrito.js"; 
-import { productos } from "./data.js";
+// Usar variables/globales expuestas por data.js y carrito.js
 
 document.addEventListener("click", (e) => {
   // Verificamos que sea un botón de agregar

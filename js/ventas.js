@@ -1,11 +1,11 @@
 // js/ventas.js
 // Obtener ventas del localStorage o iniciar array vacío
-export function obtenerVentas() {
+function obtenerVentas() {
     return JSON.parse(localStorage.getItem("ventas")) || [];
 }
 
 // Función principal para registrar la venta cerrada
-export function registrarVenta(carrito, total, metodoPago, valorRecibido = 0) {
+function registrarVenta(carrito, total, metodoPago, valorRecibido = 0) {
     const ventas = obtenerVentas();
     
     // Calcular el cambio si es efectivo
@@ -28,3 +28,7 @@ export function registrarVenta(carrito, total, metodoPago, valorRecibido = 0) {
     
     return nuevaVenta; // Devolvemos la venta para mostrar la factura
 }
+
+// Exponer globalmente
+window.obtenerVentas = obtenerVentas;
+window.registrarVenta = registrarVenta;
