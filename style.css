@@ -609,3 +609,133 @@
         width: 80%;
     }
 }
+
+/* RESPUESTA EXTRA PARA TABLET Y MOVIL */
+@media (max-width: 900px) {
+    .header__container {
+        flex-wrap: wrap;
+        row-gap: 0.7rem;
+    }
+
+    .header__nav {
+        order: 3;
+        width: 100%;
+        flex: 0 0 100%;
+    }
+
+    .header__menu {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.5rem 1rem;
+    }
+
+    .header__icons {
+        margin-left: auto;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .buscador-header {
+        min-width: 220px;
+    }
+}
+
+@media (max-width: 640px) {
+    .header__container {
+        padding: 0.7rem 0.9rem;
+        gap: 0.5rem;
+    }
+
+    .header__logo {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .header__logo h1 {
+        font-size: 1.2rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .header__icons {
+        width: 100%;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+
+    .buscador-header {
+        flex: 1 1 100%;
+        order: -1;
+        min-width: 0;
+    }
+
+    .input-buscar-header {
+        min-width: 0;
+        max-width: none;
+    }
+
+    .icon-link {
+        padding: 0.3rem 0.45rem;
+    }
+
+    .resultados-busqueda-container {
+        top: 64px;
+        padding: 0.6rem;
+    }
+
+    .resultados-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.7rem;
+        padding: 1rem;
+    }
+
+    .resultados-header h3 {
+        font-size: 1rem;
+    }
+
+    .resultados-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.8rem;
+        padding: 0.8rem;
+    }
+
+    .resultado-card {
+        padding: 0.9rem;
+    }
+
+    .resultado-card img {
+        height: 120px;
+    }
+
+    .categorias {
+        padding: 3rem 0 2.5rem;
+    }
+
+    .cartas {
+        padding: 0 1rem;
+        gap: 1rem;
+    }
+
+    .carta {
+        width: min(100%, 18rem);
+    }
+
+    .productos-inicio__container {
+        padding: 0 1rem;
+    }
+
+    .productos__container {
+        grid-template-columns: 1fr;
+    }
+
+    .card img {
+        height: 150px;
+    }
+
+    .btn-ver {
+        width: min(100%, 320px);
+    }
+}
