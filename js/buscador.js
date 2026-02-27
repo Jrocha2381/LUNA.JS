@@ -9,6 +9,32 @@ function precioVenta(producto) {
   return Number(producto.precioVenta ?? producto.precio ?? 0);
 }
 
+function resolverRutaImagenBuscador(ruta) {
+  const valor = String(ruta || "").trim();
+  if (!valor) return "";
+  if (/^(data:|https?:|blob:|file:)/i.test(valor)) return valor;
+
+  const path = window.location.pathname.toLowerCase().replace(/\\/g, "/");
+  const enSeccion = path.includes("/secciones/");
+  const enCarrito = path.includes("/carritopage/");
+
+  if (enSeccion) {
+    if (valor.startsWith("../../") || valor.startsWith("../")) return valor;
+    if (valor.startsWith("images/") || valor.startsWith("img/")) return `../../${valor}`;
+    return valor;
+  }
+
+  if (enCarrito) {
+    if (valor.startsWith("../../")) return valor.replace(/^(\.\.\/){2}/, "../");
+    if (valor.startsWith("images/") || valor.startsWith("img/")) return `../${valor}`;
+    return valor;
+  }
+
+  if (valor.startsWith("../../")) return valor.replace(/^(\.\.\/){2}/, "");
+  if (valor.startsWith("../")) return valor.replace(/^\.\.\//, "");
+  return valor;
+}
+
 function filtrarProductos(textoBusqueda) {
   if (!textoBusqueda.trim()) {
     return [];
@@ -55,7 +81,7 @@ function activarBuscadorHeader() {
       const tieneStock = !producto.seguimientoInventario || producto.stock > 0;
       html += `
         <div class="resultado-card" style="${!tieneStock ? "opacity: 0.6;" : ""}">
-          <img src="${producto.imagen}" alt="${producto.nombre}" />
+          <img src="${resolverRutaImagenBuscador(producto.imagen)}" alt="${producto.nombre}" />
           <h4>${producto.nombre}</h4>
           <p class="categoria-tag">${producto.categoria}</p>
           <p class="precio">$${precioVenta(producto).toLocaleString()}</p>
@@ -153,7 +179,7 @@ function activarBuscadorCarrito() {
 
       html += `
         <div class="item-carrito">
-          <img src="${p.imagen}" alt="${p.nombre}" class="img-carrito">
+          <img src="${resolverRutaImagenBuscador(p.imagen)}" alt="${p.nombre}" class="img-carrito">
           <div class="info-carrito">
             <h4>${p.nombre}</h4>
             <p>Precio: $${precioVenta(p).toLocaleString()}</p>
