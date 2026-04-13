@@ -261,8 +261,6 @@ function renderCarrito() {
     contenedor.innerHTML = `
       <div style="text-align:center; padding: 50px;">
         <p>Tu carrito esta vacio.</p>
-        <br>
-        <a href="../index.html" style="color: #8a9b2f; font-weight: bold;">Volver a la tienda</a>
       </div>
     `;
     return;
@@ -818,15 +816,4 @@ function activarEventosAdmin() {
 
         renderAdminProductos();
         renderCarrito();
-      });
-    }
-  });
-
-  if (btnCancelar) {
-    btnCancelar.addEventListener("click", () => {
-      limpiarFormularioAdmin();
-    });
-  }
-
-  adminListenersActivos = true;
-}
+     
