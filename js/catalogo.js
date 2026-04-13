@@ -98,4 +98,8 @@ if (buscador) {
   });
 }
 
+// Exponer globalmente para permitir actualizaciones inmediatas desde el editor de flujo
+window.renderizarProductos = renderizarProductos;
+
+// Carga inicial
 renderizarProductos();
