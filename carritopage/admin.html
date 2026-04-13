@@ -9,103 +9,80 @@
   <body>
     <header>
       <h1>Panel Administrativo</h1>
-      <div style="display:flex; gap:10px; align-items:center;">
+      <div style="display: flex; gap: 10px; align-items: center">
         <a href="acceso-admin.html">Menu de cuenta</a>
         <a href="../index.html">Volver a la tienda</a>
       </div>
     </header>
 
     <main>
-      <section class="admin-productos">
-        <h2>CRUD de productos</h2>
-
-        <form id="producto-form" class="producto-form">
-          <h3 id="producto-form-title">Crear producto</h3>
-
-          <div class="form-grid">
-            <label>
-              Nombre *
-              <input type="text" name="nombre" required />
-            </label>
-
-            <label>
-              Categoria *
-              <select name="categoria" required>
-                <option value="Escolar">Escolar</option>
-                <option value="Oficina">Oficina</option>
-                <option value="Arte">Arte</option>
-                <option value="Papeleria">Papeleria</option>
-              </select>
-            </label>
-
-            <label>
-              Precio de venta *
-              <input type="number" name="precioVenta" min="0" step="0.01" required />
-            </label>
-
-            <label>
-              Costo *
-              <input type="number" name="costo" min="0" step="0.01" required />
-            </label>
-
-            <label class="checkbox-label">
-              <input type="checkbox" name="seguimientoInventario" checked />
-              Seguimiento de inventario
-            </label>
-
-            <label>
-              Stock
-              <input type="number" name="stock" min="0" step="1" value="0" />
-            </label>
-
-            <label>
-              URL imagen (opcional)
-              <input type="text" name="imagen" placeholder="../images/archivo.png" />
-            </label>
-
-            <label>
-              Imagen desde tu equipo (opcional)
-              <input type="file" name="imagenArchivo" accept="image/*" />
-            </label>
-
-            <label>
-              Descripcion
-              <input type="text" name="descripcion" />
-            </label>
+      <section class="admin-productos admin-entidades">
+        <div class="admin-top">
+          <div>
+            <h2>Gestión de entidades</h2>
+            <p class="descripcion">
+              Administra clientes, proveedores y categorías desde el mismo panel
+              administrativo.
+            </p>
           </div>
+        </div>
 
+        <div class="admin-tabs">
+          <button type="button" class="tab active" data-entity="clientes">
+            Clientes
+          </button>
+          <button type="button" class="tab" data-entity="proveedores">
+            Proveedores
+          </button>
+          <button type="button" class="tab" data-entity="categorias">
+            Categorías
+          </button>
+        </div>
+
+        <div class="entity-tools">
+          <input
+            id="entity-search"
+            class="input-buscar"
+            type="search"
+            placeholder="Buscar en la entidad..."
+          />
+        </div>
+
+        <form id="entity-form" class="producto-form">
+          <h3 id="entity-form-title">Crear cliente</h3>
+          <input type="hidden" name="id" />
+          <div id="form-fields" class="form-grid"></div>
           <div class="form-actions">
-            <button id="producto-submit" type="submit" class="btn-admin-primario">
-              Guardar producto
+            <button id="entity-submit" type="submit" class="btn-admin-primario">
+              Guardar Cliente
             </button>
-            <button id="producto-cancelar" type="button" class="btn-admin-secundario">
-              Cancelar
+            <button
+              id="entity-reset"
+              type="button"
+              class="btn-admin-secundario"
+            >
+              Limpiar
             </button>
           </div>
         </form>
 
+        <div id="admin-message" class="mensaje oculto"></div>
+        <div id="admin-loader" class="loader oculto">Cargando...</div>
+
         <div class="tabla-wrapper">
-          <table class="tabla-productos">
+          <table class="tabla-productos tabla-entidades">
             <thead>
-              <tr>
-                <th>ID</th>
-                <th>Codigo interno</th>
-                <th>Nombre</th>
-                <th>Categoria</th>
-                <th>Venta</th>
-                <th>Costo</th>
-                <th>Stock</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
+              <tr id="entity-table-head"></tr>
             </thead>
-            <tbody id="admin-productos-body"></tbody>
+            <tbody id="entity-table-body"></tbody>
           </table>
         </div>
       </section>
     </main>
 
     <script src="admin-auth.js"></script>
+    <script src="admin-api.js"></script>
+    <script src="admin-crud.js"></script>
     <script src="../js/data.js"></script>
     <script src="../js/ventas.js"></script>
     <script src="carrito.js"></script>

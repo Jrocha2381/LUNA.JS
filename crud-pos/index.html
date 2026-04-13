@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>POS CRUD - Clientes, Proveedores y Categorías</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header>
+        <h1>POS - Gestión de Entidades</h1>
+        <p class="subtitle">
+          Clientes, Proveedores y Categorías con API mock usando fetch +
+          async/await.
+        </p>
+      </header>
+
+      <nav class="tabs" role="tablist">
+        <button class="tab-button active" data-entity="clientes">
+          Clientes
+        </button>
+        <button class="tab-button" data-entity="proveedores">
+          Proveedores
+        </button>
+        <button class="tab-button" data-entity="categorias">Categorías</button>
+      </nav>
+
+      <main>
+        <div id="message-container"></div>
+
+        <section class="entity-panel active" data-entity="clientes">
+          <div class="panel-header">
+            <div>
+              <h2>Clientes</h2>
+              <p>Administración de clientes registrados en el sistema.</p>
+            </div>
+            <input
+              id="clientes-search"
+              class="search-input"
+              type="search"
+              placeholder="Buscar cliente..."
+            />
+          </div>
+
+          <form id="clientes-form" class="entity-form" data-entity="clientes">
+            <input type="hidden" name="id" />
+            <div class="field-grid">
+              <label>
+                Nombre
+                <input
+                  name="nombre"
+                  type="text"
+                  required
+                  placeholder="Nombre del cliente"
+                />
+              </label>
+              <label>
+                Teléfono
+                <input
+                  name="telefono"
+                  type="tel"
+                  required
+                  placeholder="Teléfono"
+                />
+              </label>
+            </div>
+            <div class="form-actions">
+              <button type="submit">Guardar cliente</button>
+              <button type="button" class="secondary reset-button">
+                Limpiar
+              </button>
+            </div>
+          </form>
+
+          <div class="table-wrapper">
+            <table id="clientes-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Teléfono</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="entity-panel" data-entity="proveedores">
+          <div class="panel-header">
+            <div>
+              <h2>Proveedores</h2>
+              <p>Administración de proveedores que suministran productos.</p>
+            </div>
+            <input
+              id="proveedores-search"
+              class="search-input"
+              type="search"
+              placeholder="Buscar proveedor..."
+            />
+          </div>
+
+          <form
+            id="proveedores-form"
+            class="entity-form"
+            data-entity="proveedores"
+          >
+            <input type="hidden" name="id" />
+            <div class="field-grid">
+              <label>
+                Nombre
+                <input
+                  name="nombre"
+                  type="text"
+                  required
+                  placeholder="Nombre del proveedor"
+                />
+              </label>
+              <label>
+                Contacto
+                <input
+                  name="contacto"
+                  type="text"
+                  required
+                  placeholder="Persona de contacto"
+                />
+              </label>
+            </div>
+            <div class="form-actions">
+              <button type="submit">Guardar proveedor</button>
+              <button type="button" class="secondary reset-button">
+                Limpiar
+              </button>
+            </div>
+          </form>
+
+          <div class="table-wrapper">
+            <table id="proveedores-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Contacto</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="entity-panel" data-entity="categorias">
+          <div class="panel-header">
+            <div>
+              <h2>Categorías</h2>
+              <p>Administración de categorías de productos.</p>
+            </div>
+            <input
+              id="categorias-search"
+              class="search-input"
+              type="search"
+              placeholder="Buscar categoría..."
+            />
+          </div>
+
+          <form
+            id="categorias-form"
+            class="entity-form"
+            data-entity="categorias"
+          >
+            <input type="hidden" name="id" />
+            <div class="field-grid">
+              <label>
+                Nombre
+                <input
+                  name="nombre"
+                  type="text"
+                  required
+                  placeholder="Nombre de la categoría"
+                />
+              </label>
+            </div>
+            <div class="form-actions">
+              <button type="submit">Guardar categoría</button>
+              <button type="button" class="secondary reset-button">
+                Limpiar
+              </button>
+            </div>
+          </form>
+
+          <div class="table-wrapper">
+            <table id="categorias-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div id="loader" class="loader hidden" aria-hidden="true">Cargando...</div>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
