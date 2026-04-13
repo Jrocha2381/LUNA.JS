@@ -115,6 +115,8 @@ function guardarProductos(nuevosProductos = productos) {
   localStorage.setItem(STORAGE_PRODUCTOS_KEY, JSON.stringify(productos));
   // Mantener referencia global actualizada
   window.productos = productos;
+  // Notificar a toda la aplicación que los datos cambiaron para reflejo inmediato
+  window.dispatchEvent(new CustomEvent("productosActualizados", { detail: productos }));
   return productos;
 }
 

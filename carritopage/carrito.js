@@ -90,6 +90,9 @@ function mostrarToast(tipo, titulo, mensaje, duracion = 3500) {
   }, duracion);
 }
 
+// Exponer globalmente para otros módulos
+window.mostrarToast = mostrarToast;
+
 function mostrarConfirmacion(mensaje, onAceptar) {
   const container = crearContenedorToast();
   const s = TOAST_STYLES.warning;
@@ -142,6 +145,9 @@ function mostrarConfirmacion(mensaje, onAceptar) {
     onAceptar();
   };
 }
+
+// Exponer globalmente para otros módulos
+window.mostrarConfirmacion = mostrarConfirmacion;
 
 function obtenerCarrito() {
   return JSON.parse(localStorage.getItem("carrito")) || [];

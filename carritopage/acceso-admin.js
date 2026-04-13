@@ -32,17 +32,40 @@ window.sesionAdminActiva = sesionEsValida;
 window.cerrarSesionAdmin = cerrarSesionAdmin;
 
 document.addEventListener("DOMContentLoaded", () => {
-  const loginCard = document.getElementById("login-card");
-  const menuCard = document.getElementById("menu-card");
+  const loginContainer = document.getElementById("login-container");
+  const dashboardContainer = document.getElementById("dashboard-container");
   const loginForm = document.getElementById("login-form");
   const errorLabel = document.getElementById("login-error");
   const btnCerrarSesion = document.getElementById("btn-cerrar-sesion");
+  const adminFrame = document.getElementById("admin-frame");
+  const navItems = document.querySelectorAll(".nav-item[data-src]");
+  const viewTitle = document.getElementById("view-title");
 
   const mostrarVista = (autenticado) => {
-    if (!loginCard || !menuCard) return;
-    loginCard.classList.toggle("oculto", autenticado);
-    menuCard.classList.toggle("oculto", !autenticado);
+    if (!loginContainer || !dashboardContainer) return;
+
+    if (autenticado) {
+      loginContainer.classList.add("oculto");
+      dashboardContainer.classList.remove("oculto");
+      document.body.classList.add("admin-mode");
+    } else {
+      loginContainer.classList.remove("oculto");
+      dashboardContainer.classList.add("oculto");
+      document.body.classList.remove("admin-mode");
+    }
   };
+
+  // Navegación del Dashboard
+  navItems.forEach(item => {
+    item.addEventListener("click", () => {
+      const src = item.dataset.src;
+      navItems.forEach(i => i.classList.remove("active"));
+      item.classList.add("active");
+
+      adminFrame.src = src;
+      viewTitle.textContent = item.innerText.replace(/[^\w\s]/gi, '').trim();
+    });
+  });
 
   mostrarVista(sesionEsValida());
 

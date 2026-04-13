@@ -5,10 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cuenta | Papel y Luna</title>
     <link rel="stylesheet" href="acceso-admin.css" />
+    <style>
+      /* Estilos para el nuevo Dashboard */
+      body.admin-mode { background: #f0f2f5; margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; }
+      .sidebar { width: 260px; background: #ffffff; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; padding: 20px 0; box-shadow: 2px 0 10px rgba(0,0,0,0.03); z-index: 100; }
+      .sidebar-header { padding: 0 25px 30px; border-bottom: 1px solid #f5f5f5; margin-bottom: 20px; }
+      .sidebar-header h2 { color: #8a9b2f; margin: 0; font-size: 1.4rem; font-weight: 700; }
+      .sidebar-header p { margin: 5px 0 0; font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 1px; }
+      
+      .nav-menu { flex: 1; padding: 0 15px; }
+      .nav-item { 
+        display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-radius: 10px;
+        text-decoration: none; color: #555; font-weight: 600; margin-bottom: 8px; transition: 0.2s; cursor: pointer;
+      }
+      .nav-item:hover { background: #f8f9fa; color: #8a9b2f; }
+      .nav-item.active { background: #8a9b2f; color: white; box-shadow: 0 4px 12px rgba(138,155,47,0.3); }
+      .nav-item .icon { font-size: 1.2rem; }
+
+      .sidebar-footer { padding: 20px 15px; border-top: 1px solid #f5f5f5; }
+      .btn-logout { 
+        width: 100%; padding: 10px; border: none; background: #fff1f2; color: #e11d48; 
+        border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+      }
+      .btn-logout:hover { background: #ffe4e6; }
+
+      .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+      .top-bar { height: 60px; background: white; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; padding: 0 30px; justify-content: space-between; }
+      .top-bar .user-info { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: #666; }
+      .user-avatar { width: 32px; height: 32px; background: #eee; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #8a9b2f; }
+      
+      #admin-frame { width: 100%; height: 100%; border: none; background: #f0f2f5; }
+      
+      /* Ajustes para el login cuando no está en admin-mode */
+      .acceso-wrapper { transition: 0.3s; }
+      .oculto { display: none !important; }
+    </style>
   </head>
   <body>
-    <main class="acceso-wrapper">
-      <section class="acceso-card" id="login-card">
+    <!-- Contenedor de Login (Centrado) -->
+    <main class="acceso-wrapper" id="login-container">
+      <section class="acceso-card" id="login-card" style="margin: 100px auto;">
         <p class="eyebrow">Papel y Luna</p>
         <h1>Acceso de cuenta</h1>
         <p class="descripcion">
@@ -34,37 +70,49 @@
         </p>
         <a class="btn-link" href="../index.html">Volver a la tienda</a>
       </section>
-
-      <section class="acceso-card menu-card oculto" id="menu-card">
-        <p class="eyebrow">Sesion iniciada</p>
-        <h2>Menu administrativo</h2>
-        <p class="descripcion">
-          Selecciona la funcionalidad que quieres abrir.
-        </p>
-
-        <div class="menu-grid">
-          <a href="admin.html" class="menu-item">
-            <h3>CRUD Entidades</h3>
-            <p>
-              Gestionar clientes, proveedores y categorías desde el panel
-              administrativo.
-            </p>
-          </a>
-
-          <a href="historial.html" class="menu-item">
-            <h3>Historial de ventas</h3>
-            <p>Consultar ventas, descargar reportes y ver facturas.</p>
-          </a>
-        </div>
-
-        <div class="acciones-finales">
-          <button id="btn-cerrar-sesion" class="btn-secundario">
-            Cerrar sesion
-          </button>
-          <a class="btn-link" href="../index.html">Volver a la tienda</a>
-        </div>
-      </section>
     </main>
+
+    <!-- Nuevo Dashboard (Sidebar + Content) -->
+    <div id="dashboard-container" class="oculto" style="width: 100%; display: flex; height: 100vh;">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h2>Papel y Luna</h2>
+          <p>Panel Admin</p>
+        </div>
+        
+        <nav class="nav-menu">
+          <a class="nav-item active" data-src="admin.html">
+            <span class="icon">📦</span> Inventario
+          </a>
+          <a class="nav-item" data-src="historial.html">
+            <span class="icon">📊</span> Ventas
+          </a>
+          <a class="nav-item" data-src="compras.html">
+            <span class="icon">🛒</span> Compras
+          </a>
+          <a href="../index.html" class="nav-item">
+            <span class="icon">🏠</span> Ir a la Tienda
+          </a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <button id="btn-cerrar-sesion" class="btn-logout">
+            <span>🚪</span> Cerrar Sesión
+          </button>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="top-bar">
+          <div id="view-title" style="font-weight: 700; color: #333;">Inventario de Productos</div>
+          <div class="user-info">
+            <span id="display-user">Admin</span>
+            <div class="user-avatar">A</div>
+          </div>
+        </header>
+        <iframe id="admin-frame" src="admin.html"></iframe>
+      </main>
+    </div>
 
     <script src="acceso-admin.js"></script>
   </body>
