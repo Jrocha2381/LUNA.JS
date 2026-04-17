@@ -1,43 +1,60 @@
-﻿export const BASE_API = "https://script.google.com/macros/s/AKfycbz505Z0SE9dm3mmjw8A_Wkinazb-z6aasNImDa_JNcBotOBOMTRtSSB1AkNF9j_mfqx/exec"; 
+﻿export const BASE_API =
+  "https://script.google.com/macros/s/AKfycbz505Z0SE9dm3mmjw8A_Wkinazb-z6aasNImDa_JNcBotOBOMTRtSSB1AkNF9j_mfqx/exec";
 
 // Data falsa temporal por si el servidor falla y limpiar cache viejo
 const localDB = {
-  productos: [], categorias: [], clientes: [], proveedores: [], ventas: [], compras: [], usuarios: []
+  productos: [],
+  categorias: [],
+  clientes: [],
+  proveedores: [],
+  ventas: [],
+  compras: [],
+  usuarios: [],
 };
 
 // GET DTO Optimista con Local Storage Firme
 export async function getEntities(resource) {
-  const cacheKey = 'cpos_cache_' + resource;
+  const cacheKey = "cpos_cache_" + resource;
   const localCache = localStorage.getItem(cacheKey);
 
-  const fetchPromise = fetch(`${BASE_API}?resource=${resource}&_t=${Date.now()}`)
-    .then(async res => {
+  const fetchPromise = fetch(
+    `${BASE_API}?resource=${resource}&_t=${Date.now()}`,
+  )
+    .then(async (res) => {
       if (!res.ok) throw new Error("Error HTTP " + res.status);
       const json = await res.json();
       if (!json.success) throw new Error(json.message);
-      
+
       const freshData = json.data || [];
       localStorage.setItem(cacheKey, JSON.stringify(freshData));
-      
-      window.dispatchEvent(new CustomEvent('sync_' + resource, { detail: freshData }));
-      if(resource === 'productos') {
-        window.dispatchEvent(new CustomEvent('cambioCatalogo', { detail: freshData })); 
+
+      window.dispatchEvent(
+        new CustomEvent("sync_" + resource, { detail: freshData }),
+      );
+      if (resource === "productos") {
+        window.dispatchEvent(
+          new CustomEvent("cambioCatalogo", { detail: freshData }),
+        );
       }
       return freshData;
     })
-    .catch(error => {
-      console.warn("Aviso de red o hoja no encontrada para " + resource + ", usando local.");
+    .catch((error) => {
+      console.warn(
+        "Aviso de red o hoja no encontrada para " +
+          resource +
+          ", usando local.",
+      );
       let existingLocal = localStorage.getItem(cacheKey);
-      if(!existingLocal) {
-         localStorage.setItem(cacheKey, JSON.stringify(localDB[resource] || []));
-         return localDB[resource] || [];
+      if (!existingLocal) {
+        localStorage.setItem(cacheKey, JSON.stringify(localDB[resource] || []));
+        return localDB[resource] || [];
       }
       return JSON.parse(existingLocal);
     });
 
   if (localCache) {
     // Sincroniza en background sin bloquear
-    fetchPromise.catch(e=>console.warn(e)); 
+    fetchPromise.catch((e) => console.warn(e));
     return JSON.parse(localCache);
   }
   return await fetchPromise;
@@ -46,28 +63,32 @@ export async function getEntities(resource) {
 // POST/PUT/DELETE DTO: Operación Local Automática (Offline First Muteado Error)
 export async function saveEntity(resource, dataObj, action = "upsert") {
   try {
-    const cacheKey = 'cpos_cache_' + resource;
+    const cacheKey = "cpos_cache_" + resource;
     let localStr = localStorage.getItem(cacheKey);
-    let dataArr = localStr ? JSON.parse(localStr) : (localDB[resource] || []);
-    
-    if(action === "delete") {
-      dataArr = dataArr.filter(x => String(x.id) !== String(dataObj.id));
+    let dataArr = localStr ? JSON.parse(localStr) : localDB[resource] || [];
+
+    if (action === "delete") {
+      dataArr = dataArr.filter((x) => String(x.id) !== String(dataObj.id));
     } else {
-      const idx = dataArr.findIndex(x => String(x.id) === String(dataObj.id));
-      if(idx > -1) dataArr[idx] = { ...dataArr[idx], ...dataObj };
+      const idx = dataArr.findIndex((x) => String(x.id) === String(dataObj.id));
+      if (idx > -1) dataArr[idx] = { ...dataArr[idx], ...dataObj };
       else dataArr.unshift(dataObj);
     }
     // Siempre GUARDAR a localStorage sin importar si backend falla
     localStorage.setItem(cacheKey, JSON.stringify(dataArr));
 
     const payload = {
+      resource,
       action: action === "delete" ? "delete" : "save",
       id: dataObj.id,
-      data: dataObj
+      data: dataObj,
     };
 
     const postData = {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(payload),
     };
 
@@ -75,12 +96,14 @@ export async function saveEntity(resource, dataObj, action = "upsert") {
     if (!res.ok) throw new Error("HTTP POST " + res.status);
     const json = await res.json();
     if (!json.success) throw new Error(json.message);
-    
-    return json;
+
+    return { ...json, data: json.data || dataObj };
   } catch (error) {
-    console.warn(`Error de red al guardar '${resource}' en Sheets. El elemento fue guardado localmente (Offline): ${error}`);
+    console.warn(
+      `Error de red al guardar '${resource}' en Sheets. El elemento fue guardado localmente (Offline): ${error}`,
+    );
     // No hacer el throw, permitir que la App continúe su camino exitoso offline
-    return { success: true, localOnly: true };
+    return { success: true, localOnly: true, data: dataObj };
   }
 }
 

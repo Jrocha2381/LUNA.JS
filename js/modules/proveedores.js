@@ -1,11 +1,19 @@
-import { getEntities, saveEntity, deleteEntity } from '../api.js';
-import { getFormData, showConfirmModal, showFormModal, showToast, escapeHtml } from '../ui.js';
+import { getEntities, saveEntity, deleteEntity } from "../api.js";
+import {
+  getFormData,
+  showConfirmModal,
+  showFormModal,
+  showToast,
+  escapeHtml,
+} from "../ui.js";
 
 const RESOURCE = "proveedores";
 let cacheData = [];
 
 export async function init(container) {
-  try { cacheData = await getEntities(RESOURCE); } catch(e) { }
+  try {
+    cacheData = await getEntities(RESOURCE);
+  } catch (e) {}
 }
 
 export function render() {
@@ -21,14 +29,19 @@ export function render() {
     </table>
   `;
   renderTable(cacheData);
-  document.getElementById(`btn-new-${RESOURCE}`).addEventListener("click", () => openFormModal());
+  document
+    .getElementById(`btn-new-${RESOURCE}`)
+    .addEventListener("click", () => openFormModal());
 }
 
 function renderTable(data) {
   const tbody = document.getElementById(`tbl-${RESOURCE}-body`);
-  if(!data.length) return tbody.innerHTML = `<tr><td colspan="4" style="padding: 20px; text-align:center;">No hay proveedores</td></tr>`;
-  
-  tbody.innerHTML = data.map(i => `
+  if (!data.length)
+    return (tbody.innerHTML = `<tr><td colspan="4" style="padding: 20px; text-align:center;">No hay proveedores</td></tr>`);
+
+  tbody.innerHTML = data
+    .map(
+      (i) => `
     <tr style="border-bottom: 1px solid var(--border-color);">
       <td style="padding: 12px;"><strong>${escapeHtml(i.nombre)}</strong></td>
       <td style="padding: 12px;">${escapeHtml(i.nit)}</td>
@@ -38,20 +51,26 @@ function renderTable(data) {
         <button class="btn btn-danger btn-sm" onclick="window.appDeleteProveedor('${escapeHtml(i.id)}')" style="padding: 6px 10px;"><i class="ph ph-trash"></i></button>
       </td>
     </tr>
-  `).join('');
+  `,
+    )
+    .join("");
 }
 
-window.appEditProveedor = (id) => openFormModal(cacheData.find(x => String(x.id) === String(id)));
+window.appEditProveedor = (id) =>
+  openFormModal(cacheData.find((x) => String(x.id) === String(id)));
 window.appDeleteProveedor = (id) => {
   showConfirmModal("Eliminar Proveedor", "<p>¿Seguro?</p>", async () => {
-    await deleteEntity(RESOURCE, id); showToast("Eliminado"); cacheData = cacheData.filter(x => String(x.id) !== String(id)); renderTable(cacheData);
+    await deleteEntity(RESOURCE, id);
+    showToast("Eliminado");
+    cacheData = cacheData.filter((x) => String(x.id) !== String(id));
+    renderTable(cacheData);
   });
 };
 
 function openFormModal(item) {
   const i = item || {};
   const formHtml = `
-    <input type="hidden" name="id" value="${i.id || ''}">
+    <input type="hidden" name="id" value="${i.id || ""}">
     <div style="margin-bottom: 15px;">
       <label style="display:block; margin-bottom:4px; font-weight:600;">Nombre de la Empresa *</label>
       <input type="text" name="nombre" value="${escapeHtml(i.nombre)}" required style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
@@ -65,20 +84,31 @@ function openFormModal(item) {
       <input type="text" name="contacto" value="${escapeHtml(i.contacto)}" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
     </div>
   `;
-  showFormModal(i.id ? "Editar Proveedor" : "Nuevo Proveedor", formHtml, async (form) => {
-    const fd = getFormData(form);
-    if(!fd.id) delete fd.id;
-    const result = await saveEntity(RESOURCE, fd);
-    showToast(i.id ? "Actualizado" : "Creado");
-    
-    const savedItem = result.data;
-    if(i.id && savedItem?.id) {
-        cacheData[cacheData.findIndex(x => x.id === savedItem.id)] = savedItem;
-    } else if (savedItem) {
-        cacheData.push(savedItem);
-    } else {
-        cacheData = await getEntities(RESOURCE);
-    }
-    renderTable(cacheData);
-  });
+  showFormModal(
+    i.id ? "Editar Proveedor" : "Nuevo Proveedor",
+    formHtml,
+    async (form) => {
+      const fd = getFormData(form);
+      if (!fd.id) delete fd.id;
+      const result = await saveEntity(RESOURCE, fd);
+      showToast(i.id ? "Actualizado" : "Creado");
+
+      const savedItem = result.data || fd;
+      if (!savedItem.id) {
+        savedItem.id = fd.id || Date.now().toString();
+      }
+
+      if (i.id) {
+        const index = cacheData.findIndex(
+          (x) => String(x.id) === String(savedItem.id),
+        );
+        if (index > -1)
+          cacheData[index] = { ...cacheData[index], ...savedItem };
+        else cacheData.unshift(savedItem);
+      } else {
+        cacheData.unshift(savedItem);
+      }
+      renderTable(cacheData);
+    },
+  );
 }

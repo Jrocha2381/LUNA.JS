@@ -1,12 +1,21 @@
 (() => {
   var __defProp = Object.defineProperty;
   var __getOwnPropNames = Object.getOwnPropertyNames;
-  var __esm = (fn, res) => function __init() {
-    return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
-  };
-  var __commonJS = (cb, mod) => function __require() {
-    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
-  };
+  var __esm = (fn, res) =>
+    function __init() {
+      return (fn && (res = (0, fn[__getOwnPropNames(fn)[0]])((fn = 0))), res);
+    };
+  var __commonJS = (cb, mod) =>
+    function __require() {
+      return (
+        mod ||
+          (0, cb[__getOwnPropNames(cb)[0]])(
+            (mod = { exports: {} }).exports,
+            mod,
+          ),
+        mod.exports
+      );
+    };
   var __export = (target, all) => {
     for (var name in all)
       __defProp(target, name, { get: all[name], enumerable: true });
@@ -17,7 +26,10 @@
     const container = document.getElementById("toast-container");
     const toast = document.createElement("div");
     toast.className = `toast ${type}`;
-    const icon = type === "success" ? '<i class="ph-fill ph-check-circle"></i>' : '<i class="ph-fill ph-warning-circle"></i>';
+    const icon =
+      type === "success"
+        ? '<i class="ph-fill ph-check-circle"></i>'
+        : '<i class="ph-fill ph-warning-circle"></i>';
     toast.innerHTML = `${icon} <span>${message}</span>`;
     container.appendChild(toast);
     requestAnimationFrame(() => toast.classList.add("show"));
@@ -59,9 +71,13 @@
     formData.forEach((value, key) => {
       let cleanVal = typeof value === "string" ? value.trim() : value;
       if (key === "segimientoInventario") {
-        cleanVal = cleanVal.toLowerCase() === "si" || cleanVal.toLowerCase() === "true";
+        cleanVal =
+          cleanVal.toLowerCase() === "si" || cleanVal.toLowerCase() === "true";
       }
-      if (["precio", "costo", "stock", "cantidad"].includes(key) && cleanVal !== "") {
+      if (
+        ["precio", "costo", "stock", "cantidad"].includes(key) &&
+        cleanVal !== ""
+      ) {
         cleanVal = Number(cleanVal);
       }
       payload[key] = cleanVal;
@@ -70,9 +86,20 @@
   }
   function escapeHtml(str) {
     if (str === null || str === void 0) return "";
-    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
-  var modalOverlay, modalTitle, modalBody, btnCancel, btnConfirm, btnClose, onConfirmCallback;
+  var modalOverlay,
+    modalTitle,
+    modalBody,
+    btnCancel,
+    btnConfirm,
+    btnClose,
+    onConfirmCallback;
   var init_ui = __esm({
     "js/ui.js"() {
       modalOverlay = document.getElementById("main-modal");
@@ -104,33 +131,48 @@
           closeModal();
         }
       });
-    }
+    },
   });
 
   // js/api.js
   async function getEntities(resource) {
     const cacheKey = "cpos_cache_" + resource;
     const localCache = localStorage.getItem(cacheKey);
-    const fetchPromise = fetch(`${BASE_API}?resource=${resource}&_t=${Date.now()}`).then(async (res) => {
-      if (!res.ok) throw new Error("Error HTTP " + res.status);
-      const json = await res.json();
-      if (!json.success) throw new Error(json.message);
-      const freshData = json.data || [];
-      localStorage.setItem(cacheKey, JSON.stringify(freshData));
-      window.dispatchEvent(new CustomEvent("sync_" + resource, { detail: freshData }));
-      if (resource === "productos") {
-        window.dispatchEvent(new CustomEvent("cambioCatalogo", { detail: freshData }));
-      }
-      return freshData;
-    }).catch((error) => {
-      console.warn("Aviso de red o hoja no encontrada para " + resource + ", usando local.");
-      let existingLocal = localStorage.getItem(cacheKey);
-      if (!existingLocal) {
-        localStorage.setItem(cacheKey, JSON.stringify(localDB[resource] || []));
-        return localDB[resource] || [];
-      }
-      return JSON.parse(existingLocal);
-    });
+    const fetchPromise = fetch(
+      `${BASE_API}?resource=${resource}&_t=${Date.now()}`,
+    )
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Error HTTP " + res.status);
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message);
+        const freshData = json.data || [];
+        localStorage.setItem(cacheKey, JSON.stringify(freshData));
+        window.dispatchEvent(
+          new CustomEvent("sync_" + resource, { detail: freshData }),
+        );
+        if (resource === "productos") {
+          window.dispatchEvent(
+            new CustomEvent("cambioCatalogo", { detail: freshData }),
+          );
+        }
+        return freshData;
+      })
+      .catch((error) => {
+        console.warn(
+          "Aviso de red o hoja no encontrada para " +
+            resource +
+            ", usando local.",
+        );
+        let existingLocal = localStorage.getItem(cacheKey);
+        if (!existingLocal) {
+          localStorage.setItem(
+            cacheKey,
+            JSON.stringify(localDB[resource] || []),
+          );
+          return localDB[resource] || [];
+        }
+        return JSON.parse(existingLocal);
+      });
     if (localCache) {
       fetchPromise.catch((e) => console.warn(e));
       return JSON.parse(localCache);
@@ -145,28 +187,36 @@
       if (action === "delete") {
         dataArr = dataArr.filter((x) => String(x.id) !== String(dataObj.id));
       } else {
-        const idx = dataArr.findIndex((x) => String(x.id) === String(dataObj.id));
+        const idx = dataArr.findIndex(
+          (x) => String(x.id) === String(dataObj.id),
+        );
         if (idx > -1) dataArr[idx] = { ...dataArr[idx], ...dataObj };
         else dataArr.unshift(dataObj);
       }
       localStorage.setItem(cacheKey, JSON.stringify(dataArr));
       const payload = {
+        resource,
         action: action === "delete" ? "delete" : "save",
         id: dataObj.id,
-        data: dataObj
+        data: dataObj,
       };
       const postData = {
         method: "POST",
-        body: JSON.stringify(payload)
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       };
       const res = await fetch(`${BASE_API}?resource=${resource}`, postData);
       if (!res.ok) throw new Error("HTTP POST " + res.status);
       const json = await res.json();
       if (!json.success) throw new Error(json.message);
-      return json;
+      return { ...json, data: json.data || dataObj };
     } catch (error) {
-      console.warn(`Error de red al guardar '${resource}' en Sheets. El elemento fue guardado localmente (Offline): ${error}`);
-      return { success: true, localOnly: true };
+      console.warn(
+        `Error de red al guardar '${resource}' en Sheets. El elemento fue guardado localmente (Offline): ${error}`,
+      );
+      return { success: true, localOnly: true, data: dataObj };
     }
   }
   async function deleteEntity(resource, id) {
@@ -175,7 +225,8 @@
   var BASE_API, localDB;
   var init_api = __esm({
     "js/api.js"() {
-      BASE_API = "https://script.google.com/macros/s/AKfycbz505Z0SE9dm3mmjw8A_Wkinazb-z6aasNImDa_JNcBotOBOMTRtSSB1AkNF9j_mfqx/exec";
+      BASE_API =
+        "https://script.google.com/macros/s/AKfycbz505Z0SE9dm3mmjw8A_Wkinazb-z6aasNImDa_JNcBotOBOMTRtSSB1AkNF9j_mfqx/exec";
       localDB = {
         productos: [],
         categorias: [],
@@ -183,9 +234,9 @@
         proveedores: [],
         ventas: [],
         compras: [],
-        usuarios: []
+        usuarios: [],
       };
-    }
+    },
   });
 
   // js/modules/productos.js
@@ -193,16 +244,18 @@
   __export(productos_exports, {
     init: () => init,
     openFormModal: () => openFormModal,
-    render: () => render
+    render: () => render,
   });
   async function init(container) {
     containerElement = container;
     try {
       cacheData = await getEntities("productos");
-      getEntities("categorias").then((res) => cacheCats = res).catch(() => {
-      });
-      getEntities("proveedores").then((res) => cacheProv = res).catch(() => {
-      });
+      getEntities("categorias")
+        .then((res) => (cacheCats = res))
+        .catch(() => {});
+      getEntities("proveedores")
+        .then((res) => (cacheProv = res))
+        .catch(() => {});
     } catch (e) {
       showToast("Error cargando productos", "error");
     }
@@ -229,12 +282,20 @@
   </table>`;
     containerElement.innerHTML = html;
     renderTable(cacheData);
-    document.getElementById("btn-new-producto").addEventListener("click", () => openFormModal(null));
-    document.getElementById("search-productos").addEventListener("input", (e) => {
-      const term = e.target.value.toLowerCase();
-      const filtered = cacheData.filter((p) => (p.nombre || "").toLowerCase().includes(term) || (p.codigo || "").toLowerCase().includes(term));
-      renderTable(filtered);
-    });
+    document
+      .getElementById("btn-new-producto")
+      .addEventListener("click", () => openFormModal(null));
+    document
+      .getElementById("search-productos")
+      .addEventListener("input", (e) => {
+        const term = e.target.value.toLowerCase();
+        const filtered = cacheData.filter(
+          (p) =>
+            (p.nombre || "").toLowerCase().includes(term) ||
+            (p.codigo || "").toLowerCase().includes(term),
+        );
+        renderTable(filtered);
+      });
   }
   function renderTable(data) {
     const tbody = document.getElementById("tbl-productos-body");
@@ -243,7 +304,9 @@
       tbody.innerHTML = `<tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-muted);">No hay productos registrados.</td></tr>`;
       return;
     }
-    tbody.innerHTML = data.map((p) => `
+    tbody.innerHTML = data
+      .map(
+        (p) => `
     <tr style="border-bottom: 1px solid var(--border-color);">
       <td style="padding: 12px;"><strong>${escapeHtml(p.nombre)}</strong><br><small style="color: var(--text-muted);">${escapeHtml(p.codigo || p.id)}</small></td>
       <td style="padding: 12px;"><span style="background: var(--bg-color); padding: 4px 8px; border-radius: 12px; font-size: 12px;">${escapeHtml(p.categoria || "General")}</span></td>
@@ -256,13 +319,25 @@
         <button class="btn btn-danger btn-sm" onclick="window.appDeleteProducto('${escapeHtml(p.id)}')" style="padding: 6px 10px;"><i class="ph ph-trash"></i></button>
       </td>
     </tr>
-  `).join("");
+  `,
+      )
+      .join("");
   }
   function openFormModal(prod, onChangeCallback = null) {
     const isEditing = !!prod;
     const p = prod || {};
-    const catOptions = cacheCats.map((c) => `<option value="${escapeHtml(c.nombre)}" ${c.nombre === p.categoria ? "selected" : ""}>${escapeHtml(c.nombre)}</option>`).join("");
-    const provOptions = cacheProv.map((pr) => `<option value="${escapeHtml(pr.id)}" ${pr.id === p.proveedorId ? "selected" : ""}>${escapeHtml(pr.nombre)}</option>`).join("");
+    const catOptions = cacheCats
+      .map(
+        (c) =>
+          `<option value="${escapeHtml(c.nombre)}" ${c.nombre === p.categoria ? "selected" : ""}>${escapeHtml(c.nombre)}</option>`,
+      )
+      .join("");
+    const provOptions = cacheProv
+      .map(
+        (pr) =>
+          `<option value="${escapeHtml(pr.id)}" ${pr.id === p.proveedorId ? "selected" : ""}>${escapeHtml(pr.nombre)}</option>`,
+      )
+      .join("");
     const formHtml = `
     <input type="hidden" name="id" value="${p.id || ""}">
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
@@ -317,36 +392,75 @@
 
     </div>
   `;
-    showFormModal(isEditing ? "Editar Producto" : "Nuevo Producto", formHtml, async (form) => {
-      const currentData = getFormData(form);
-      const isNew = !currentData.id;
-      if (isNew) {
-        currentData.id = "temp-" + Date.now();
-        cacheData.push(currentData);
-      } else {
-        const idx = cacheData.findIndex((x) => String(x.id) === String(currentData.id));
-        if (idx > -1) cacheData[idx] = { ...cacheData[idx], ...currentData };
-      }
-      renderTable(document.getElementById("search-productos")?.value ? cacheData.filter((x) => x.nombre.includes(document.getElementById("search-productos").value)) : cacheData);
-      showToast(isEditing ? "Actualizando (en segundo plano)..." : "Creando (en segundo plano)...");
-      window.dispatchEvent(new CustomEvent("cambioCatalogo", { detail: cacheData }));
-      if (isNew) delete currentData.id;
-      saveEntity("productos", currentData).then((result) => {
-        const savedItem = result.data;
-        if (isNew && savedItem?.id) {
-          const tempIdx = cacheData.findIndex((x) => String(x.id).startsWith("temp-"));
-          if (tempIdx > -1) cacheData[tempIdx] = savedItem;
-        } else if (!isNew && savedItem) {
-          const idx = cacheData.findIndex((x) => String(x.id) === String(savedItem.id));
-          if (idx > -1) cacheData[idx] = savedItem;
+    showFormModal(
+      isEditing ? "Editar Producto" : "Nuevo Producto",
+      formHtml,
+      async (form) => {
+        const currentData = getFormData(form);
+        const isNew = !currentData.id;
+        if (isNew) {
+          currentData.id = "temp-" + Date.now();
+          cacheData.push(currentData);
+        } else {
+          const idx = cacheData.findIndex(
+            (x) => String(x.id) === String(currentData.id),
+          );
+          if (idx > -1) cacheData[idx] = { ...cacheData[idx], ...currentData };
         }
-        renderTable(document.getElementById("search-productos")?.value ? cacheData.filter((x) => x.nombre.includes(document.getElementById("search-productos").value)) : cacheData);
-        window.dispatchEvent(new CustomEvent("cambioCatalogo", { detail: cacheData }));
-        if (onChangeCallback && savedItem) onChangeCallback(savedItem);
-      }).catch((err) => {
-        showToast("Error guardando en la Nube. Refresca la pesta\xF1a.", "error");
-      });
-    });
+        renderTable(
+          document.getElementById("search-productos")?.value
+            ? cacheData.filter((x) =>
+                x.nombre.includes(
+                  document.getElementById("search-productos").value,
+                ),
+              )
+            : cacheData,
+        );
+        showToast(
+          isEditing
+            ? "Actualizando (en segundo plano)..."
+            : "Creando (en segundo plano)...",
+        );
+        window.dispatchEvent(
+          new CustomEvent("cambioCatalogo", { detail: cacheData }),
+        );
+        if (isNew) delete currentData.id;
+        saveEntity("productos", currentData)
+          .then((result) => {
+            const savedItem = result.data;
+            if (isNew && savedItem?.id) {
+              const tempIdx = cacheData.findIndex((x) =>
+                String(x.id).startsWith("temp-"),
+              );
+              if (tempIdx > -1) cacheData[tempIdx] = savedItem;
+            } else if (!isNew && savedItem) {
+              const idx = cacheData.findIndex(
+                (x) => String(x.id) === String(savedItem.id),
+              );
+              if (idx > -1) cacheData[idx] = savedItem;
+            }
+            renderTable(
+              document.getElementById("search-productos")?.value
+                ? cacheData.filter((x) =>
+                    x.nombre.includes(
+                      document.getElementById("search-productos").value,
+                    ),
+                  )
+                : cacheData,
+            );
+            window.dispatchEvent(
+              new CustomEvent("cambioCatalogo", { detail: cacheData }),
+            );
+            if (onChangeCallback && savedItem) onChangeCallback(savedItem);
+          })
+          .catch((err) => {
+            showToast(
+              "Error guardando en la Nube. Refresca la pesta\xF1a.",
+              "error",
+            );
+          });
+      },
+    );
   }
   var containerElement, cacheData, cacheCats, cacheProv;
   var init_productos = __esm({
@@ -361,24 +475,45 @@
         if (prod) openFormModal(prod);
       };
       window.appDeleteProducto = (id) => {
-        showConfirmModal("Confirmar Eliminaci\xF3n", "<p>\xBFSeguro que deseas eliminar este producto? Esta acci\xF3n no se puede deshacer.</p>", async () => {
-          cacheData = cacheData.filter((p) => String(p.id) !== String(id));
-          renderTable(document.getElementById("search-productos")?.value ? cacheData.filter((x) => x.nombre.includes(document.getElementById("search-productos").value)) : cacheData);
-          showToast("Eliminando (en segundo plano)...");
-          window.dispatchEvent(new CustomEvent("cambioCatalogo", { detail: cacheData }));
-          deleteEntity("productos", id).then(() => {
-            showToast("Producto eliminado de Sheets", "success");
-          }).catch(() => showToast("Error borrando en la nube. Refresca la ventana.", "error"));
-        });
+        showConfirmModal(
+          "Confirmar Eliminaci\xF3n",
+          "<p>\xBFSeguro que deseas eliminar este producto? Esta acci\xF3n no se puede deshacer.</p>",
+          async () => {
+            cacheData = cacheData.filter((p) => String(p.id) !== String(id));
+            renderTable(
+              document.getElementById("search-productos")?.value
+                ? cacheData.filter((x) =>
+                    x.nombre.includes(
+                      document.getElementById("search-productos").value,
+                    ),
+                  )
+                : cacheData,
+            );
+            showToast("Eliminando (en segundo plano)...");
+            window.dispatchEvent(
+              new CustomEvent("cambioCatalogo", { detail: cacheData }),
+            );
+            deleteEntity("productos", id)
+              .then(() => {
+                showToast("Producto eliminado de Sheets", "success");
+              })
+              .catch(() =>
+                showToast(
+                  "Error borrando en la nube. Refresca la ventana.",
+                  "error",
+                ),
+              );
+          },
+        );
       };
-    }
+    },
   });
 
   // js/modules/ventas.js
   var ventas_exports = {};
   __export(ventas_exports, {
     init: () => init2,
-    render: () => render2
+    render: () => render2,
   });
   async function init2(container) {
     containerElement2 = container;
@@ -387,8 +522,7 @@
       clients = await getEntities("clientes");
       const allSales = await getEntities("ventas");
       openSales = allSales.filter((s) => s.estado === "abierta");
-    } catch (e) {
-    }
+    } catch (e) {}
   }
   function render2() {
     containerElement2.innerHTML = `
@@ -435,18 +569,26 @@
     document.getElementById("pos-search").addEventListener("input", (e) => {
       renderCatalog(e.target.value.toLowerCase());
     });
-    document.getElementById("btn-load-open").addEventListener("click", showOpenSalesModal);
+    document
+      .getElementById("btn-load-open")
+      .addEventListener("click", showOpenSalesModal);
     renderCatalog();
     renderCart();
   }
   function renderCatalog(filter = "") {
     const grid = document.getElementById("pos-catalog-grid");
-    const filtered = catalog.filter((p) => p.nombre.toLowerCase().includes(filter) || p.codigo && p.codigo.toLowerCase().includes(filter));
+    const filtered = catalog.filter(
+      (p) =>
+        p.nombre.toLowerCase().includes(filter) ||
+        (p.codigo && p.codigo.toLowerCase().includes(filter)),
+    );
     if (!filtered.length) {
       grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 40px; color: var(--text-muted);">Sin resultados</div>`;
       return;
     }
-    grid.innerHTML = filtered.map((p) => `
+    grid.innerHTML = filtered
+      .map(
+        (p) => `
     <div style="border: 1px solid var(--border-color); background: var(--bg-solid); border-radius: var(--radius); padding: 12px; text-align: center; position: relative; transition: all 0.3s ease; box-shadow: var(--shadow);" class="product-card" onmouseover="this.style.transform='translateY(-4px)'; this.style.borderColor='var(--primary-color)'" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-color)'">
       <button onclick="window.posEditProduct('${escapeHtml(p.id)}')" style="position: absolute; top: 8px; right: 8px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 4px; padding: 4px; cursor: pointer; color: var(--text-muted); transition: 0.2s;" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-muted)'"><i class="ph ph-pencil-simple"></i></button>
       
@@ -458,7 +600,9 @@
         </div>
       </div>
     </div>
-  `).join("");
+  `,
+      )
+      .join("");
   }
   function renderCart() {
     const container = document.getElementById("pos-cart-items");
@@ -471,10 +615,11 @@
       return;
     }
     let total = 0;
-    container.innerHTML = currentCart.map((item, idx) => {
-      const sub = item.cantidad * item.precio;
-      total += sub;
-      return `
+    container.innerHTML = currentCart
+      .map((item, idx) => {
+        const sub = item.cantidad * item.precio;
+        total += sub;
+        return `
       <div style="display: flex; gap: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 12px;">
          <div style="flex: 1;">
             <div style="font-weight: 600; font-size: 14px; line-height:1.2; color: var(--text-dark);">${escapeHtml(item.nombre)}</div>
@@ -488,13 +633,16 @@
          </div>
       </div>
     `;
-    }).join("");
+      })
+      .join("");
     totalEl.textContent = `$${total.toFixed(2)}`;
   }
   function showOpenSalesModal() {
     if (!openSales.length) return showToast("No hay ventas abiertas", "error");
     let html = `<ul style="list-style: none; padding: 0;">`;
-    html += openSales.map((v) => `
+    html += openSales
+      .map(
+        (v) => `
     <li style="padding: 12px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
       <div>
         <strong>Venta Abierta</strong> <br>
@@ -502,12 +650,18 @@
       </div>
       <button class="btn btn-primary btn-sm" onclick="window.posResumeSale('${escapeHtml(v.id)}')">Retomar</button>
     </li>
-  `).join("");
+  `,
+      )
+      .join("");
     html += `</ul>`;
-    showConfirmModal("Ventas en Espera", html, () => {
-    });
+    showConfirmModal("Ventas en Espera", html, () => {});
   }
-  var containerElement2, currentCart, openSales, catalog, clients, currentSaleId;
+  var containerElement2,
+    currentCart,
+    openSales,
+    catalog,
+    clients,
+    currentSaleId;
   var init_ventas = __esm({
     "js/modules/ventas.js"() {
       init_api();
@@ -524,7 +678,9 @@
       });
       window.posAddToCart = (productId) => {
         const prod = catalog.find((p) => String(p.id) === String(productId));
-        const existingIdx = currentCart.findIndex((item) => String(item.id) === String(productId));
+        const existingIdx = currentCart.findIndex(
+          (item) => String(item.id) === String(productId),
+        );
         if (existingIdx > -1) {
           currentCart[existingIdx].cantidad++;
         } else {
@@ -533,7 +689,7 @@
             nombre: prod.nombre,
             precio: Number(prod.precio),
             costo: Number(prod.costo),
-            cantidad: 1
+            cantidad: 1,
           });
         }
         renderCart();
@@ -569,16 +725,20 @@
         });
       };
       window.posHoldSale = async () => {
-        if (!currentCart.length) return showToast("El carrito est\xE1 vac\xEDo", "error");
-        const total = currentCart.reduce((acc, i) => acc + i.precio * i.cantidad, 0);
+        if (!currentCart.length)
+          return showToast("El carrito est\xE1 vac\xEDo", "error");
+        const total = currentCart.reduce(
+          (acc, i) => acc + i.precio * i.cantidad,
+          0,
+        );
         const saleObj = {
           id: currentSaleId || "",
-          fecha: (/* @__PURE__ */ new Date()).toISOString(),
+          fecha: /* @__PURE__ */ new Date().toISOString(),
           clienteId: "",
           metodoPago: "",
           estado: "abierta",
           total,
-          itemsJson: JSON.stringify(currentCart)
+          itemsJson: JSON.stringify(currentCart),
         };
         await saveEntity("ventas", saleObj);
         showToast("Venta guardada en espera");
@@ -587,7 +747,8 @@
           const ix = openSales.findIndex((x) => x.id === currentSaleId);
           if (ix > -1) openSales[ix] = saleObj;
         }
-        document.getElementById("btn-load-open").innerHTML = `<i class="ph ph-folder-open"></i> Ventas en Espera (${openSales.length})`;
+        document.getElementById("btn-load-open").innerHTML =
+          `<i class="ph ph-folder-open"></i> Ventas en Espera (${openSales.length})`;
         window.posClearCart();
       };
       window.posResumeSale = (saleId) => {
@@ -600,9 +761,18 @@
         }
       };
       window.posCheckout = () => {
-        if (!currentCart.length) return showToast("El carrito est\xE1 vac\xEDo", "error");
-        const total = currentCart.reduce((acc, i) => acc + i.precio * i.cantidad, 0);
-        const clientOptions = clients.map((c) => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.nombre)}</option>`).join("");
+        if (!currentCart.length)
+          return showToast("El carrito est\xE1 vac\xEDo", "error");
+        const total = currentCart.reduce(
+          (acc, i) => acc + i.precio * i.cantidad,
+          0,
+        );
+        const clientOptions = clients
+          .map(
+            (c) =>
+              `<option value="${escapeHtml(c.id)}">${escapeHtml(c.nombre)}</option>`,
+          )
+          .join("");
         const formHtml = `
     <div style="margin-bottom: 15px; text-align: center;">
       <h3 style="font-size: 24px; color: var(--primary-color);">Total a pagar: $${total.toFixed(2)}</h3>
@@ -634,17 +804,22 @@
           }
           const saleObj = {
             id: currentSaleId || "",
-            fecha: (/* @__PURE__ */ new Date()).toISOString(),
+            fecha: /* @__PURE__ */ new Date().toISOString(),
             clienteId: client,
             metodoPago: method,
             estado: "cerrada",
             total,
-            itemsJson: JSON.stringify(currentCart)
+            itemsJson: JSON.stringify(currentCart),
           };
           await saveEntity("ventas", saleObj);
           for (let item of currentCart) {
             const p = catalog.find((x) => x.id === item.id);
-            if (p && (p.segimientoInventario === true || p.segimientoInventario === "si" || p.segimientoInventario === "true")) {
+            if (
+              p &&
+              (p.segimientoInventario === true ||
+                p.segimientoInventario === "si" ||
+                p.segimientoInventario === "true")
+            ) {
               p.stock = Number(p.stock || 0) - item.cantidad;
               await saveEntity("productos", p);
             }
@@ -657,22 +832,21 @@
           renderCatalog(document.getElementById("pos-search").value);
         });
       };
-    }
+    },
   });
 
   // js/modules/compras.js
   var compras_exports = {};
   __export(compras_exports, {
     init: () => init3,
-    render: () => render3
+    render: () => render3,
   });
   async function init3(container) {
     containerElement3 = container;
     try {
       catalog2 = await getEntities("productos");
       providers = await getEntities("proveedores");
-    } catch (e) {
-    }
+    } catch (e) {}
   }
   function render3() {
     containerElement3.innerHTML = `
@@ -728,18 +902,26 @@
   }
   function renderCatalog2(filter = "") {
     const grid = document.getElementById("compra-catalog-grid");
-    const filtered = catalog2.filter((p) => p.nombre.toLowerCase().includes(filter) || p.codigo && p.codigo.toLowerCase().includes(filter));
+    const filtered = catalog2.filter(
+      (p) =>
+        p.nombre.toLowerCase().includes(filter) ||
+        (p.codigo && p.codigo.toLowerCase().includes(filter)),
+    );
     if (!filtered.length) {
       grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 40px; color: var(--text-muted);">Sin resultados. Ve a Productos para a\xF1adirlo primero.</div>`;
       return;
     }
-    grid.innerHTML = filtered.map((p) => `
+    grid.innerHTML = filtered
+      .map(
+        (p) => `
     <div style="border: 1px solid var(--border-color); border-radius: var(--radius); padding: 12px; text-align: center; cursor: pointer;" onclick="window.compraAddToCart('${escapeHtml(p.id)}')">
       <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">${escapeHtml(p.nombre)}</div>
       <div style="color: var(--text-muted); font-size: 12px;">Costo act: $${p.costo || 0}</div>
       <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Stock: ${p.stock || 0}</div>
     </div>
-  `).join("");
+  `,
+      )
+      .join("");
   }
   function renderCart2() {
     const container = document.getElementById("compra-cart-items");
@@ -750,10 +932,11 @@
       return;
     }
     let total = 0;
-    container.innerHTML = currentPurchase.map((item, idx) => {
-      const sub = item.cantidad * item.costoNuevo;
-      total += sub;
-      return `
+    container.innerHTML = currentPurchase
+      .map((item, idx) => {
+        const sub = item.cantidad * item.costoNuevo;
+        total += sub;
+        return `
       <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 12px;">
          <div style="font-weight: 600; font-size: 14px; line-height:1.2; margin-bottom: 6px;">${escapeHtml(item.nombre)}</div>
          <div style="display: flex; gap: 8px; margin-bottom: 6px;">
@@ -770,7 +953,8 @@
          </div>
       </div>
     `;
-    }).join("");
+      })
+      .join("");
     totalEl.textContent = `$${total.toFixed(2)}`;
   }
   var RESOURCE, containerElement3, currentPurchase, catalog2, providers;
@@ -785,7 +969,9 @@
       window.compraAddToCart = (productId) => {
         const prod = catalog2.find((p) => p.id === productId);
         if (!prod) return;
-        const existingIdx = currentPurchase.findIndex((item) => item.id === productId);
+        const existingIdx = currentPurchase.findIndex(
+          (item) => item.id === productId,
+        );
         if (existingIdx > -1) {
           currentPurchase[existingIdx].cantidad++;
         } else {
@@ -793,7 +979,7 @@
             id: prod.id,
             nombre: prod.nombre,
             costoNuevo: Number(prod.costo || 0),
-            cantidad: 1
+            cantidad: 1,
           });
         }
         renderCart2();
@@ -817,9 +1003,14 @@
       };
       window.compraCheckout = () => {
         const providerId = document.getElementById("compra-proveedor").value;
-        if (!providerId) return showToast("Debes seleccionar un proveedor", "error");
-        if (!currentPurchase.length) return showToast("La orden est\xE1 vac\xEDa", "error");
-        const total = currentPurchase.reduce((acc, i) => acc + i.costoNuevo * i.cantidad, 0);
+        if (!providerId)
+          return showToast("Debes seleccionar un proveedor", "error");
+        if (!currentPurchase.length)
+          return showToast("La orden est\xE1 vac\xEDa", "error");
+        const total = currentPurchase.reduce(
+          (acc, i) => acc + i.costoNuevo * i.cantidad,
+          0,
+        );
         const formHtml = `
     <div style="margin-bottom: 15px; text-align: center;">
       <h3 style="font-size: 24px; color: var(--primary-color);">Costo Total: $${total.toFixed(2)}</h3>
@@ -834,41 +1025,49 @@
       </select>
     </div>
   `;
-        showFormModal("Confirmar Registro de Compra", formHtml, async (form) => {
-          const fd = getFormData(form);
-          const compraObj = {
-            id: "",
-            fecha: (/* @__PURE__ */ new Date()).toISOString(),
-            proveedorId: providerId,
-            metodoPago: fd.metodoPago,
-            total,
-            itemsJson: JSON.stringify(currentPurchase)
-          };
-          await saveEntity(RESOURCE, compraObj);
-          for (let item of currentPurchase) {
-            const p = catalog2.find((x) => x.id === item.id);
-            if (p) {
-              p.costo = item.costoNuevo;
-              if (p.segimientoInventario === true || p.segimientoInventario === "si" || p.segimientoInventario === "true") {
-                p.stock = Number(p.stock || 0) + item.cantidad;
+        showFormModal(
+          "Confirmar Registro de Compra",
+          formHtml,
+          async (form) => {
+            const fd = getFormData(form);
+            const compraObj = {
+              id: "",
+              fecha: /* @__PURE__ */ new Date().toISOString(),
+              proveedorId: providerId,
+              metodoPago: fd.metodoPago,
+              total,
+              itemsJson: JSON.stringify(currentPurchase),
+            };
+            await saveEntity(RESOURCE, compraObj);
+            for (let item of currentPurchase) {
+              const p = catalog2.find((x) => x.id === item.id);
+              if (p) {
+                p.costo = item.costoNuevo;
+                if (
+                  p.segimientoInventario === true ||
+                  p.segimientoInventario === "si" ||
+                  p.segimientoInventario === "true"
+                ) {
+                  p.stock = Number(p.stock || 0) + item.cantidad;
+                }
+                await saveEntity("productos", p);
               }
-              await saveEntity("productos", p);
             }
-          }
-          showToast("Compra Registrada Correctamente \u{1F4E6}");
-          currentPurchase = [];
-          renderCart2();
-          renderCatalog2(document.getElementById("compra-search").value);
-        });
+            showToast("Compra Registrada Correctamente \u{1F4E6}");
+            currentPurchase = [];
+            renderCart2();
+            renderCatalog2(document.getElementById("compra-search").value);
+          },
+        );
       };
-    }
+    },
   });
 
   // js/modules/historial.js
   var historial_exports = {};
   __export(historial_exports, {
     init: () => init4,
-    render: () => render4
+    render: () => render4,
   });
   async function init4(container) {
     containerElement4 = container;
@@ -877,12 +1076,20 @@
     containerElement4.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 40px;">Cargando historial...</div>`;
     try {
       cacheData2 = await getEntities("ventas");
-      const closedSales = cacheData2.filter((s) => s.estado === "cerrada" || s.estado === "anulada" || s.estado === "reembolsada").sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+      const closedSales = cacheData2
+        .filter(
+          (s) =>
+            s.estado === "cerrada" ||
+            s.estado === "anulada" ||
+            s.estado === "reembolsada",
+        )
+        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
       if (!closedSales.length) {
         containerElement4.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 40px;"><i class="ph ph-receipt" style="font-size:48px; margin-bottom:12px;"></i><br>No hay ventas registradas</div>`;
         return;
       }
-      containerElement4.innerHTML = `
+      containerElement4.innerHTML =
+        `
       <div style="background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px;">
         <h2 style="margin-bottom: 20px; font-weight: 600; color: var(--primary-color);">Historial de Ventas</h2>
         <div style="overflow-x: auto;">
@@ -897,21 +1104,52 @@
                </tr>
              </thead>
              <tbody>
-               ` + closedSales.map((v) => `
-                 <tr style="border-bottom: 1px solid var(--border-color); ` + (v.estado === "anulada" ? "opacity:0.5;" : "") + `">
-                   <td style="padding: 12px; font-family: monospace; color: var(--text-muted);">` + escapeHtml(v.id) + `</td>
-                   <td style="padding: 12px;">` + new Date(v.fecha).toLocaleString() + `</td>
+               ` +
+        closedSales
+          .map(
+            (v) =>
+              `
+                 <tr style="border-bottom: 1px solid var(--border-color); ` +
+              (v.estado === "anulada" ? "opacity:0.5;" : "") +
+              `">
+                   <td style="padding: 12px; font-family: monospace; color: var(--text-muted);">` +
+              escapeHtml(v.id) +
+              `</td>
+                   <td style="padding: 12px;">` +
+              new Date(v.fecha).toLocaleString() +
+              `</td>
                    <td style="padding: 12px;">
-                     <span style="background: var(--bg-solid); padding: 4px 8px; border-radius: 12px; font-size: 12px;">` + escapeHtml(v.metodoPago) + `</span>
-                     <br><small style="font-weight: bold; color: ` + (v.estado === "cerrada" ? "var(--primary-color)" : "var(--danger-color)") + `;">` + v.estado.toUpperCase() + `</small>
+                     <span style="background: var(--bg-solid); padding: 4px 8px; border-radius: 12px; font-size: 12px;">` +
+              escapeHtml(v.metodoPago) +
+              `</span>
+                     <br><small style="font-weight: bold; color: ` +
+              (v.estado === "cerrada"
+                ? "var(--primary-color)"
+                : "var(--danger-color)") +
+              `;">` +
+              v.estado.toUpperCase() +
+              `</small>
                    </td>
-                   <td style="padding: 12px; text-align: right; font-weight: 600; color: var(--primary-color);">$` + Number(v.total).toFixed(2) + `</td>
+                   <td style="padding: 12px; text-align: right; font-weight: 600; color: var(--primary-color);">$` +
+              Number(v.total).toFixed(2) +
+              `</td>
                    <td style="padding: 12px; text-align: center; display: flex; gap: 8px; justify-content: center;">
-                     <button class="btn btn-secondary btn-sm" onclick="window.posViewFactura('` + escapeHtml(v.id) + `')"><i class="ph ph-receipt"></i> Ver Factura</button>
-                     ` + (v.estado === "cerrada" ? `<button class="btn btn-danger btn-sm" onclick="window.posVoidVenta('` + escapeHtml(v.id) + `')"><i class="ph ph-x-circle"></i> Anular</button>` : "") + `
+                     <button class="btn btn-secondary btn-sm" onclick="window.posViewFactura('` +
+              escapeHtml(v.id) +
+              `')"><i class="ph ph-receipt"></i> Ver Factura</button>
+                     ` +
+              (v.estado === "cerrada"
+                ? `<button class="btn btn-danger btn-sm" onclick="window.posVoidVenta('` +
+                  escapeHtml(v.id) +
+                  `')"><i class="ph ph-x-circle"></i> Anular</button>`
+                : "") +
+              `
                    </td>
                  </tr>
-               `).join("") + `
+               `,
+          )
+          .join("") +
+        `
              </tbody>
           </table>
         </div>
@@ -933,59 +1171,86 @@
         let itemsHtml = "";
         try {
           const items = JSON.parse(v.itemsJson);
-          itemsHtml = items.map((i) => '<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>' + i.cantidad + "x " + i.nombre + "</span><span>$" + (i.precio * i.cantidad).toFixed(2) + "</span></div>").join("");
-        } catch (e) {
-        }
-        const html = `
+          itemsHtml = items
+            .map(
+              (i) =>
+                '<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>' +
+                i.cantidad +
+                "x " +
+                i.nombre +
+                "</span><span>$" +
+                (i.precio * i.cantidad).toFixed(2) +
+                "</span></div>",
+            )
+            .join("");
+        } catch (e) {}
+        const html =
+          `
     <div class="ticket-realistic">
       <h3 style="text-align: center; margin-bottom: 2px;">PAPEL & LUNA</h3>
-      <p style="text-align: center; font-size: 12px; margin-bottom: 20px; color: #555;">Documento Tributario Equivalente<br>Ticket N\xB0 ` + v.id + `</p>
+      <p style="text-align: center; font-size: 12px; margin-bottom: 20px; color: #555;">Documento Tributario Equivalente<br>Ticket N\xB0 ` +
+          v.id +
+          `</p>
       
       <div style="font-size: 14px; margin-bottom: 15px;">
-        <div style="display:flex; justify-content:space-between;"><span>Fecha:</span><span>` + new Date(v.fecha).toLocaleString() + `</span></div>
-        <div style="display:flex; justify-content:space-between;"><span>Pago:</span><span>` + v.metodoPago + `</span></div>
-        <div style="display:flex; justify-content:space-between;"><span>Estado:</span><span style="` + (v.estado === "anulada" ? "color:red;" : "") + `">` + v.estado.toUpperCase() + `</span></div>
+        <div style="display:flex; justify-content:space-between;"><span>Fecha:</span><span>` +
+          new Date(v.fecha).toLocaleString() +
+          `</span></div>
+        <div style="display:flex; justify-content:space-between;"><span>Pago:</span><span>` +
+          v.metodoPago +
+          `</span></div>
+        <div style="display:flex; justify-content:space-between;"><span>Estado:</span><span style="` +
+          (v.estado === "anulada" ? "color:red;" : "") +
+          `">` +
+          v.estado.toUpperCase() +
+          `</span></div>
       </div>
 
       <div style="border-top: 1px dashed var(--ticket-border); border-bottom: 1px dashed var(--ticket-border); padding: 15px 0; margin-bottom: 15px; font-size: 14px;">
         <div style="display:flex; justify-content:space-between; font-weight: bold; margin-bottom: 8px;"><span>Cant Desc</span><span>Monto</span></div>
-        ` + itemsHtml + `
+        ` +
+          itemsHtml +
+          `
       </div>
       
       <div style="display:flex; justify-content:space-between; font-size: 18px; font-weight: bold;">
-        <span>TOTAL:</span><span>$` + Number(v.total).toFixed(2) + `</span>
+        <span>TOTAL:</span><span>$` +
+          Number(v.total).toFixed(2) +
+          `</span>
       </div>
       <p style="text-align: center; font-size: 12px; margin-top: 20px; color: #777;">Gracias por su compra</p>
     </div>
   `;
-        showConfirmModal("Detalle de Venta", html, () => {
-        });
+        showConfirmModal("Detalle de Venta", html, () => {});
       };
       window.posVoidVenta = (id) => {
-        showConfirmModal("Anular Venta", "<b>Atenci\xF3n:</b> Anular\xE1s esta venta y el inventario de los productos se contemplar\xE1 en el pr\xF3ximo refactor (RF-70 a RF-73).<br><br>\xBFEst\xE1s completamente seguro?", async () => {
-          const v = cacheData2.find((x) => String(x.id) === String(id));
-          if (!v) return;
-          v.estado = "anulada";
-          render4();
-          showToast("Anulando Venta en Sheets...");
-          await saveEntity("ventas", v);
-          showToast("Venta Anulada", "success");
-        });
+        showConfirmModal(
+          "Anular Venta",
+          "<b>Atenci\xF3n:</b> Anular\xE1s esta venta y el inventario de los productos se contemplar\xE1 en el pr\xF3ximo refactor (RF-70 a RF-73).<br><br>\xBFEst\xE1s completamente seguro?",
+          async () => {
+            const v = cacheData2.find((x) => String(x.id) === String(id));
+            if (!v) return;
+            v.estado = "anulada";
+            render4();
+            showToast("Anulando Venta en Sheets...");
+            await saveEntity("ventas", v);
+            showToast("Venta Anulada", "success");
+          },
+        );
       };
-    }
+    },
   });
 
   // js/modules/clientes.js
   var clientes_exports = {};
   __export(clientes_exports, {
     init: () => init5,
-    render: () => render5
+    render: () => render5,
   });
   async function init5(container) {
     try {
       cacheData3 = await getEntities(RESOURCE2);
-    } catch (e) {
-    }
+    } catch (e) {}
   }
   function render5() {
     document.getElementById(`view-${RESOURCE2}`).innerHTML = `
@@ -1000,12 +1265,17 @@
     </table>
   `;
     renderTable2(cacheData3);
-    document.getElementById(`btn-new-${RESOURCE2}`).addEventListener("click", () => openFormModal2());
+    document
+      .getElementById(`btn-new-${RESOURCE2}`)
+      .addEventListener("click", () => openFormModal2());
   }
   function renderTable2(data) {
     const tbody = document.getElementById(`tbl-${RESOURCE2}-body`);
-    if (!data.length) return tbody.innerHTML = `<tr><td colspan="4" style="padding: 20px; text-align:center;">No hay clientes</td></tr>`;
-    tbody.innerHTML = data.map((i) => `
+    if (!data.length)
+      return (tbody.innerHTML = `<tr><td colspan="4" style="padding: 20px; text-align:center;">No hay clientes</td></tr>`);
+    tbody.innerHTML = data
+      .map(
+        (i) => `
     <tr style="border-bottom: 1px solid var(--border-color);">
       <td style="padding: 12px;"><strong>${escapeHtml(i.nombre)}</strong></td>
       <td style="padding: 12px;">${escapeHtml(i.telefono)}</td>
@@ -1015,7 +1285,9 @@
         <button class="btn btn-danger btn-sm" onclick="window.appDeleteCliente('${escapeHtml(i.id)}')" style="padding: 6px 10px;"><i class="ph ph-trash"></i></button>
       </td>
     </tr>
-  `).join("");
+  `,
+      )
+      .join("");
   }
   function openFormModal2(item) {
     const i = item || {};
@@ -1034,21 +1306,26 @@
       <input type="email" name="correo" value="${escapeHtml(i.correo)}" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
     </div>
   `;
-    showFormModal(i.id ? "Editar Cliente" : "Nuevo Cliente", formHtml, async (form) => {
-      const fd = getFormData(form);
-      if (!fd.id) delete fd.id;
-      const result = await saveEntity(RESOURCE2, fd);
-      showToast(i.id ? "Actualizado" : "Creado");
-      const savedItem = result.data;
-      if (i.id && savedItem?.id) {
-        cacheData3[cacheData3.findIndex((x) => x.id === savedItem.id)] = savedItem;
-      } else if (savedItem) {
-        cacheData3.push(savedItem);
-      } else {
-        cacheData3 = await getEntities(RESOURCE2);
-      }
-      renderTable2(cacheData3);
-    });
+    showFormModal(
+      i.id ? "Editar Cliente" : "Nuevo Cliente",
+      formHtml,
+      async (form) => {
+        const fd = getFormData(form);
+        if (!fd.id) delete fd.id;
+        const result = await saveEntity(RESOURCE2, fd);
+        showToast(i.id ? "Actualizado" : "Creado");
+        const savedItem = result.data;
+        if (i.id && savedItem?.id) {
+          cacheData3[cacheData3.findIndex((x) => x.id === savedItem.id)] =
+            savedItem;
+        } else if (savedItem) {
+          cacheData3.push(savedItem);
+        } else {
+          cacheData3 = await getEntities(RESOURCE2);
+        }
+        renderTable2(cacheData3);
+      },
+    );
   }
   var RESOURCE2, cacheData3;
   var init_clientes = __esm({
@@ -1057,7 +1334,8 @@
       init_ui();
       RESOURCE2 = "clientes";
       cacheData3 = [];
-      window.appEditCliente = (id) => openFormModal2(cacheData3.find((x) => String(x.id) === String(id)));
+      window.appEditCliente = (id) =>
+        openFormModal2(cacheData3.find((x) => String(x.id) === String(id)));
       window.appDeleteCliente = (id) => {
         showConfirmModal("Eliminar Cliente", "<p>\xBFSeguro?</p>", async () => {
           await deleteEntity(RESOURCE2, id);
@@ -1066,20 +1344,19 @@
           renderTable2(cacheData3);
         });
       };
-    }
+    },
   });
 
   // js/modules/proveedores.js
   var proveedores_exports = {};
   __export(proveedores_exports, {
     init: () => init6,
-    render: () => render6
+    render: () => render6,
   });
   async function init6(container) {
     try {
       cacheData4 = await getEntities(RESOURCE3);
-    } catch (e) {
-    }
+    } catch (e) {}
   }
   function render6() {
     document.getElementById(`view-${RESOURCE3}`).innerHTML = `
@@ -1094,12 +1371,17 @@
     </table>
   `;
     renderTable3(cacheData4);
-    document.getElementById(`btn-new-${RESOURCE3}`).addEventListener("click", () => openFormModal3());
+    document
+      .getElementById(`btn-new-${RESOURCE3}`)
+      .addEventListener("click", () => openFormModal3());
   }
   function renderTable3(data) {
     const tbody = document.getElementById(`tbl-${RESOURCE3}-body`);
-    if (!data.length) return tbody.innerHTML = `<tr><td colspan="4" style="padding: 20px; text-align:center;">No hay proveedores</td></tr>`;
-    tbody.innerHTML = data.map((i) => `
+    if (!data.length)
+      return (tbody.innerHTML = `<tr><td colspan="4" style="padding: 20px; text-align:center;">No hay proveedores</td></tr>`);
+    tbody.innerHTML = data
+      .map(
+        (i) => `
     <tr style="border-bottom: 1px solid var(--border-color);">
       <td style="padding: 12px;"><strong>${escapeHtml(i.nombre)}</strong></td>
       <td style="padding: 12px;">${escapeHtml(i.nit)}</td>
@@ -1109,7 +1391,9 @@
         <button class="btn btn-danger btn-sm" onclick="window.appDeleteProveedor('${escapeHtml(i.id)}')" style="padding: 6px 10px;"><i class="ph ph-trash"></i></button>
       </td>
     </tr>
-  `).join("");
+  `,
+      )
+      .join("");
   }
   function openFormModal3(item) {
     const i = item || {};
@@ -1128,21 +1412,31 @@
       <input type="text" name="contacto" value="${escapeHtml(i.contacto)}" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
     </div>
   `;
-    showFormModal(i.id ? "Editar Proveedor" : "Nuevo Proveedor", formHtml, async (form) => {
-      const fd = getFormData(form);
-      if (!fd.id) delete fd.id;
-      const result = await saveEntity(RESOURCE3, fd);
-      showToast(i.id ? "Actualizado" : "Creado");
-      const savedItem = result.data;
-      if (i.id && savedItem?.id) {
-        cacheData4[cacheData4.findIndex((x) => x.id === savedItem.id)] = savedItem;
-      } else if (savedItem) {
-        cacheData4.push(savedItem);
-      } else {
-        cacheData4 = await getEntities(RESOURCE3);
-      }
-      renderTable3(cacheData4);
-    });
+    showFormModal(
+      i.id ? "Editar Proveedor" : "Nuevo Proveedor",
+      formHtml,
+      async (form) => {
+        const fd = getFormData(form);
+        if (!fd.id) delete fd.id;
+        const result = await saveEntity(RESOURCE3, fd);
+        showToast(i.id ? "Actualizado" : "Creado");
+        const savedItem = result.data || fd;
+        if (!savedItem.id) {
+          savedItem.id = fd.id || Date.now().toString();
+        }
+        if (i.id) {
+          const index = cacheData4.findIndex(
+            (x) => String(x.id) === String(savedItem.id),
+          );
+          if (index > -1)
+            cacheData4[index] = { ...cacheData4[index], ...savedItem };
+          else cacheData4.unshift(savedItem);
+        } else {
+          cacheData4.unshift(savedItem);
+        }
+        renderTable3(cacheData4);
+      },
+    );
   }
   var RESOURCE3, cacheData4;
   var init_proveedores = __esm({
@@ -1151,30 +1445,34 @@
       init_ui();
       RESOURCE3 = "proveedores";
       cacheData4 = [];
-      window.appEditProveedor = (id) => openFormModal3(cacheData4.find((x) => String(x.id) === String(id)));
+      window.appEditProveedor = (id) =>
+        openFormModal3(cacheData4.find((x) => String(x.id) === String(id)));
       window.appDeleteProveedor = (id) => {
-        showConfirmModal("Eliminar Proveedor", "<p>\xBFSeguro?</p>", async () => {
-          await deleteEntity(RESOURCE3, id);
-          showToast("Eliminado");
-          cacheData4 = cacheData4.filter((x) => String(x.id) !== String(id));
-          renderTable3(cacheData4);
-        });
+        showConfirmModal(
+          "Eliminar Proveedor",
+          "<p>\xBFSeguro?</p>",
+          async () => {
+            await deleteEntity(RESOURCE3, id);
+            showToast("Eliminado");
+            cacheData4 = cacheData4.filter((x) => String(x.id) !== String(id));
+            renderTable3(cacheData4);
+          },
+        );
       };
-    }
+    },
   });
 
   // js/modules/categorias.js
   var categorias_exports = {};
   __export(categorias_exports, {
     init: () => init7,
-    render: () => render7
+    render: () => render7,
   });
   async function init7(container) {
     containerElement5 = container;
     try {
       cacheData5 = await getEntities(RESOURCE4);
-    } catch (e) {
-    }
+    } catch (e) {}
   }
   function render7() {
     containerElement5.innerHTML = `
@@ -1189,12 +1487,17 @@
     </table>
   `;
     renderTable4(cacheData5);
-    document.getElementById(`btn-new-${RESOURCE4}`).addEventListener("click", () => openFormModal4());
+    document
+      .getElementById(`btn-new-${RESOURCE4}`)
+      .addEventListener("click", () => openFormModal4());
   }
   function renderTable4(data) {
     const tbody = document.getElementById(`tbl-${RESOURCE4}-body`);
-    if (!data.length) return tbody.innerHTML = `<tr><td colspan="3" style="padding: 20px; text-align:center;">No hay categor\xEDas</td></tr>`;
-    tbody.innerHTML = data.map((i) => `
+    if (!data.length)
+      return (tbody.innerHTML = `<tr><td colspan="3" style="padding: 20px; text-align:center;">No hay categor\xEDas</td></tr>`);
+    tbody.innerHTML = data
+      .map(
+        (i) => `
     <tr style="border-bottom: 1px solid var(--border-color);">
       <td style="padding: 12px;">${escapeHtml(i.id)}</td>
       <td style="padding: 12px;"><strong>${escapeHtml(i.nombre)}</strong></td>
@@ -1203,7 +1506,9 @@
         <button class="btn btn-danger btn-sm" onclick="window.appDeleteCategoria('${escapeHtml(i.id)}')" style="padding: 6px 10px;"><i class="ph ph-trash"></i></button>
       </td>
     </tr>
-  `).join("");
+  `,
+      )
+      .join("");
   }
   function openFormModal4(item) {
     const i = item || {};
@@ -1214,21 +1519,26 @@
       <input type="text" name="nombre" value="${escapeHtml(i.nombre)}" required style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
     </div>
   `;
-    showFormModal(i.id ? "Editar Categor\xEDa" : "Nueva Categor\xEDa", formHtml, async (form) => {
-      const fd = getFormData(form);
-      if (!fd.id) delete fd.id;
-      const result = await saveEntity(RESOURCE4, fd);
-      showToast(i.id ? "Actualizado" : "Creado");
-      const savedItem = result.data;
-      if (i.id && savedItem?.id) {
-        cacheData5[cacheData5.findIndex((x) => x.id === savedItem.id)] = savedItem;
-      } else if (savedItem) {
-        cacheData5.push(savedItem);
-      } else {
-        cacheData5 = await getEntities(RESOURCE4);
-      }
-      renderTable4(cacheData5);
-    });
+    showFormModal(
+      i.id ? "Editar Categor\xEDa" : "Nueva Categor\xEDa",
+      formHtml,
+      async (form) => {
+        const fd = getFormData(form);
+        if (!fd.id) delete fd.id;
+        const result = await saveEntity(RESOURCE4, fd);
+        showToast(i.id ? "Actualizado" : "Creado");
+        const savedItem = result.data;
+        if (i.id && savedItem?.id) {
+          cacheData5[cacheData5.findIndex((x) => x.id === savedItem.id)] =
+            savedItem;
+        } else if (savedItem) {
+          cacheData5.push(savedItem);
+        } else {
+          cacheData5 = await getEntities(RESOURCE4);
+        }
+        renderTable4(cacheData5);
+      },
+    );
   }
   var containerElement5, cacheData5, RESOURCE4;
   var init_categorias = __esm({
@@ -1237,23 +1547,28 @@
       init_ui();
       cacheData5 = [];
       RESOURCE4 = "categorias";
-      window.appEditCategoria = (id) => openFormModal4(cacheData5.find((x) => String(x.id) === String(id)));
+      window.appEditCategoria = (id) =>
+        openFormModal4(cacheData5.find((x) => String(x.id) === String(id)));
       window.appDeleteCategoria = (id) => {
-        showConfirmModal("Eliminar Categor\xEDa", "<p>\xBFSeguro?</p>", async () => {
-          await deleteEntity(RESOURCE4, id);
-          showToast("Eliminado");
-          cacheData5 = cacheData5.filter((x) => String(x.id) !== String(id));
-          renderTable4(cacheData5);
-        });
+        showConfirmModal(
+          "Eliminar Categor\xEDa",
+          "<p>\xBFSeguro?</p>",
+          async () => {
+            await deleteEntity(RESOURCE4, id);
+            showToast("Eliminado");
+            cacheData5 = cacheData5.filter((x) => String(x.id) !== String(id));
+            renderTable4(cacheData5);
+          },
+        );
       };
-    }
+    },
   });
 
   // js/modules/usuarios.js
   var usuarios_exports = {};
   __export(usuarios_exports, {
     init: () => init8,
-    render: () => render8
+    render: () => render8,
   });
   async function init8(container) {
     containerElement6 = container;
@@ -1272,12 +1587,17 @@
         console.warn("Sheet usuarios not found. Falling back to local.");
       }
       if (cacheData6.length === 0) {
-        const defaultAdmin = { id: 1, username: "admin", role: "admin", password: "admin" };
+        const defaultAdmin = {
+          id: 1,
+          username: "admin",
+          role: "admin",
+          password: "admin",
+        };
         cacheData6.push(defaultAdmin);
-        saveEntity("usuarios", defaultAdmin).catch(() => {
-        });
+        saveEntity("usuarios", defaultAdmin).catch(() => {});
       }
-      containerElement6.innerHTML = `
+      containerElement6.innerHTML =
+        `
       <div style="background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
           <h2 style="font-weight: 600; color: var(--primary-color);">Gesti\xF3n de Usuarios</h2>
@@ -1293,16 +1613,31 @@
                </tr>
              </thead>
              <tbody>
-               ` + cacheData6.map((u) => `
+               ` +
+        cacheData6
+          .map(
+            (u) =>
+              `
                  <tr style="border-bottom: 1px solid var(--border-color);">
-                   <td style="padding: 12px; font-weight: 500;">` + u.username + `</td>
-                   <td style="padding: 12px;"><span style="background: var(--bg-solid); padding: 4px 8px; border-radius: 12px; font-size: 12px; text-transform: uppercase;">` + u.role + `</span></td>
+                   <td style="padding: 12px; font-weight: 500;">` +
+              u.username +
+              `</td>
+                   <td style="padding: 12px;"><span style="background: var(--bg-solid); padding: 4px 8px; border-radius: 12px; font-size: 12px; text-transform: uppercase;">` +
+              u.role +
+              `</span></td>
                    <td style="padding: 12px; text-align: right; display: flex; gap: 8px; justify-content: flex-end;">
-                     <button class="btn btn-secondary btn-sm" onclick="window.posEditUsuario('` + u.id + `')"><i class="ph ph-pencil-simple"></i> Editar</button>
-                     <button class="btn btn-danger btn-sm" onclick="window.posDeleteUsuario('` + u.id + `')"><i class="ph ph-trash"></i></button>
+                     <button class="btn btn-secondary btn-sm" onclick="window.posEditUsuario('` +
+              u.id +
+              `')"><i class="ph ph-pencil-simple"></i> Editar</button>
+                     <button class="btn btn-danger btn-sm" onclick="window.posDeleteUsuario('` +
+              u.id +
+              `')"><i class="ph ph-trash"></i></button>
                    </td>
                  </tr>
-               `).join("") + `
+               `,
+          )
+          .join("") +
+        `
              </tbody>
           </table>
         </div>
@@ -1314,23 +1649,36 @@
   }
   function renderForm() {
     const isEdit = currentId !== null;
-    const user = isEdit ? cacheData6.find((u) => String(u.id) === String(currentId)) : { username: "", password: "", role: "cajero" };
-    containerElement6.innerHTML = `
+    const user = isEdit
+      ? cacheData6.find((u) => String(u.id) === String(currentId))
+      : { username: "", password: "", role: "cajero" };
+    containerElement6.innerHTML =
+      `
     <div style="background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; max-width: 500px; margin: 0 auto;">
-      <h2 style="margin-bottom: 20px; font-weight: 600; color: var(--primary-color);">` + (isEdit ? "Editar Usuario" : "Nuevo Usuario") + `</h2>
+      <h2 style="margin-bottom: 20px; font-weight: 600; color: var(--primary-color);">` +
+      (isEdit ? "Editar Usuario" : "Nuevo Usuario") +
+      `</h2>
       <div class="form-group" style="margin-bottom: 15px;">
         <label style="display: block; margin-bottom: 5px; font-weight: 500;">Nombre de Usuario</label>
-        <input type="text" id="usr-name" class="input" style="width: 100%; box-sizing: border-box;" value="` + (user.username || "") + `">
+        <input type="text" id="usr-name" class="input" style="width: 100%; box-sizing: border-box;" value="` +
+      (user.username || "") +
+      `">
       </div>
       <div class="form-group" style="margin-bottom: 15px;">
-        <label style="display: block; margin-bottom: 5px; font-weight: 500;">Contrase\xF1a ` + (isEdit ? "(dejar en blanco para no cambiar)" : "") + `</label>
+        <label style="display: block; margin-bottom: 5px; font-weight: 500;">Contrase\xF1a ` +
+      (isEdit ? "(dejar en blanco para no cambiar)" : "") +
+      `</label>
         <input type="password" id="usr-pass" class="input" style="width: 100%; box-sizing: border-box;">
       </div>
       <div class="form-group" style="margin-bottom: 20px;">
         <label style="display: block; margin-bottom: 5px; font-weight: 500;">Rol</label>
         <select id="usr-role" class="input" style="width: 100%; box-sizing: border-box;">
-          <option value="cajero" ` + (user.role === "cajero" ? "selected" : "") + `>Cajero</option>
-          <option value="admin" ` + (user.role === "admin" ? "selected" : "") + `>Administrador</option>
+          <option value="cajero" ` +
+      (user.role === "cajero" ? "selected" : "") +
+      `>Cajero</option>
+          <option value="admin" ` +
+      (user.role === "admin" ? "selected" : "") +
+      `>Administrador</option>
         </select>
       </div>
       <div style="display: flex; gap: 10px; justify-content: flex-end;">
@@ -1363,26 +1711,36 @@
         render8();
       };
       window.posDeleteUsuario = (id) => {
-        showConfirmModal("Eliminar Usuario", "\xBFEst\xE1s seguro de eliminar este usuario? No podr\xE1 entrar logearse m\xE1s.", async () => {
-          cacheData6 = cacheData6.filter((x) => String(x.id) !== String(id));
-          render8();
-          showToast("Eliminando Usuario...");
-          await deleteEntity("usuarios", id);
-          showToast("Usuario eliminado", "success");
-        });
+        showConfirmModal(
+          "Eliminar Usuario",
+          "\xBFEst\xE1s seguro de eliminar este usuario? No podr\xE1 entrar logearse m\xE1s.",
+          async () => {
+            cacheData6 = cacheData6.filter((x) => String(x.id) !== String(id));
+            render8();
+            showToast("Eliminando Usuario...");
+            await deleteEntity("usuarios", id);
+            showToast("Usuario eliminado", "success");
+          },
+        );
       };
       window.posSaveUsuario = async () => {
         const username = document.getElementById("usr-name").value.trim();
         const pass = document.getElementById("usr-pass").value;
         const role = document.getElementById("usr-role").value;
         if (!username) return showToast("Falta nombre de usuario", "warning");
-        if (!currentId && !pass) return showToast("Agrega una contrase\xF1a para el nuevo usuario", "warning");
+        if (!currentId && !pass)
+          return showToast(
+            "Agrega una contrase\xF1a para el nuevo usuario",
+            "warning",
+          );
         const isEdit = currentId !== null;
-        let oldUser = isEdit ? cacheData6.find((u) => String(u.id) === String(currentId)) : null;
+        let oldUser = isEdit
+          ? cacheData6.find((u) => String(u.id) === String(currentId))
+          : null;
         const newUser = {
-          id: isEdit ? oldUser.id : (/* @__PURE__ */ new Date()).getTime(),
+          id: isEdit ? oldUser.id : /* @__PURE__ */ new Date().getTime(),
           username,
-          role
+          role,
         };
         if (pass) {
           newUser.password = pass;
@@ -1405,21 +1763,20 @@
           showToast("Error guardando el usuario", "error");
         }
       };
-    }
+    },
   });
 
   // js/modules/descuentos.js
   var descuentos_exports = {};
   __export(descuentos_exports, {
     init: () => init9,
-    render: () => render9
+    render: () => render9,
   });
   async function init9(container) {
     containerElement7 = container;
     try {
       cacheData7 = await getEntities(RESOURCE5);
-    } catch (e) {
-    }
+    } catch (e) {}
   }
   function render9() {
     containerElement7.innerHTML = `
@@ -1443,12 +1800,17 @@
     </div>
   `;
     renderTable5(cacheData7);
-    document.getElementById(`btn-new-${RESOURCE5}`).addEventListener("click", () => openFormModal5());
+    document
+      .getElementById(`btn-new-${RESOURCE5}`)
+      .addEventListener("click", () => openFormModal5());
   }
   function renderTable5(data) {
     const tbody = document.getElementById(`tbl-${RESOURCE5}-body`);
-    if (!data || !data.length) return tbody.innerHTML = `<tr><td colspan="5" style="padding: 20px; text-align:center; color: var(--text-muted);">No hay descuentos registrados</td></tr>`;
-    tbody.innerHTML = data.map((i) => `
+    if (!data || !data.length)
+      return (tbody.innerHTML = `<tr><td colspan="5" style="padding: 20px; text-align:center; color: var(--text-muted);">No hay descuentos registrados</td></tr>`);
+    tbody.innerHTML = data
+      .map(
+        (i) => `
     <tr style="border-bottom: 1px solid var(--border-color);">
       <td style="padding: 12px; color: var(--text-muted);">${escapeHtml(i.id || "")}</td>
       <td style="padding: 12px; font-weight: 600; color: var(--text-dark);">${escapeHtml(i.nombre || "")}</td>
@@ -1463,7 +1825,9 @@
         <button class="btn btn-danger btn-sm" onclick="window.appDeleteDescuento('${escapeHtml(i.id || "")}')" title="Eliminar"><i class="ph ph-trash"></i></button>
       </td>
     </tr>
-  `).join("");
+  `,
+      )
+      .join("");
   }
   function openFormModal5(item) {
     const i = item || {};
@@ -1485,23 +1849,32 @@
       </select>
     </div>
   `;
-    showFormModal(i.id ? "Editar Descuento" : "Nuevo Descuento", formHtml, async (form) => {
-      const fd = getFormData(form);
-      if (!fd.id) delete fd.id;
-      if (!fd.estado) fd.estado = "Activo";
-      fd.porcentaje = parseFloat(fd.porcentaje) || 0;
-      const result = await saveEntity(RESOURCE5, fd);
-      showToast(i.id ? "Descuento actualizado" : "Descuento creado", "success");
-      const savedItem = result.data || result;
-      if (i.id && savedItem?.id) {
-        cacheData7[cacheData7.findIndex((x) => String(x.id) === String(savedItem.id))] = savedItem;
-      } else if (savedItem) {
-        cacheData7.push(savedItem);
-      } else {
-        cacheData7 = await getEntities(RESOURCE5);
-      }
-      renderTable5(cacheData7);
-    });
+    showFormModal(
+      i.id ? "Editar Descuento" : "Nuevo Descuento",
+      formHtml,
+      async (form) => {
+        const fd = getFormData(form);
+        if (!fd.id) delete fd.id;
+        if (!fd.estado) fd.estado = "Activo";
+        fd.porcentaje = parseFloat(fd.porcentaje) || 0;
+        const result = await saveEntity(RESOURCE5, fd);
+        showToast(
+          i.id ? "Descuento actualizado" : "Descuento creado",
+          "success",
+        );
+        const savedItem = result.data || result;
+        if (i.id && savedItem?.id) {
+          cacheData7[
+            cacheData7.findIndex((x) => String(x.id) === String(savedItem.id))
+          ] = savedItem;
+        } else if (savedItem) {
+          cacheData7.push(savedItem);
+        } else {
+          cacheData7 = await getEntities(RESOURCE5);
+        }
+        renderTable5(cacheData7);
+      },
+    );
   }
   var containerElement7, cacheData7, RESOURCE5;
   var init_descuentos = __esm({
@@ -1510,30 +1883,34 @@
       init_ui();
       cacheData7 = [];
       RESOURCE5 = "descuentos";
-      window.appEditDescuento = (id) => openFormModal5(cacheData7.find((x) => String(x.id) === String(id)));
+      window.appEditDescuento = (id) =>
+        openFormModal5(cacheData7.find((x) => String(x.id) === String(id)));
       window.appDeleteDescuento = (id) => {
-        showConfirmModal("Eliminar Descuento", "<p>\xBFSeguro que deseas eliminar este descuento?</p>", async () => {
-          await deleteEntity(RESOURCE5, id);
-          showToast("Descuento eliminado");
-          cacheData7 = cacheData7.filter((x) => String(x.id) !== String(id));
-          renderTable5(cacheData7);
-        });
+        showConfirmModal(
+          "Eliminar Descuento",
+          "<p>\xBFSeguro que deseas eliminar este descuento?</p>",
+          async () => {
+            await deleteEntity(RESOURCE5, id);
+            showToast("Descuento eliminado");
+            cacheData7 = cacheData7.filter((x) => String(x.id) !== String(id));
+            renderTable5(cacheData7);
+          },
+        );
       };
-    }
+    },
   });
 
   // js/modules/faltantes.js
   var faltantes_exports = {};
   __export(faltantes_exports, {
     init: () => init10,
-    render: () => render10
+    render: () => render10,
   });
   async function init10(container) {
     containerElement8 = container;
     try {
       cacheData8 = await getEntities(RESOURCE6);
-    } catch (e) {
-    }
+    } catch (e) {}
   }
   function render10() {
     containerElement8.innerHTML = `
@@ -1557,14 +1934,19 @@
     </div>
   `;
     renderTable6(cacheData8);
-    document.getElementById(`btn-new-${RESOURCE6}`).addEventListener("click", () => openFormModal6());
+    document
+      .getElementById(`btn-new-${RESOURCE6}`)
+      .addEventListener("click", () => openFormModal6());
   }
   function renderTable6(data) {
     const tbody = document.getElementById(`tbl-${RESOURCE6}-body`);
-    if (!data || !data.length) return tbody.innerHTML = `<tr><td colspan="5" style="padding: 20px; text-align:center; color: var(--text-muted);">No hay reportes de faltantes o mermas</td></tr>`;
-    tbody.innerHTML = data.map((i) => `
+    if (!data || !data.length)
+      return (tbody.innerHTML = `<tr><td colspan="5" style="padding: 20px; text-align:center; color: var(--text-muted);">No hay reportes de faltantes o mermas</td></tr>`);
+    tbody.innerHTML = data
+      .map(
+        (i) => `
     <tr style="border-bottom: 1px solid var(--border-color);">
-      <td style="padding: 12px; color: var(--text-muted);">${escapeHtml(i.fecha || (/* @__PURE__ */ new Date()).toLocaleDateString())}</td>
+      <td style="padding: 12px; color: var(--text-muted);">${escapeHtml(i.fecha || /* @__PURE__ */ new Date().toLocaleDateString())}</td>
       <td style="padding: 12px; font-weight: 600; color: var(--text-dark);">${escapeHtml(i.producto || i.descripcion || "")}</td>
       <td style="padding: 12px; color: var(--text-dark);">
         <span style="background: var(--danger-light); color: var(--danger-color); padding: 4px 8px; border-radius: 4px; font-weight: bold;">
@@ -1577,11 +1959,13 @@
         <button class="btn btn-danger btn-sm" onclick="window.appDeleteFaltante('${escapeHtml(i.id || "")}')" title="Eliminar"><i class="ph ph-trash"></i></button>
       </td>
     </tr>
-  `).join("");
+  `,
+      )
+      .join("");
   }
   function openFormModal6(item) {
     const i = item || {};
-    const hoy = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+    const hoy = /* @__PURE__ */ new Date().toISOString().split("T")[0];
     const formHtml = `
     <input type="hidden" name="id" value="${i.id || ""}">
     <div style="margin-bottom: 15px;">
@@ -1607,22 +1991,31 @@
       </select>
     </div>
   `;
-    showFormModal(i.id ? "Editar Reporte" : "Nuevo Faltante", formHtml, async (form) => {
-      const fd = getFormData(form);
-      if (!fd.id) delete fd.id;
-      fd.cantidad = parseFloat(fd.cantidad) || 0;
-      const result = await saveEntity(RESOURCE6, fd);
-      showToast(i.id ? "Reporte actualizado" : "Faltante registrado", "success");
-      const savedItem = result.data || result;
-      if (i.id && savedItem?.id) {
-        cacheData8[cacheData8.findIndex((x) => String(x.id) === String(savedItem.id))] = savedItem;
-      } else if (savedItem) {
-        cacheData8.push(savedItem);
-      } else {
-        cacheData8 = await getEntities(RESOURCE6);
-      }
-      renderTable6(cacheData8);
-    });
+    showFormModal(
+      i.id ? "Editar Reporte" : "Nuevo Faltante",
+      formHtml,
+      async (form) => {
+        const fd = getFormData(form);
+        if (!fd.id) delete fd.id;
+        fd.cantidad = parseFloat(fd.cantidad) || 0;
+        const result = await saveEntity(RESOURCE6, fd);
+        showToast(
+          i.id ? "Reporte actualizado" : "Faltante registrado",
+          "success",
+        );
+        const savedItem = result.data || result;
+        if (i.id && savedItem?.id) {
+          cacheData8[
+            cacheData8.findIndex((x) => String(x.id) === String(savedItem.id))
+          ] = savedItem;
+        } else if (savedItem) {
+          cacheData8.push(savedItem);
+        } else {
+          cacheData8 = await getEntities(RESOURCE6);
+        }
+        renderTable6(cacheData8);
+      },
+    );
   }
   var containerElement8, cacheData8, RESOURCE6;
   var init_faltantes = __esm({
@@ -1631,16 +2024,21 @@
       init_ui();
       cacheData8 = [];
       RESOURCE6 = "faltantes";
-      window.appEditFaltante = (id) => openFormModal6(cacheData8.find((x) => String(x.id) === String(id)));
+      window.appEditFaltante = (id) =>
+        openFormModal6(cacheData8.find((x) => String(x.id) === String(id)));
       window.appDeleteFaltante = (id) => {
-        showConfirmModal("Eliminar Reporte", "<p>\xBFSeguro que deseas eliminar este reporte de faltante?</p>", async () => {
-          await deleteEntity(RESOURCE6, id);
-          showToast("Reporte eliminado");
-          cacheData8 = cacheData8.filter((x) => String(x.id) !== String(id));
-          renderTable6(cacheData8);
-        });
+        showConfirmModal(
+          "Eliminar Reporte",
+          "<p>\xBFSeguro que deseas eliminar este reporte de faltante?</p>",
+          async () => {
+            await deleteEntity(RESOURCE6, id);
+            showToast("Reporte eliminado");
+            cacheData8 = cacheData8.filter((x) => String(x.id) !== String(id));
+            renderTable6(cacheData8);
+          },
+        );
       };
-    }
+    },
   });
 
   // js/main.js
@@ -1664,20 +2062,22 @@
       var views = document.querySelectorAll(".view");
       var pageTitle = document.getElementById("page-title");
       var btnThemeToggle = document.getElementById("btn-theme-toggle");
-      var btnThemeToggleLogin = document.getElementById("btn-theme-toggle-login");
+      var btnThemeToggleLogin = document.getElementById(
+        "btn-theme-toggle-login",
+      );
       var currentView = "ventas";
       var currentUser = null;
       var moduleMap = {
-        "productos": productos_exports,
-        "ventas": ventas_exports,
-        "compras": compras_exports,
-        "historial": historial_exports,
-        "clientes": clientes_exports,
-        "proveedores": proveedores_exports,
-        "categorias": categorias_exports,
-        "descuentos": descuentos_exports,
-        "faltantes": faltantes_exports,
-        "usuarios": usuarios_exports
+        productos: productos_exports,
+        ventas: ventas_exports,
+        compras: compras_exports,
+        historial: historial_exports,
+        clientes: clientes_exports,
+        proveedores: proveedores_exports,
+        categorias: categorias_exports,
+        descuentos: descuentos_exports,
+        faltantes: faltantes_exports,
+        usuarios: usuarios_exports,
       };
       function initTheme() {
         const pref = localStorage.getItem("theme");
@@ -1687,11 +2087,18 @@
         }
       }
       function updateThemeIcons(isDark) {
-        if (btnThemeToggle) btnThemeToggle.innerHTML = isDark ? '<i class="ph ph-sun"></i>' : '<i class="ph ph-moon"></i>';
-        if (btnThemeToggleLogin) btnThemeToggleLogin.innerHTML = isDark ? '<i class="ph ph-sun"></i>' : '<i class="ph ph-moon"></i>';
+        if (btnThemeToggle)
+          btnThemeToggle.innerHTML = isDark
+            ? '<i class="ph ph-sun"></i>'
+            : '<i class="ph ph-moon"></i>';
+        if (btnThemeToggleLogin)
+          btnThemeToggleLogin.innerHTML = isDark
+            ? '<i class="ph ph-sun"></i>'
+            : '<i class="ph ph-moon"></i>';
       }
       function toggleTheme() {
-        const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+        const isDark =
+          document.documentElement.getAttribute("data-theme") === "dark";
         if (isDark) {
           document.documentElement.removeAttribute("data-theme");
           localStorage.setItem("theme", "light");
@@ -1703,11 +2110,13 @@
         }
       }
       if (btnThemeToggle) btnThemeToggle.addEventListener("click", toggleTheme);
-      if (btnThemeToggleLogin) btnThemeToggleLogin.addEventListener("click", toggleTheme);
+      if (btnThemeToggleLogin)
+        btnThemeToggleLogin.addEventListener("click", toggleTheme);
       initTheme();
       function applyRoles() {
         const role = currentUser ? currentUser.role : "cajero";
-        document.getElementById("current-role-label").textContent = role.toUpperCase();
+        document.getElementById("current-role-label").textContent =
+          role.toUpperCase();
         navButtons.forEach((btn) => {
           const allowed = btn.dataset.role.split(",");
           if (allowed.includes(role)) {
@@ -1721,15 +2130,19 @@
         currentView = target;
         navButtons.forEach((btn) => {
           btn.classList.toggle("active", btn.dataset.target === target);
-          if (btn.dataset.target === target) pageTitle.textContent = btn.textContent.trim();
+          if (btn.dataset.target === target)
+            pageTitle.textContent = btn.textContent.trim();
         });
-        views.forEach((v) => v.classList.toggle("active", v.id === "view-" + target));
+        views.forEach((v) =>
+          v.classList.toggle("active", v.id === "view-" + target),
+        );
         if (window.innerWidth <= 768) sidebar.classList.remove("show");
         if (moduleMap[target]) {
           try {
             const container = document.getElementById("view-" + target);
             if (container && container.querySelector(".empty-state")) {
-              container.innerHTML = '<div style="text-align:center; padding: 40px;"><i class="ph ph-spinner ph-spin" style="font-size:32px;"></i></div>';
+              container.innerHTML =
+                '<div style="text-align:center; padding: 40px;"><i class="ph ph-spinner ph-spin" style="font-size:32px;"></i></div>';
               moduleMap[target].init(container).then(() => {
                 moduleMap[target].render();
               });
@@ -1741,7 +2154,9 @@
           }
         } else {
           const container = document.getElementById("view-" + target);
-          if (container) container.innerHTML = '<div class="empty-state"><i class="ph ph-wrench"></i><p>Construyendo m\xF3dulo...</p></div>';
+          if (container)
+            container.innerHTML =
+              '<div class="empty-state"><i class="ph ph-wrench"></i><p>Construyendo m\xF3dulo...</p></div>';
         }
       }
       var loginOverlay = document.getElementById("login-overlay");
@@ -1754,7 +2169,8 @@
         const err = document.getElementById("login-error");
         const card = document.querySelector(".login-card");
         err.style.display = "none";
-        btnLogin.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Validando...';
+        btnLogin.innerHTML =
+          '<i class="ph ph-spinner ph-spin"></i> Validando...';
         let user = null;
         try {
           const usuariosDB = await getEntities("usuarios");
@@ -1762,7 +2178,10 @@
             user = usuariosDB.find((x) => x.username === u && x.password === p);
           }
         } catch (e2) {
-          console.warn("No se pudo obtener usuarios, se intentar\xE1 usar fallback admin", e2);
+          console.warn(
+            "No se pudo obtener usuarios, se intentar\xE1 usar fallback admin",
+            e2,
+          );
         }
         if (!user && u === "admin" && p === "admin") {
           user = { username: "admin", role: "admin" };
@@ -1801,7 +2220,9 @@
         navButtons.forEach((btn) => {
           btn.addEventListener("click", () => switchView(btn.dataset.target));
         });
-        menuToggle.addEventListener("click", () => sidebar.classList.toggle("show"));
+        menuToggle.addEventListener("click", () =>
+          sidebar.classList.toggle("show"),
+        );
       });
       window.appSyncModule = async (target, silent = false) => {
         if (!moduleMap[target]) return;
@@ -1827,7 +2248,7 @@
           window.appSyncModule(currentView, true);
         }
       });
-    }
+    },
   });
   require_main();
 })();
