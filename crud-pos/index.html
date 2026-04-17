@@ -1,210 +1,155 @@
-<!doctype html>
+﻿<!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>POS CRUD - Clientes, Proveedores y Categorías</title>
-    <link rel="stylesheet" href="./styles.css" />
-  </head>
-  <body>
-    <div class="app-shell">
-      <header>
-        <h1>POS - Gestión de Entidades</h1>
-        <p class="subtitle">
-          Clientes, Proveedores y Categorías con API mock usando fetch +
-          async/await.
-        </p>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Papel y Luna</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+
+  <!-- PANTALLA DE LOGIN (Rediseño Creativo Papel & Luna) -->
+  <div id="login-overlay" class="login-view parallax-login">
+    <div class="login-parallax-bg"></div>
+    <div class="theme-toggle-login">
+        <button id="btn-theme-toggle-login" class="btn btn-secondary btn-sm" title="Cambiar Tema">
+          <i class="ph ph-moon"></i>
+        </button>
+    </div>
+    
+    <div class="login-card floating-card">
+      <div class="login-logo-container">
+         <i class="ph ph-scroll logo-paper"></i>
+         <i class="ph ph-moon-stars logo-moon"></i>
+      </div>
+      <h1>Papel & Luna</h1>
+      <p class="subtitle-chia">Papelería y Miscelánea<br><span><i class="ph ph-map-pin"></i> Chía, Cundinamarca</span></p>
+      
+      <form id="login-form" onsubmit="return false;">
+        <div class="form-group slide-up-1">
+          <label>Usuario</label>
+          <input type="text" id="login-username" placeholder="Ingresa tu usuario" required>
+        </div>
+        <div class="form-group slide-up-2">
+          <label>Contraseña</label>
+          <input type="password" id="login-password" placeholder="Tu contraseña" required>
+        </div>
+        <button type="submit" id="btn-login-submit" class="btn btn-primary slide-up-3" style="width: 100%; margin-top: 10px;">Ingresar al Sistema</button>
+        <p id="login-error" style="color: var(--danger-color); margin-top: 15px; display: none;">Credenciales incorrectas</p>
+      </form>
+    </div>
+  </div>
+  
+  <div class="app-layout">
+    <!-- Sidebar / Menú Lateral -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <i class="ph ph-leaf sidebar-logo"></i>
+        <h2>Papel & Luna</h2>
+      </div>
+      <nav class="sidebar-nav">
+        <ul>
+          <li><button class="nav-btn active" data-target="ventas" data-role="cajero,admin"><i class="ph ph-shopping-cart"></i> Nueva Venta</button></li>
+          <li><button class="nav-btn" data-target="productos" data-role="cajero,admin"><i class="ph ph-package"></i> Productos</button></li>
+          <li><button class="nav-btn" data-target="compras" data-role="admin"><i class="ph ph-truck"></i> Compras</button></li>
+          <li><button class="nav-btn" data-target="historial" data-role="cajero,admin"><i class="ph ph-clock-counter-clockwise"></i> Historial de Ventas</button></li>
+          <li><button class="nav-btn" data-target="clientes" data-role="cajero,admin"><i class="ph ph-users"></i> Clientes</button></li>
+          <li><button class="nav-btn" data-target="proveedores" data-role="admin"><i class="ph ph-buildings"></i> Proveedores</button></li>
+          <li><button class="nav-btn" data-target="categorias" data-role="admin"><i class="ph ph-tag"></i> Categorías</button></li>
+          <li><button class="nav-btn" data-target="descuentos" data-role="admin"><i class="ph ph-percent"></i> Descuentos</button></li>
+          <li><button class="nav-btn" data-target="faltantes" data-role="cajero,admin"><i class="ph ph-clipboard-text"></i> Faltantes</button></li>
+          <li><button class="nav-btn" data-target="usuarios" data-role="admin"><i class="ph ph-user-gear"></i> Mantenimiento Users</button></li>
+        </ul>
+      </nav>
+      <div style="padding: 20px; border-top: 1px solid var(--border-color); text-align: center;">
+         <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Rol actual: <span id="current-role-label">N/A</span></p>
+         <button id="btn-logout" class="btn btn-secondary btn-sm" style="width: 100%;"><i class="ph ph-sign-out"></i> Cerrar Sesión</button>
+      </div>
+    </aside>
+
+    <!-- Contenido Principal -->
+    <main class="main-content">
+      <header class="topbar">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button id="menu-toggle" class="menu-toggle"><i class="ph ph-list"></i></button>
+          <h1 id="page-title">Nueva Venta</h1>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
+          <button id="btn-theme-toggle" class="btn btn-secondary btn-sm" title="Cambiar Tema">
+            <i class="ph ph-moon"></i>
+          </button>
+          <button id="btn-sync" class="btn btn-primary btn-sm" style="display: flex; align-items: center; gap: 6px;">
+            <i class="ph ph-arrows-clockwise"></i> Sincronizar
+          </button>
+        </div>
       </header>
 
-      <nav class="tabs" role="tablist">
-        <button class="tab-button active" data-entity="clientes">
-          Clientes
-        </button>
-        <button class="tab-button" data-entity="proveedores">
-          Proveedores
-        </button>
-        <button class="tab-button" data-entity="categorias">Categorías</button>
-      </nav>
-
-      <main>
-        <div id="message-container"></div>
-
-        <section class="entity-panel active" data-entity="clientes">
-          <div class="panel-header">
-            <div>
-              <h2>Clientes</h2>
-              <p>Administración de clientes registrados en el sistema.</p>
-            </div>
-            <input
-              id="clientes-search"
-              class="search-input"
-              type="search"
-              placeholder="Buscar cliente..."
-            />
-          </div>
-
-          <form id="clientes-form" class="entity-form" data-entity="clientes">
-            <input type="hidden" name="id" />
-            <div class="field-grid">
-              <label>
-                Nombre
-                <input
-                  name="nombre"
-                  type="text"
-                  required
-                  placeholder="Nombre del cliente"
-                />
-              </label>
-              <label>
-                Teléfono
-                <input
-                  name="telefono"
-                  type="tel"
-                  required
-                  placeholder="Teléfono"
-                />
-              </label>
-            </div>
-            <div class="form-actions">
-              <button type="submit">Guardar cliente</button>
-              <button type="button" class="secondary reset-button">
-                Limpiar
-              </button>
-            </div>
-          </form>
-
-          <div class="table-wrapper">
-            <table id="clientes-table">
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Teléfono</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
+      <div class="views-container">
+        <!-- Vistas (SPA) -->
+        <section id="view-ventas" class="view active">
+          <div class="empty-state"><i class="ph ph-wrench"></i><p>Módulo de Ventas en construcción</p></div>
         </section>
 
-        <section class="entity-panel" data-entity="proveedores">
-          <div class="panel-header">
-            <div>
-              <h2>Proveedores</h2>
-              <p>Administración de proveedores que suministran productos.</p>
-            </div>
-            <input
-              id="proveedores-search"
-              class="search-input"
-              type="search"
-              placeholder="Buscar proveedor..."
-            />
-          </div>
-
-          <form
-            id="proveedores-form"
-            class="entity-form"
-            data-entity="proveedores"
-          >
-            <input type="hidden" name="id" />
-            <div class="field-grid">
-              <label>
-                Nombre
-                <input
-                  name="nombre"
-                  type="text"
-                  required
-                  placeholder="Nombre del proveedor"
-                />
-              </label>
-              <label>
-                Contacto
-                <input
-                  name="contacto"
-                  type="text"
-                  required
-                  placeholder="Persona de contacto"
-                />
-              </label>
-            </div>
-            <div class="form-actions">
-              <button type="submit">Guardar proveedor</button>
-              <button type="button" class="secondary reset-button">
-                Limpiar
-              </button>
-            </div>
-          </form>
-
-          <div class="table-wrapper">
-            <table id="proveedores-table">
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Contacto</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
+        <section id="view-productos" class="view">
+          <div class="empty-state"><i class="ph ph-wrench"></i><p>Módulo de Productos en construcción</p></div>
         </section>
 
-        <section class="entity-panel" data-entity="categorias">
-          <div class="panel-header">
-            <div>
-              <h2>Categorías</h2>
-              <p>Administración de categorías de productos.</p>
-            </div>
-            <input
-              id="categorias-search"
-              class="search-input"
-              type="search"
-              placeholder="Buscar categoría..."
-            />
-          </div>
-
-          <form
-            id="categorias-form"
-            class="entity-form"
-            data-entity="categorias"
-          >
-            <input type="hidden" name="id" />
-            <div class="field-grid">
-              <label>
-                Nombre
-                <input
-                  name="nombre"
-                  type="text"
-                  required
-                  placeholder="Nombre de la categoría"
-                />
-              </label>
-            </div>
-            <div class="form-actions">
-              <button type="submit">Guardar categoría</button>
-              <button type="button" class="secondary reset-button">
-                Limpiar
-              </button>
-            </div>
-          </form>
-
-          <div class="table-wrapper">
-            <table id="categorias-table">
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
+        <section id="view-compras" class="view">
+          <div class="empty-state"><i class="ph ph-wrench"></i><p>Módulo de Compras en construcción</p></div>
         </section>
-      </main>
+        
+        <section id="view-historial" class="view">
+          <div class="empty-state"><i class="ph ph-wrench"></i><p>Módulo de Historial en construcción</p></div>
+        </section>
+        
+        <section id="view-clientes" class="view">
+          <div class="empty-state"><i class="ph ph-wrench"></i><p>Módulo de Clientes en construcción</p></div>
+        </section>
+        
+        <section id="view-proveedores" class="view">
+          <div class="empty-state"><i class="ph ph-wrench"></i><p>Módulo de Proveedores en construcción</p></div>
+        </section>
+        
+        <section id="view-categorias" class="view">
+          <div class="empty-state"><i class="ph ph-wrench"></i><p>Módulo de Categorías en construcción</p></div>
+        </section>
+
+        <section id="view-descuentos" class="view">
+          <div class="empty-state"><i class="ph ph-wrench"></i><p>Módulo de Descuentos en construcción</p></div>
+        </section>
+
+        <section id="view-faltantes" class="view">
+          <div class="empty-state"><i class="ph ph-wrench"></i><p>Módulo de Faltantes en construcción</p></div>
+        </section>
+
+        <section id="view-usuarios" class="view">
+          <div class="empty-state"><i class="ph ph-wrench"></i><p>Módulo de Usuarios en construcción</p></div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <div class="modal-overlay" id="main-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Título Modal</h3>
+        <button class="modal-close" id="modal-close"><i class="ph ph-x"></i></button>
+      </div>
+      <div class="modal-body" id="modal-body">
+      </div>
+      <div class="modal-footer" id="modal-footer">
+        <button class="btn btn-secondary" id="modal-btn-cancel">Cancelar</button>
+        <button class="btn btn-primary" id="modal-btn-confirm">Confirmar</button>
+      </div>
     </div>
+  </div>
 
-    <div id="loader" class="loader hidden" aria-hidden="true">Cargando...</div>
-
-    <script type="module" src="./main.js"></script>
-  </body>
+  <script src="js/bundle.js"></script>
+</body>
 </html>
+
+
