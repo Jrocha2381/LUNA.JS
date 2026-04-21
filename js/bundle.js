@@ -197,14 +197,11 @@
       const payload = {
         resource,
         action: action === "delete" ? "delete" : "save",
-        id: dataObj.id,
+        id: dataObj.id || "",
         data: dataObj,
       };
       const postData = {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(payload),
       };
       const res = await fetch(`${BASE_API}?resource=${resource}`, postData);
@@ -226,7 +223,7 @@
   var init_api = __esm({
     "js/api.js"() {
       BASE_API =
-        "https://script.google.com/macros/s/AKfycbz505Z0SE9dm3mmjw8A_Wkinazb-z6aasNImDa_JNcBotOBOMTRtSSB1AkNF9j_mfqx/exec";
+        "https://script.google.com/macros/s/AKfycbwBqWV20EZVA9HEyMCYUwCo_vy9U2lH5byRYNg5vGI68rwp_raTbMA8f1l4aEFJ6rmI/exec";
       localDB = {
         productos: [],
         categorias: [],
@@ -738,7 +735,7 @@
           metodoPago: "",
           estado: "abierta",
           total,
-          itemsJson: JSON.stringify(currentCart),
+          itemsJSON: JSON.stringify(currentCart),
         };
         await saveEntity("ventas", saleObj);
         showToast("Venta guardada en espera");
@@ -755,7 +752,7 @@
         const sale = openSales.find((s) => s.id === saleId);
         if (sale) {
           currentSaleId = sale.id;
-          currentCart = JSON.parse(sale.itemsJson);
+          currentCart = JSON.parse(sale.itemsJSON);
           renderCart();
           document.getElementById("modal-btn-cancel").click();
         }
@@ -809,7 +806,7 @@
             metodoPago: method,
             estado: "cerrada",
             total,
-            itemsJson: JSON.stringify(currentCart),
+              itemsJSON: JSON.stringify(currentCart),
           };
           await saveEntity("ventas", saleObj);
           for (let item of currentCart) {
@@ -1036,7 +1033,7 @@
               proveedorId: providerId,
               metodoPago: fd.metodoPago,
               total,
-              itemsJson: JSON.stringify(currentPurchase),
+              itemsJSON: JSON.stringify(currentPurchase),
             };
             await saveEntity(RESOURCE, compraObj);
             for (let item of currentPurchase) {
@@ -1365,7 +1362,7 @@
     </div>
     <table style="width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: var(--radius); overflow: hidden;">
       <thead style="background: var(--primary-light); text-align: left;">
-        <tr><th style="padding: 12px;">Empresa/Nombre</th><th style="padding: 12px;">NIT</th><th style="padding: 12px;">Contacto</th><th style="padding: 12px; text-align: right;">Acciones</th></tr>
+          <tr><th style="padding: 12px;">Empresa/Nombre</th><th style="padding: 12px;">Teléfono</th><th style="padding: 12px;">Correo</th><th style="padding: 12px; text-align: right;">Acciones</th></tr>
       </thead>
       <tbody id="tbl-${RESOURCE3}-body"></tbody>
     </table>
@@ -1384,8 +1381,8 @@
         (i) => `
     <tr style="border-bottom: 1px solid var(--border-color);">
       <td style="padding: 12px;"><strong>${escapeHtml(i.nombre)}</strong></td>
-      <td style="padding: 12px;">${escapeHtml(i.nit)}</td>
-      <td style="padding: 12px;">${escapeHtml(i.contacto)}</td>
+      <td style="padding: 12px;">${escapeHtml(i.teléfono || i.telefono)}</td>
+      <td style="padding: 12px;">${escapeHtml(i.correo)}</td>
       <td style="padding: 12px; text-align: right;">
         <button class="btn btn-secondary btn-sm" onclick="window.appEditProveedor('${escapeHtml(i.id)}')" style="padding: 6px 10px;"><i class="ph ph-pencil-simple"></i></button>
         <button class="btn btn-danger btn-sm" onclick="window.appDeleteProveedor('${escapeHtml(i.id)}')" style="padding: 6px 10px;"><i class="ph ph-trash"></i></button>
@@ -1404,12 +1401,12 @@
       <input type="text" name="nombre" value="${escapeHtml(i.nombre)}" required style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
     </div>
     <div style="margin-bottom: 15px;">
-      <label style="display:block; margin-bottom:4px; font-weight:600;">NIT/RUT</label>
-      <input type="text" name="nit" value="${escapeHtml(i.nit)}" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
+      <label style="display:block; margin-bottom:4px; font-weight:600;">Teléfono</label>
+      <input type="text" name="teléfono" value="${escapeHtml(i.teléfono || i.telefono)}" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
     </div>
     <div style="margin-bottom: 15px;">
-      <label style="display:block; margin-bottom:4px; font-weight:600;">Tel\xE9fono de Contacto</label>
-      <input type="text" name="contacto" value="${escapeHtml(i.contacto)}" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
+      <label style="display:block; margin-bottom:4px; font-weight:600;">Correo Electrónico</label>
+      <input type="email" name="correo" value="${escapeHtml(i.correo)}" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
     </div>
   `;
     showFormModal(

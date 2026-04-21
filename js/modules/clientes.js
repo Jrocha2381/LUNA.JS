@@ -33,7 +33,7 @@ function renderTable(data) {
   tbody.innerHTML = data.map(i => `
     <tr style="border-bottom: 1px solid var(--border-color);">
       <td style="padding: 12px;"><strong>${escapeHtml(i.nombre)}</strong></td>
-      <td style="padding: 12px;">${escapeHtml(i.telefono)}</td>
+      <td style="padding: 12px;">${escapeHtml(i.teléfono || i.telefono)}</td>
       <td style="padding: 12px;">${escapeHtml(i.correo)}</td>
       <td style="padding: 12px; text-align: right;">
         <div class="action-buttons">
@@ -62,7 +62,7 @@ function openFormModal(item) {
     </div>
     <div style="margin-bottom: 15px;">
       <label style="display:block; margin-bottom:4px; font-weight:600;">Teléfono</label>
-      <input type="text" name="telefono" value="${escapeHtml(i.telefono)}" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
+      <input type="text" name="teléfono" value="${escapeHtml(i.teléfono || i.telefono)}" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
     </div>
     <div style="margin-bottom: 15px;">
       <label style="display:block; margin-bottom:4px; font-weight:600;">Correo Electrónico</label>

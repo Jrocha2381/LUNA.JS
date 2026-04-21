@@ -1,4 +1,4 @@
-﻿export const BASE_API = "https://script.google.com/macros/s/AKfycbwBqWV20EZVA9HEyMCYUwCo_vy9U2lH5byRYNg5vGI68rwp_raTbMA8f1l4aEFJ6rmI/exec";
+﻿﻿export const BASE_API = "https://script.google.com/macros/s/AKfycbwBqWV20EZVA9HEyMCYUwCo_vy9U2lH5byRYNg5vGI68rwp_raTbMA8f1l4aEFJ6rmI/exec";
 
 // Data falsa temporal por si el servidor falla y limpiar cache viejo
 const localDB = {
@@ -79,15 +79,15 @@ export async function saveEntity(resource, dataObj, action = "upsert") {
     const payload = {
       resource,
       action: action === "delete" ? "delete" : "save",
-      id: dataObj.id,
+      id: String(dataObj.id || ""),
       data: dataObj,
     };
 
     const postData = {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      mode: "no-cors", // Ayuda a mitigar bloqueos en entornos locales restringidos
+      // Eliminamos el header de JSON para evitar errores de CORS (Preflight OPTIONS) 
+      // Google Apps Script recibirá el body igualmente en e.postData.contents
       body: JSON.stringify(payload),
     };
 

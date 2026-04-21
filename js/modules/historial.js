@@ -1,4 +1,4 @@
-﻿import { getEntities, saveEntity } from '../api.js';
+﻿﻿import { getEntities, saveEntity } from '../api.js';
 import { escapeHtml, showConfirmModal, showToast } from '../ui.js';
 
 let containerElement;
@@ -66,7 +66,7 @@ window.posViewFactura = (id) => {
   
   let itemsHtml = "";
   try {
-    const items = JSON.parse(v.itemsJson);
+    const items = JSON.parse(v.itemsJSON);
     itemsHtml = items.map(i => '<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>' + i.cantidad + 'x ' + i.nombre + '</span><span>$' + (i.precio * i.cantidad).toFixed(2) + '</span></div>').join('');
   } catch(e) {}
 

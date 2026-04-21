@@ -193,7 +193,7 @@ window.compraCheckout = () => {
        fecha: new Date().toISOString(),
        proveedor: providerName,
        total: total,
-       items: JSON.stringify(currentPurchase)
+       itemsJSON: JSON.stringify(currentPurchase)
      };
 
      // 1. Guardar Compra

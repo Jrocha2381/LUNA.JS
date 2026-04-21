@@ -203,7 +203,7 @@ window.posHoldSale = async () => {
     metodoPago: "",
     estado: "abierta",
     total: total,
-    itemsJson: JSON.stringify(currentCart)
+    itemsJSON: JSON.stringify(currentCart)
   };
 
   await saveEntity("ventas", saleObj);
@@ -243,7 +243,7 @@ window.posResumeSale = (saleId) => {
   const sale = openSales.find(s => s.id === saleId);
   if(sale) {
     currentSaleId = sale.id;
-    currentCart = JSON.parse(sale.itemsJson);
+    currentCart = JSON.parse(sale.itemsJSON);
     renderCart();
     
     // Close overlapping modals using DOM direct to mock standard cancel
@@ -298,7 +298,7 @@ window.posCheckout = () => {
        metodoPago: method,
        estado: "cerrada",
        total: total,
-       itemsJson: JSON.stringify(currentCart)
+       itemsJSON: JSON.stringify(currentCart)
      };
 
      // 1. Guardar o actualizar la venta
