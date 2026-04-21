@@ -63,7 +63,10 @@ export function render() {
     </div>
   `;
 
-  document.getElementById("btn-new-producto-compra").addEventListener("click", () => openProductFormModal());
+  const btnNewProd = document.getElementById("btn-new-producto-compra");
+  if(btnNewProd) {
+    btnNewProd.addEventListener("click", openProductFormModal);
+  }
   
   document.getElementById("compra-search").addEventListener("input", (e) => {
     renderCatalog(e.target.value.toLowerCase());

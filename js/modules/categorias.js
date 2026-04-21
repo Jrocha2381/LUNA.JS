@@ -32,18 +32,39 @@ function renderTable(data) {
   const tbody = document.getElementById(`tbl-${RESOURCE}-body`);
   if(!data.length) return tbody.innerHTML = `<tr><td colspan="3" style="padding: 20px; text-align:center;">No hay categorías</td></tr>`;
   
-  tbody.innerHTML = data.map(i => `
+  tbody.innerHTML = data.map((i, idx) => `
     <tr style="border-bottom: 1px solid var(--border-color);">
       <td style="padding: 12px;">${escapeHtml(i.id)}</td>
       <td style="padding: 12px;"><strong>${escapeHtml(i.nombre)}</strong></td>
       <td style="padding: 12px; text-align: right;">
         <div class="action-buttons">
-          <button class="btn btn-secondary btn-sm" onclick="window.appEditCategoria('${escapeHtml(i.id)}')" style="padding: 6px 10px;"><i class="ph ph-pencil-simple"></i></button>
-          <button class="btn btn-danger btn-sm" onclick="window.appDeleteCategoria('${escapeHtml(i.id)}')" style="padding: 6px 10px;"><i class="ph ph-trash"></i></button>
+          <button class="btn btn-secondary btn-sm" data-edit-id="${i.id}" style="padding: 6px 10px;"><i class="ph ph-pencil-simple"></i></button>
+          <button class="btn btn-danger btn-sm" data-delete-id="${i.id}" style="padding: 6px 10px;"><i class="ph ph-trash"></i></button>
         </div>
       </td>
     </tr>
   `).join('');
+  
+  // Agregar event listeners a los botones
+  tbody.querySelectorAll('[data-edit-id]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = btn.getAttribute('data-edit-id');
+      const item = cacheData.find(x => String(x.id) === String(id));
+      if(item) openFormModal(item);
+    });
+  });
+  
+  tbody.querySelectorAll('[data-delete-id]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = btn.getAttribute('data-delete-id');
+      showConfirmModal("Eliminar Categoría", "<p>¿Seguro?</p>", async () => {
+        await deleteEntity(RESOURCE, id);
+        showToast("Eliminado");
+        cacheData = cacheData.filter(x => String(x.id) !== String(id));
+        renderTable(cacheData);
+      });
+    });
+  });
 }
 
 window.appEditCategoria = (id) => openFormModal(cacheData.find(x => String(x.id) === String(id)));

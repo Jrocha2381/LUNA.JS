@@ -902,7 +902,10 @@
       </div>
     </div>
   `;
-    document.getElementById("btn-new-producto-compra").addEventListener("click", () => openProductFormModal2());
+    const btnNewProd = document.getElementById("btn-new-producto-compra");
+    if(btnNewProd) {
+      btnNewProd.addEventListener("click", openProductFormModal2);
+    }
     
     document.getElementById("compra-search").addEventListener("input", (e) => {
       renderCatalog2(e.target.value.toLowerCase());
@@ -1581,13 +1584,34 @@
       <td style="padding: 12px;">${escapeHtml(i.id)}</td>
       <td style="padding: 12px;"><strong>${escapeHtml(i.nombre)}</strong></td>
       <td style="padding: 12px; text-align: right;">
-        <button class="btn btn-secondary btn-sm" onclick="window.appEditCategoria('${escapeHtml(i.id)}')" style="padding: 6px 10px;"><i class="ph ph-pencil-simple"></i></button>
-        <button class="btn btn-danger btn-sm" onclick="window.appDeleteCategoria('${escapeHtml(i.id)}')" style="padding: 6px 10px;"><i class="ph ph-trash"></i></button>
+        <button class="btn btn-secondary btn-sm" data-edit-id="${i.id}" style="padding: 6px 10px;"><i class="ph ph-pencil-simple"></i></button>
+        <button class="btn btn-danger btn-sm" data-delete-id="${i.id}" style="padding: 6px 10px;"><i class="ph ph-trash"></i></button>
       </td>
     </tr>
   `,
       )
       .join("");
+    
+    // Agregar event listeners a los botones
+    tbody.querySelectorAll('[data-edit-id]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = btn.getAttribute('data-edit-id');
+        const item = cacheData5.find(x => String(x.id) === String(id));
+        if(item) openFormModal4(item);
+      });
+    });
+    
+    tbody.querySelectorAll('[data-delete-id]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = btn.getAttribute('data-delete-id');
+        showConfirmModal("Eliminar Categoría", "<p>¿Seguro?</p>", async () => {
+          await deleteEntity(RESOURCE4, id);
+          showToast("Eliminado");
+          cacheData5 = cacheData5.filter(x => String(x.id) !== String(id));
+          renderTable4(cacheData5);
+        });
+      });
+    });
   }
   function openFormModal4(item) {
     const i = item || {};
