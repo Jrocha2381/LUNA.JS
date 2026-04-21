@@ -66,10 +66,11 @@ function openFormModal(item) {
     const fd = getFormData(form);
     const isNew = !fd.id;
     
-    // UI optimista al instante
+    // Generar ID temporal ÚNICO con mayor precisión
+    let tempId = null;
     if(isNew) {
-      // Generar ID temporal ÚNICO: timestamp + random + contador para evitar colisiones
-      fd.id = "temp-" + Date.now() + "-" + Math.floor(Math.random() * 10000);
+      tempId = "temp-" + Date.now() + "-" + Math.floor(Math.random() * 1000000);
+      fd.id = tempId;
       cacheData.push(fd);
     } else {
       const idx = cacheData.findIndex(x => String(x.id) === String(fd.id));
@@ -78,18 +79,21 @@ function openFormModal(item) {
     renderTable(cacheData);
     showToast(isNew ? "Creando (en segundo plano)..." : "Actualizando (en segundo plano)...");
     
+    // Guardar el tempId antes de borrarlo
+    const tempIdToFind = tempId;
     if(isNew) delete fd.id; // Quitar ID temporal antes de enviar a Sheets
     
     // Guardar silenciosamente
     saveEntity(RESOURCE, fd).then(result => {
       const savedItem = result.data || fd;
       if(isNew) {
-        // Buscar por el ID temporal exacto que creamos, no solo por prefijo "temp-"
-        const tempIdx = cacheData.findIndex(x => String(x.id).startsWith("temp-" + Date.now().toString().slice(-9)));
+        // Buscar por el ID temporal EXACTO que creamos
+        const tempIdx = cacheData.findIndex(x => String(x.id) === String(tempIdToFind));
         if(tempIdx > -1 && savedItem?.id) {
-          cacheData[tempIdx] = savedItem;
+          // Reemplazar solo el elemento con ese ID temporal específico
+          cacheData[tempIdx] = { ...savedItem };
         } else if(tempIdx > -1 && !savedItem.id) {
-          cacheData[tempIdx].id = "ID-" + Date.now() + "-" + Math.floor(Math.random() * 10000);
+          cacheData[tempIdx].id = "ID-" + Date.now() + "-" + Math.floor(Math.random() * 1000000);
         }
       } else if(savedItem?.id) {
         const idx = cacheData.findIndex(x => String(x.id) === String(savedItem.id));

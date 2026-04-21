@@ -753,8 +753,18 @@
         if (sale) {
           currentSaleId = sale.id;
           currentCart = JSON.parse(sale.itemsJSON);
-          renderCart();
-          document.getElementById("modal-btn-cancel").click();
+          
+          // Cerrar modal de ventas en espera de forma explícita
+          const modalOverlay = document.getElementById("main-modal");
+          if(modalOverlay) {
+            modalOverlay.classList.remove("show");
+          }
+          
+          // Renderizar el carrito actualizado después de cerrar la modal
+          setTimeout(() => {
+            renderCart();
+            showToast("✓ Venta retomada correctamente");
+          }, 300);
         }
       };
       window.posCheckout = () => {
@@ -853,9 +863,10 @@
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
            <h2 style="font-size: 18px; font-weight: 600;">Productos para Comprar (Reabastecer)</h2>
+           <button class="btn btn-secondary btn-sm" id="btn-new-producto-compra" style="white-space: nowrap;"><i class="ph ph-plus"></i> Crear Producto</button>
         </div>
 
-        <input type="text" id="compra-search" placeholder="Buscar producto existente..." style="padding: 12px; width: 100%; border: 1px solid var(--border-color); border-radius: var(--radius); margin-bottom: 20px; font-size: 16px;">
+        <input type="text" id="compra-search" placeholder="Buscar producto existente o crear nuevo..." style="padding: 12px; width: 100%; border: 1px solid var(--border-color); border-radius: var(--radius); margin-bottom: 20px; font-size: 16px;">
         
         <div id="compra-catalog-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; overflow-y: auto;">
            <!-- Se llena din\xE1micamente -->
@@ -891,6 +902,8 @@
       </div>
     </div>
   `;
+    document.getElementById("btn-new-producto-compra").addEventListener("click", () => openProductFormModal2());
+    
     document.getElementById("compra-search").addEventListener("input", (e) => {
       renderCatalog2(e.target.value.toLowerCase());
     });
@@ -1060,6 +1073,72 @@
           },
         );
       };
+      
+      // NUEVA FUNCIÓN: Crear Producto desde Compras
+      function openProductFormModal2() {
+        const formHtml = `
+          <div style="margin-bottom: 15px;">
+            <label style="display:block; margin-bottom:4px; font-weight:600;">Nombre del Producto *</label>
+            <input type="text" name="nombre" required style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label style="display:block; margin-bottom:4px; font-weight:600;">Código (SKU)</label>
+            <input type="text" name="codigo" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label style="display:block; margin-bottom:4px; font-weight:600;">Costo de Compra $</label>
+            <input type="number" step="0.01" min="0" name="costo" value="0" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label style="display:block; margin-bottom:4px; font-weight:600;">Precio de Venta $</label>
+            <input type="number" step="0.01" min="0" name="precio" value="0" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label style="display:block; margin-bottom:4px; font-weight:600;">Stock Inicial</label>
+            <input type="number" min="0" name="stock" value="0" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
+          </div>
+        `;
+
+        showFormModal("Crear Producto Nuevo", formHtml, async (form) => {
+          const fd = getFormData(form);
+          
+          // Generar ID temporal único
+          const tempId = "temp-" + Date.now() + "-" + Math.floor(Math.random() * 10000);
+          
+          const newProduct = {
+            id: tempId,
+            nombre: fd.nombre,
+            codigo: fd.codigo || "",
+            costo: Number(fd.costo) || 0,
+            precio: Number(fd.precio) || 0,
+            stock: Number(fd.stock) || 0,
+            categoria: "Sin categoría",
+            segimientoInventario: false
+          };
+
+          // Agregar al catálogo local para poder comprarlo inmediatamente
+          catalog2.push(newProduct);
+          showToast("Producto creado y listo para comprar ✓");
+
+          // Guardar en background
+          saveEntity("productos", newProduct).then(result => {
+            const savedProduct = result.data || newProduct;
+            if(savedProduct?.id && savedProduct.id !== tempId) {
+              // Actualizar el ID temporal con el ID real del servidor
+              const idx = catalog2.findIndex(p => p.id === tempId);
+              if(idx > -1) {
+                catalog2[idx] = savedProduct;
+              }
+            }
+          }).catch(err => {
+            console.error("Error guardando producto:", err);
+          });
+
+          // Renderizar de nuevo para mostrar el nuevo producto
+          renderCatalog2(document.getElementById("compra-search").value);
+          return true;
+        });
+      }
     },
   });
 
@@ -1524,19 +1603,47 @@
       formHtml,
       async (form) => {
         const fd = getFormData(form);
-        if (!fd.id) delete fd.id;
-        const result = await saveEntity(RESOURCE4, fd);
-        showToast(i.id ? "Actualizado" : "Creado");
-        const savedItem = result.data;
-        if (i.id && savedItem?.id) {
-          cacheData5[cacheData5.findIndex((x) => x.id === savedItem.id)] =
-            savedItem;
-        } else if (savedItem) {
-          cacheData5.push(savedItem);
+        const isNew = !fd.id;
+        
+        // Generar ID temporal ÚNICO con mayor precisión
+        let tempId = null;
+        if(isNew) {
+          tempId = "temp-" + Date.now() + "-" + Math.floor(Math.random() * 1000000);
+          fd.id = tempId;
+          cacheData5.push(fd);
         } else {
-          cacheData5 = await getEntities(RESOURCE4);
+          const idx = cacheData5.findIndex(x => String(x.id) === String(fd.id));
+          if(idx > -1) cacheData5[idx] = { ...cacheData5[idx], ...fd };
         }
         renderTable4(cacheData5);
+        showToast(isNew ? "Creando (en segundo plano)..." : "Actualizando (en segundo plano)...");
+        
+        // Guardar el tempId antes de borrarlo
+        const tempIdToFind = tempId;
+        if(isNew) delete fd.id; // Quitar ID temporal antes de enviar a Sheets
+        
+        // Guardar silenciosamente
+        saveEntity(RESOURCE4, fd).then(result => {
+          const savedItem = result.data || fd;
+          if(isNew) {
+            // Buscar por el ID temporal EXACTO que creamos
+            const tempIdx = cacheData5.findIndex(x => String(x.id) === String(tempIdToFind));
+            if(tempIdx > -1 && savedItem?.id) {
+              // Reemplazar solo el elemento con ese ID temporal específico
+              cacheData5[tempIdx] = { ...savedItem };
+            } else if(tempIdx > -1 && !savedItem.id) {
+              cacheData5[tempIdx].id = "ID-" + Date.now() + "-" + Math.floor(Math.random() * 1000000);
+            }
+          } else if(savedItem?.id) {
+            const idx = cacheData5.findIndex(x => String(x.id) === String(savedItem.id));
+            if(idx > -1) cacheData5[idx] = savedItem;
+          }
+          renderTable4(cacheData5);
+        }).catch(() => {
+          showToast("Error guardando. Refresca la pestaña.", "error");
+          cacheData5 = cacheData5.filter(x => !String(x.id).startsWith("temp-"));
+          renderTable4(cacheData5);
+        });
       },
     );
   }

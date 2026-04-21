@@ -244,10 +244,18 @@ window.posResumeSale = (saleId) => {
   if(sale) {
     currentSaleId = sale.id;
     currentCart = JSON.parse(sale.itemsJSON);
-    renderCart();
     
-    // Close overlapping modals using DOM direct to mock standard cancel
-    document.getElementById("modal-btn-cancel").click(); 
+    // Cerrar modal de ventas en espera de forma explícita
+    const modalOverlay = document.getElementById("main-modal");
+    if(modalOverlay) {
+      modalOverlay.classList.remove("show");
+    }
+    
+    // Renderizar el carrito actualizado después de cerrar la modal
+    setTimeout(() => {
+      renderCart();
+      showToast("✓ Venta retomada correctamente");
+    }, 300);
   }
 };
 
