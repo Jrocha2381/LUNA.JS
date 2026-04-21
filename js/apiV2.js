@@ -97,32 +97,38 @@ export async function saveItem(resource, item) {
     console.log(`✅ Guardado en localStorage: ${resource}/${item.id}`);
     
     // ✅ PASO 2: Intentar sincronizar con Sheets
-    const payload = {
-      action: 'save',
-      resource: resource,
-      id: item.id,
-      data: item
-    };
-    
-    const response = await fetch(`${BASE_API}?resource=${resource}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
-    });
-    
-    if (response.ok) {
-      const json = await response.json();
-      if (json.success) {
-        remoteSaved = true;
-        console.log(`☁️ Sincronizado con Sheets: ${resource}/${item.id}`);
+    try {
+      const payload = JSON.stringify({
+        action: 'save',
+        resource: resource,
+        id: item.id,
+        data: item
+      });
+      
+      const response = await fetch(BASE_API, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json'
+        },
+        body: payload
+      });
+      
+      if (response.ok) {
+        const json = await response.json();
+        if (json.success) {
+          remoteSaved = true;
+          console.log(`☁️ Sincronizado con Sheets: ${resource}/${item.id}`);
+        }
       }
+    } catch (apiError) {
+      console.warn(`⚠️ API no disponible, guardado solo en localStorage:`, apiError.message);
     }
     
     return { 
       success: true, 
       localSaved, 
       remoteSaved,
-      message: remoteSaved ? '✓ Guardado en línea' : '⚠ Guardado localmente (sin conexión)'
+      message: remoteSaved ? '✓ Guardado en línea' : '⚠ Guardado localmente'
     };
     
   } catch (error) {
@@ -131,7 +137,7 @@ export async function saveItem(resource, item) {
       success: localSaved, 
       localSaved, 
       remoteSaved: false,
-      message: localSaved ? '⚠ Guardado localmente (error de conexión)' : '❌ Error al guardar'
+      message: localSaved ? '⚠ Guardado localmente' : '❌ Error'
     };
   }
 }

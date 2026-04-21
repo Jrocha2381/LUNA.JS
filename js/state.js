@@ -3,6 +3,26 @@
  * Single source of truth para toda la aplicación
  */
 
+// Usuarios por defecto
+const USUARIOS_DEFAULT = [
+  {
+    id: 'USER-1',
+    usuario: 'admin',
+    contraseña: '123456',
+    nombre: 'Administrador',
+    rol: 'admin',
+    activo: true
+  },
+  {
+    id: 'USER-2',
+    usuario: 'cajero',
+    contraseña: '123456',
+    nombre: 'Cajero',
+    rol: 'cajero',
+    activo: true
+  }
+];
+
 export let state = {
   // ====== COLECCIONES PRINCIPALES ======
   productos: [],
@@ -11,7 +31,7 @@ export let state = {
   clientes: [],
   proveedores: [],
   categorias: [],
-  usuarios: [],
+  usuarios: USUARIOS_DEFAULT,
 
   // ====== CONTROL DE VENTA ACTUAL ======
   ventaActual: null,
@@ -41,7 +61,7 @@ export function updateState(path, value) {
     current = current[keys[i]];
   }
   current[keys[keys.length - 1]] = value;
-  console.log(`📊 Estado actualizado: ${path}`, value);
+  console.log(`📊 ${path}:`, value);
 }
 
 /**
@@ -60,12 +80,12 @@ export function getState(path) {
 }
 
 /**
- * Guardar estado completo en localStorage como backup
+ * Guardar estado en localStorage
  */
 export function saveStateToLocalStorage() {
   try {
     localStorage.setItem('appState', JSON.stringify(state));
-    console.log('✅ Estado guardado en localStorage');
+    console.log('✅ Estado guardado');
   } catch (error) {
     console.error('❌ Error guardando estado:', error);
   }
@@ -80,11 +100,11 @@ export function restoreStateFromLocalStorage() {
     if (saved) {
       const restored = JSON.parse(saved);
       Object.assign(state, restored);
-      console.log('✅ Estado restaurado desde localStorage');
+      console.log('✅ Estado restaurado');
       return true;
     }
   } catch (error) {
-    console.error('❌ Error restaurando estado:', error);
+    console.error('❌ Error restaurando:', error);
   }
   return false;
 }

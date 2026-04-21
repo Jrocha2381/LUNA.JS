@@ -121,15 +121,23 @@ export function checkAuthentication() {
  */
 export async function login(usuario, contraseña) {
   try {
-    // ⚠️ NOTA: En PRODUCCIÓN esto debe ir al backend
-    // Por ahora, buscar en usuarios cargados
+    console.log('🔐 Intentando login:', usuario);
+    
+    // Cargar usuarios si no están cargados
+    if (!state.usuarios || state.usuarios.length === 0) {
+      console.log('📥 Cargando usuarios...');
+      await loadResource('usuarios');
+    }
     
     const usuarios = state.usuarios || [];
+    console.log('👥 Usuarios disponibles:', usuarios.length);
+    
     const found = usuarios.find(u => 
-      u.usuario === usuario && u.contraseña === contraseña && u.activo
+      u.usuario === usuario && u.contraseña === contraseña && u.activo !== false
     );
 
     if (!found) {
+      console.warn('❌ Credenciales incorrectas');
       showToast('Usuario o contraseña incorrectos', 'error');
       return false;
     }
@@ -146,7 +154,7 @@ export async function login(usuario, contraseña) {
     return true;
 
   } catch (error) {
-    console.error('Error en login:', error);
+    console.error('❌ Error en login:', error);
     showToast('Error en login', 'error');
     return false;
   }
