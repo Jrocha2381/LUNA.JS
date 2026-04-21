@@ -5,9 +5,9 @@ function obtenerVentas() {
 }
 
 // Función principal para registrar la venta cerrada
-function registrarVenta(carrito, total, metodoPago, valorRecibido = 0) {
+async function registrarVenta(carrito, total, metodoPago, valorRecibido = 0) {
     const ventas = obtenerVentas();
-    
+
     // Calcular el cambio si es efectivo
     const cambio = metodoPago === "Efectivo" ? valorRecibido - total : 0;
 
@@ -25,7 +25,16 @@ function registrarVenta(carrito, total, metodoPago, valorRecibido = 0) {
     // Guardar en el historial
     ventas.push(nuevaVenta);
     localStorage.setItem("ventas", JSON.stringify(ventas));
-    
+
+    // Sincronización con Google Sheets
+    try {
+        if (window.API) {
+            await window.API.post('ventas', nuevaVenta);
+        }
+    } catch (error) {
+        console.warn("Venta guardada localmente, pero falló la sincronización API.");
+    }
+
     return nuevaVenta; // Devolvemos la venta para mostrar la factura
 }
 

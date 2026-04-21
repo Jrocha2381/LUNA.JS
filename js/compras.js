@@ -68,8 +68,10 @@ async function registrarCompra(items) {
  */
 async function enviarCompraAServicioExterno(compra) {
     console.log("📤 Enviando compra al servicio externo...", compra);
-    // Placeholder para integración real: fetch('https://api.externa.com/compras', { ... })
-    return Promise.resolve({ ok: true });
+    if (window.API) {
+        return await window.API.post('compras', compra);
+    }
+    return { success: false, message: "API no disponible" };
 }
 
 window.registrarCompra = registrarCompra;

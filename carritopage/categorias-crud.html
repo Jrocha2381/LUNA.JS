@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Categorías | Papel y Luna</title>
+    <link rel="stylesheet" href="stylecarrito.css">
+</head>
+<body>
+    <header>
+        <h1>Gestión de Categorías</h1>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <button id="btn-sync" class="btn-admin-secundario" style="padding: 5px 10px; font-size: 0.8rem;">🔄 Sincronizar Nube</button>
+        </div>
+    </header>
+
+    <main>
+        <section class="admin-productos">
+            <form id="categoria-form" class="producto-form">
+                <h3 id="form-title">Crear Nueva Categoría</h3>
+                <div class="form-grid">
+                    <label>
+                        Nombre de la Categoría *
+                        <input type="text" id="cat-nombre" required placeholder="Ej: Arte, Oficina..." />
+                    </label>
+                    <label>
+                        Descripción (opcional)
+                        <input type="text" id="cat-desc" placeholder="Breve descripción" />
+                    </label>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" id="btn-guardar" class="btn-admin-primario">Guardar Categoría</button>
+                    <button type="button" id="btn-cancelar" class="btn-admin-secundario">Cancelar</button>
+                </div>
+            </form>
+
+            <div class="tabla-wrapper">
+                <table class="tabla-productos">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-categorias">
+                        <!-- Cargado dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="admin-auth.js"></script>
+    <script type="module">
+        import { Entidades } from '../js/entidades.js';
+
+        document.addEventListener("DOMContentLoaded", () => {
+            // Verificar sesión
+            if (window.validarSesionAdmin && !window.validarSesionAdmin()) return;
+
+            const form = document.getElementById('categoria-form');
+            const tbody = document.getElementById('lista-categorias');
+            const btnSync = document.getElementById('btn-sync');
+            const btnCancelar = document.getElementById('btn-cancelar');
+            let editId = null;
+
+            const render = () => {
+                const cats = Entidades.obtener('categorias');
+                tbody.innerHTML = cats.map(c => `
+                    <tr>
+                        <td>${c.id}</td>
+                        <td><strong>${c.nombre}</strong></td>
+                        <td>${c.descripcion || '-'}</td>
+                        <td>
+                            <button class="btn-admin" onclick="prepararEdicion(${c.id}, '${c.nombre}', '${c.descripcion || ''}')">Editar</button>
+                            <button class="btn-admin" style="background:#fee2e2; color:#b91c1c;" onclick="eliminarCat(${c.id})">Eliminar</button>
+                        </td>
+                    </tr>
+                `).join('');
+            };
+
+            window.prepararEdicion = (id, nombre, desc) => {
+                editId = id;
+                document.getElementById('cat-nombre').value = nombre;
+                document.getElementById('cat-desc').value = desc;
+                document.getElementById('form-title').textContent = "Editando Categoría #" + id;
+                document.getElementById('btn-guardar').textContent = "Actualizar Cambios";
+            };
+
+            window.eliminarCat = async (id) => {
+                if(confirm('¿Estás seguro de eliminar esta categoría?')) {
+                    await Entidades.eliminar('categorias', id);
+                    render();
+                }
+            };
+
+            form.onsubmit = async (e) => {
+                e.preventDefault();
+                const data = { 
+                    nombre: document.getElementById('cat-nombre').value,
+                    descripcion: document.getElementById('cat-desc').value
+                };
+
+                if(editId) {
+                    await Entidades.actualizar('categorias', editId, data);
+                } else {
+                    await Entidades.crear('categorias', data);
+                }
+                
+                form.reset();
+                editId = null;
+                document.getElementById('form-title').textContent = "Crear Nueva Categoría";
+                document.getElementById('btn-guardar').textContent = "Guardar Categoría";
+                render();
+            };
+
+            btnCancelar.onclick = () => {
+                form.reset();
+                editId = null;
+                document.getElementById('form-title').textContent = "Crear Nueva Categoría";
+            };
+
+            btnSync.onclick = async () => {
+                btnSync.textContent = "⏳...";
+                await Entidades.sincronizar('categorias');
+                render();
+                btnSync.textContent = "🔄 Sincronizar Nube";
+            };
+
+            // Carga inicial
+            render();
+        });
+    </script>
+</body>
+</html>

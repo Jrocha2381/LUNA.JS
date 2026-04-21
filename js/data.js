@@ -126,6 +126,34 @@ function cargarProductos() {
   return base.map((item) => normalizarProducto(item, base));
 }
 
+/**
+ * Carga productos desde la API de Google Sheets y actualiza el estado local
+ */
+async function sincronizarProductosAPI() {
+  try {
+    if (typeof window.API !== 'undefined') {
+      const productosAPI = await window.API.get('productos');
+      if (productosAPI && Array.isArray(productosAPI)) {
+        guardarProductos(productosAPI);
+        console.log("✅ Productos sincronizados desde API");
+        // Disparar evento para que el catálogo se refresque solo
+        window.dispatchEvent(new CustomEvent("productosActualizados", { detail: productosAPI }));
+        return true;
+      }
+    }
+  } catch (error) {
+    console.error("❌ Error sincronizando con API:", error);
+  }
+  return false;
+}
+
+// Autoejecutar sincronización al cargar el script
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  sincronizarProductosAPI();
+} else {
+  document.addEventListener("DOMContentLoaded", sincronizarProductosAPI);
+}
+
 var productos = cargarProductos();
 
 if (!localStorage.getItem(STORAGE_PRODUCTOS_KEY)) {
@@ -224,3 +252,4 @@ window.inactivarProducto = inactivarProducto;
 window.reactivarProducto = reactivarProducto;
 window.eliminarProducto = eliminarProducto;
 window.CATEGORIAS_PERMITIDAS = CATEGORIAS_PERMITIDAS;
+window.sincronizarProductosAPI = sincronizarProductosAPI;

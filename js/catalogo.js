@@ -1,4 +1,6 @@
 // js/catalogo.js (usa funciones globales definidas en data.js y carrito.js)
+// Al cargar la página, intentamos sincronizar con la nube primero
+if (window.sincronizarProductosAPI) window.sincronizarProductosAPI().then(() => renderizarProductos());
 
 const contenedor = document.querySelector(".productos__container");
 const buscador = document.querySelector("#buscador");

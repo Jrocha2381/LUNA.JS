@@ -1,4 +1,10 @@
-﻿const ADMIN_SESSION_KEY = "luna_admin_session";
+﻿if (window.top !== window.self) {
+  // Frame-breaker: Si el panel admin intenta cargarse dentro de un iframe, 
+  // forzamos la recarga en la ventana principal para evitar anidamiento infinito.
+  window.top.location.href = window.location.href;
+}
+
+const ADMIN_SESSION_KEY = "luna_admin_session";
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "luna123";
 
@@ -38,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const errorLabel = document.getElementById("login-error");
   const btnCerrarSesion = document.getElementById("btn-cerrar-sesion");
   const adminFrame = document.getElementById("admin-frame");
-  const navItems = document.querySelectorAll(".nav-item[data-src]");
+  const navItems = document.querySelectorAll(".nav-item");
   const viewTitle = document.getElementById("view-title");
 
   const mostrarVista = (autenticado) => {
@@ -48,6 +54,11 @@ document.addEventListener("DOMContentLoaded", () => {
       loginContainer.classList.add("oculto");
       dashboardContainer.classList.remove("oculto");
       document.body.classList.add("admin-mode");
+
+      // Cargamos el contenido del iframe SOLO cuando el usuario está autenticado
+      if (adminFrame && !adminFrame.src) {
+        adminFrame.src = "admin.html";
+      }
     } else {
       loginContainer.classList.remove("oculto");
       dashboardContainer.classList.add("oculto");
@@ -57,8 +68,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Navegación del Dashboard
   navItems.forEach(item => {
-    item.addEventListener("click", () => {
+    item.addEventListener("click", (e) => {
       const src = item.dataset.src;
+      const href = item.getAttribute("href");
+
+      // BUG FIX: Si el destino es volver a la tienda (index.html), redirigimos la ventana principal.
+      // Esto evita que la tienda se abra DENTRO del panel administrativo.
+      if ((src && src.includes("index.html")) || (href && href.includes("index.html"))) {
+        e.preventDefault();
+        window.top.location.href = href || src;
+        return;
+      }
+
+      // Si el elemento no tiene data-src, es un enlace normal (como el de Volver) 
+      // o un botón de acción, por lo que dejamos que siga su curso natural.
+      if (!src) {
+        return;
+      }
+
+      e.preventDefault(); // Solo prevenimos el default si vamos a cargar contenido en el iframe
       navItems.forEach(i => i.classList.remove("active"));
       item.classList.add("active");
 

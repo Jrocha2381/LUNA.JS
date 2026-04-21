@@ -245,6 +245,24 @@ function agregarAlCarrito(producto) {
   guardarCarrito(carrito);
 }
 
+function pausarVentaActual() {
+  const carrito = obtenerCarrito();
+  if (carrito.length === 0) return;
+
+  const ventasAbiertas = JSON.parse(localStorage.getItem("ventas_abiertas") || "[]");
+  const nuevaVentaAbierta = {
+    id: Date.now(),
+    nombre: `Venta ${new Date().toLocaleTimeString()}`,
+    items: [...carrito],
+    total: carrito.reduce((s, i) => s + (precioProducto(i) * i.cantidad), 0)
+  };
+
+  ventasAbiertas.push(nuevaVentaAbierta);
+  localStorage.setItem("ventas_abiertas", JSON.stringify(ventasAbiertas));
+  guardarCarrito([]);
+  mostrarToast("success", "Venta guardada", "La venta se movió a estado abierto.");
+}
+
 function activarEventosCarrito() {
   renderCarrito();
   renderAdminProductos();
@@ -268,6 +286,7 @@ function renderCarrito() {
     return;
   }
 
+  const ventasAbiertas = JSON.parse(localStorage.getItem("ventas_abiertas") || "[]");
   let html = "";
   let totalGeneral = 0;
 
@@ -294,7 +313,10 @@ function renderCarrito() {
         </div>
         <div class="controles-item">
           <p><strong>Subtotal: ${formatearMoneda(subtotal)}</strong></p>
-          <button class="btn-eliminar" data-index="${index}">Eliminar</button>
+          <div style="display:flex; gap:5px;">
+            <button class="btn-admin-edit" onclick="window.abrirEditorFlujo(${item.id})" style="padding:5px 10px; background:#f0f2f5; border:1px solid #ddd; border-radius:5px; cursor:pointer;">✏️</button>
+            <button class="btn-eliminar" data-index="${index}">Eliminar</button>
+          </div>
         </div>
       </div>
     `;
@@ -306,10 +328,27 @@ function renderCarrito() {
       <h3>Total a pagar: ${formatearMoneda(totalGeneral)}</h3>
       <div class="botones-finales">
         <button id="vaciar-carrito" class="btn-vaciar">Vaciar Carrito</button>
+        <button id="pausar-venta" class="btn-secundario" style="background:#6c757d; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">Pausar Venta</button>
         <button id="finalizar-compra" class="btn-finalizar">Finalizar Compra</button>
       </div>
     </div>
   `;
+
+  if (ventasAbiertas.length > 0) {
+    html += `
+      <div class="ventas-abiertas-seccion" style="margin-top:30px; border-top:2px dashed #eee; padding-top:20px;">
+        <h4>🔄 Ventas Abiertas (${ventasAbiertas.length})</h4>
+        <div style="display:grid; gap:10px; margin-top:10px;">
+          ${ventasAbiertas.map(v => `
+            <div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:10px; border-radius:8px; border:1px solid #eee;">
+              <span>${v.nombre} (${formatearMoneda(v.total)})</span>
+              <button onclick="window.retomarVenta(${v.id})" style="background:#8a9b2f; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">Retomar</button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
 
   contenedor.innerHTML = html;
   asignarEventosBotones();
@@ -327,6 +366,17 @@ function validarCarritoParaCompra(carrito) {
   }
   return "";
 }
+
+window.retomarVenta = (id) => {
+  const ventasAbiertas = JSON.parse(localStorage.getItem("ventas_abiertas") || "[]");
+  const index = ventasAbiertas.findIndex(v => v.id === id);
+  if (index === -1) return;
+
+  const venta = ventasAbiertas.splice(index, 1)[0];
+  localStorage.setItem("ventas_abiertas", JSON.stringify(ventasAbiertas));
+  guardarCarrito(venta.items);
+  mostrarToast("success", "Venta retomada", "Puedes continuar con la edición.");
+};
 
 function asignarEventosBotones() {
   const carrito = obtenerCarrito();
@@ -378,6 +428,11 @@ function asignarEventosBotones() {
     };
   }
 
+  const btnPausar = document.getElementById("pausar-venta");
+  if (btnPausar) {
+    btnPausar.onclick = () => pausarVentaActual();
+  }
+
   const btnFinalizar = document.getElementById("finalizar-compra");
   if (btnFinalizar) {
     btnFinalizar.onclick = () => {
@@ -406,7 +461,7 @@ window.renderAdminProductos = renderAdminProductos;
 window.activarEventosAdmin = activarEventosAdmin;
 
 document.addEventListener("DOMContentLoaded", () => {
-  try { updateCartBadge(); } catch (e) {}
+  try { updateCartBadge(); } catch (e) { }
 });
 
 function mostrarModalPago(carrito) {
@@ -515,23 +570,25 @@ function mostrarModalPago(carrito) {
 
   // Confirmar pago
   if (btnConfirmar) {
-    btnConfirmar.onclick = () => {
+    btnConfirmar.onclick = async () => {
       if (!metodoPagoSeleccionado) {
         mostrarToast("error", "Selecciona metodo", "Por favor selecciona un método de pago");
         return;
       }
 
-      let valorRecibido = 0;
-      if (metodoPagoSeleccionado === "Efectivo") {
-        valorRecibido = Number(inputValorRecibido.value) || 0;
-        if (valorRecibido < totalGeneral) {
-          mostrarToast("error", "Monto insuficiente", "El monto recibido es menor al total");
-          return;
-        }
+      const valorRecibido = metodoPagoSeleccionado === "Efectivo" ? (Number(inputValorRecibido.value) || 0) : totalGeneral;
+
+      if (metodoPagoSeleccionado === "Efectivo" && valorRecibido < totalGeneral) {
+        mostrarToast("error", "Monto insuficiente", "El monto recibido es menor al total");
+        return;
       }
 
-      // Registrar venta
-      const venta = registrarVenta(carrito, totalGeneral, metodoPagoSeleccionado, valorRecibido);
+      // Bloquear botón para evitar doble clic
+      btnConfirmar.disabled = true;
+      btnConfirmar.textContent = "Procesando...";
+
+      // Registrar venta (ahora esperamos el registro antes de vaciar)
+      const venta = await window.registrarVenta(carrito, totalGeneral, metodoPagoSeleccionado, valorRecibido);
 
       // Actualizar stock
       const productosActuales = obtenerProductos();
@@ -710,8 +767,8 @@ function renderAdminProductos() {
           <td>
             <button class="btn-admin btn-editar" data-id="${producto.id}">Editar</button>
             ${producto.activo === false
-              ? `<button class="btn-admin btn-reactivar-admin" data-id="${producto.id}">Reactivar</button>`
-              : ""}
+          ? `<button class="btn-admin btn-reactivar-admin" data-id="${producto.id}">Reactivar</button>`
+          : ""}
             <button class="btn-admin btn-eliminar-admin" data-id="${producto.id}">Eliminar</button>
           </td>
         </tr>
