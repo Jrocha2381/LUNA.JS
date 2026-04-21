@@ -87,44 +87,37 @@ function openFormModal(item) {
     const fd = getFormData(form);
     const isNew = !fd.id;
     
-    // Generar ID temporal ÚNICO con mayor precisión
-    let tempId = null;
+    // Generar ID único si es nuevo
     if(isNew) {
-      tempId = "temp-" + Date.now() + "-" + Math.floor(Math.random() * 1000000);
-      fd.id = tempId;
-      cacheData.push(fd);
+      fd.id = "CAT-" + Date.now() + "-" + Math.floor(Math.random() * 1000000);
+    }
+    
+    // Actualizar en cache (UI optimista)
+    if(isNew) {
+      cacheData.push({...fd});
     } else {
       const idx = cacheData.findIndex(x => String(x.id) === String(fd.id));
       if(idx > -1) cacheData[idx] = { ...cacheData[idx], ...fd };
     }
     renderTable(cacheData);
-    showToast(isNew ? "Creando (en segundo plano)..." : "Actualizando (en segundo plano)...");
+    showToast(isNew ? "Creando..." : "Actualizando...");
     
-    // Guardar el tempId antes de borrarlo
-    const tempIdToFind = tempId;
-    if(isNew) delete fd.id; // Quitar ID temporal antes de enviar a Sheets
-    
-    // Guardar silenciosamente
-    saveEntity(RESOURCE, fd).then(result => {
-      const savedItem = result.data || fd;
+    // Guardar a base de datos
+    try {
+      const result = await saveEntity(RESOURCE, fd);
+      if(result.success) {
+        showToast(isNew ? "✓ Categoría creada" : "✓ Categoría actualizada", "success");
+      } else {
+        showToast("Error al guardar", "error");
+      }
+    } catch(err) {
+      console.error("Error guardando categoría:", err);
+      showToast("Error al guardar la categoría", "error");
+      // Revertir en caso de error
       if(isNew) {
-        // Buscar por el ID temporal EXACTO que creamos
-        const tempIdx = cacheData.findIndex(x => String(x.id) === String(tempIdToFind));
-        if(tempIdx > -1 && savedItem?.id) {
-          // Reemplazar solo el elemento con ese ID temporal específico
-          cacheData[tempIdx] = { ...savedItem };
-        } else if(tempIdx > -1 && !savedItem.id) {
-          cacheData[tempIdx].id = "ID-" + Date.now() + "-" + Math.floor(Math.random() * 1000000);
-        }
-      } else if(savedItem?.id) {
-        const idx = cacheData.findIndex(x => String(x.id) === String(savedItem.id));
-        if(idx > -1) cacheData[idx] = savedItem;
+        cacheData = cacheData.filter(x => x.id !== fd.id);
       }
       renderTable(cacheData);
-    }).catch(() => {
-      showToast("Error guardando. Refresca la pestaña.", "error");
-      cacheData = cacheData.filter(x => !String(x.id).startsWith("temp-"));
-      renderTable(cacheData);
-    });
+    }
   });
 }
