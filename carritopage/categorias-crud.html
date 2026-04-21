@@ -23,10 +23,6 @@
                         Nombre de la Categoría *
                         <input type="text" id="cat-nombre" required placeholder="Ej: Arte, Oficina..." />
                     </label>
-                    <label>
-                        Descripción (opcional)
-                        <input type="text" id="cat-desc" placeholder="Breve descripción" />
-                    </label>
                 </div>
                 <div class="form-actions">
                     <button type="submit" id="btn-guardar" class="btn-admin-primario">Guardar Categoría</button>
@@ -40,7 +36,6 @@
                         <tr>
                             <th>ID</th>
                             <th>Nombre</th>
-                            <th>Descripción</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -70,22 +65,20 @@
                 const cats = Entidades.obtener('categorias');
                 tbody.innerHTML = cats.map(c => `
                     <tr>
-                        <td>${c.id}</td>
-                        <td><strong>${c.nombre}</strong></td>
-                        <td>${c.descripcion || '-'}</td>
+                        <td><small>${c.id || '-'}</small></td>
+                        <td><strong>${c.nombre || '-'}</strong></td>
                         <td>
-                            <button class="btn-admin" onclick="prepararEdicion(${c.id}, '${c.nombre}', '${c.descripcion || ''}')">Editar</button>
-                            <button class="btn-admin" style="background:#fee2e2; color:#b91c1c;" onclick="eliminarCat(${c.id})">Eliminar</button>
+                            <button class="btn-admin" onclick="window.prepararEdicion('${c.id}', '${(c.nombre || '').replace(/'/g, "\\'")}')">Editar</button>
+                            <button class="btn-admin" style="background:#fee2e2; color:#b91c1c;" onclick="window.eliminarCat('${c.id}')">Eliminar</button>
                         </td>
                     </tr>
                 `).join('');
             };
 
-            window.prepararEdicion = (id, nombre, desc) => {
+            window.prepararEdicion = (id, nombre) => {
                 editId = id;
                 document.getElementById('cat-nombre').value = nombre;
-                document.getElementById('cat-desc').value = desc;
-                document.getElementById('form-title').textContent = "Editando Categoría #" + id;
+                document.getElementById('form-title').textContent = "Editando Categoría: " + nombre;
                 document.getElementById('btn-guardar').textContent = "Actualizar Cambios";
             };
 
@@ -99,9 +92,13 @@
             form.onsubmit = async (e) => {
                 e.preventDefault();
                 const data = { 
-                    nombre: document.getElementById('cat-nombre').value,
-                    descripcion: document.getElementById('cat-desc').value
+                    nombre: document.getElementById('cat-nombre').value.trim()
                 };
+
+                if (!data.nombre) {
+                    alert('El nombre es obligatorio');
+                    return;
+                }
 
                 if(editId) {
                     await Entidades.actualizar('categorias', editId, data);
@@ -120,13 +117,16 @@
                 form.reset();
                 editId = null;
                 document.getElementById('form-title').textContent = "Crear Nueva Categoría";
+                document.getElementById('btn-guardar').textContent = "Guardar Categoría";
             };
 
             btnSync.onclick = async () => {
-                btnSync.textContent = "⏳...";
+                btnSync.textContent = "⏳ Sincronizando...";
+                btnSync.disabled = true;
                 await Entidades.sincronizar('categorias');
                 render();
                 btnSync.textContent = "🔄 Sincronizar Nube";
+                btnSync.disabled = false;
             };
 
             // Carga inicial

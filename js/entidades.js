@@ -1,64 +1,124 @@
 // js/entidades.js - Gestión de Clientes, Proveedores y Categorías
+// Estructura sincronizada con Google Sheets
 
 const ENTIDADES_CONFIG = {
-    clientes: { key: "pos_clientes", route: "clientes" },
-    proveedores: { key: "pos_proveedores", route: "proveedores" },
-    categorias: { key: "pos_categorias", route: "categorias" }
+    clientes: {
+        key: "pos_clientes",
+        route: "clientes",
+        campos: ['id', 'nombre', 'telefono', 'correo']
+    },
+    proveedores: {
+        key: "pos_proveedores",
+        route: "proveedores",
+        campos: ['id', 'nombre', 'telefono', 'correo']
+    },
+    categorias: {
+        key: "pos_categorias",
+        route: "categorias",
+        campos: ['id', 'nombre']
+    }
 };
 
 export const Entidades = {
     obtener(tipo) {
         const config = ENTIDADES_CONFIG[tipo];
+        if (!config) return [];
         return JSON.parse(localStorage.getItem(config.key) || "[]");
     },
 
     async sincronizar(tipo) {
         const config = ENTIDADES_CONFIG[tipo];
-        if (!window.API) return;
+        if (!config || !window.API) return [];
         try {
+            console.log(`🔄 Sincronizando ${tipo}...`);
             const datos = await window.API.get(config.route);
-            localStorage.setItem(config.key, JSON.stringify(datos));
-            return datos;
+            if (Array.isArray(datos)) {
+                localStorage.setItem(config.key, JSON.stringify(datos));
+                console.log(`✅ ${tipo} sincronizados:`, datos.length, 'registros');
+                return datos;
+            }
         } catch (e) {
-            console.error(`Error sincronizando ${tipo}`, e);
+            console.error(`❌ Error sincronizando ${tipo}:`, e);
         }
+        return this.obtener(tipo);
     },
 
     async crear(tipo, data) {
         const config = ENTIDADES_CONFIG[tipo];
+        if (!config) return null;
+
         const lista = this.obtener(tipo);
-        const nuevo = { id: Date.now(), ...data };
+
+        // Generar ID según el tipo
+        let nuevoId = this._generarId(tipo);
+        const nuevo = { id: nuevoId, ...data };
+
         lista.push(nuevo);
         localStorage.setItem(config.key, JSON.stringify(lista));
 
+        // Sincronizar con Google Sheets
         if (window.API) {
-            await window.API.post(config.route, { action: 'create', data: nuevo });
+            try {
+                await window.API.post(config.route, { action: 'create', data: nuevo });
+                console.log(`✅ ${tipo} creado:`, nuevo);
+            } catch (e) {
+                console.error(`❌ Error al crear ${tipo} en API:`, e);
+            }
         }
         return nuevo;
     },
 
     async actualizar(tipo, id, cambios) {
         const config = ENTIDADES_CONFIG[tipo];
+        if (!config) return;
+
         let lista = this.obtener(tipo);
-        const index = lista.findIndex(item => item.id == id);
-        if (index === -1) return;
+        const index = lista.findIndex(item => item.id == id || String(item.id) === String(id));
+
+        if (index === -1) {
+            console.warn(`⚠️ ${tipo} con ID ${id} no encontrado`);
+            return;
+        }
 
         lista[index] = { ...lista[index], ...cambios };
         localStorage.setItem(config.key, JSON.stringify(lista));
 
+        // Sincronizar con Google Sheets
         if (window.API) {
-            await window.API.post(config.route, { action: 'update', id, data: cambios });
+            try {
+                await window.API.post(config.route, {
+                    action: 'update',
+                    id: lista[index].id,
+                    data: lista[index]
+                });
+                console.log(`✅ ${tipo} actualizado:`, lista[index]);
+            } catch (e) {
+                console.error(`❌ Error al actualizar ${tipo} en API:`, e);
+            }
         }
     },
 
     async eliminar(tipo, id) {
         const config = ENTIDADES_CONFIG[tipo];
+        if (!config) return;
+
         let lista = this.obtener(tipo);
-        lista = lista.filter(item => item.id != id);
+        const itemAEliminar = lista.find(item => item.id == id || String(item.id) === String(id));
+        lista = lista.filter(item => item.id != id && String(item.id) !== String(id));
+
         localStorage.setItem(config.key, JSON.stringify(lista));
 
-        if (window.API) {
-            await window.API.post(config.route, { action: 'delete', id });
+        // Sincronizar con Google Sheets
+        if (window.API && itemAEliminar) {
+            try {
+                await window.API.post(config.route, {
+                    action: 'delete',
+                    id: itemAEliminar.id
+                });
+                console.log(`✅ ${tipo} eliminado:`, itemAEliminar.id);
+            } catch (e) {
+                console.error(`❌ Error al eliminar ${tipo} en API:`, e);
+            }
         }
     },
 
@@ -67,9 +127,19 @@ export const Entidades = {
         const t = termino.toLowerCase();
         return lista.filter(item =>
             (item.nombre && item.nombre.toLowerCase().includes(t)) ||
+            (item.correo && item.correo.toLowerCase().includes(t)) ||
             (item.email && item.email.toLowerCase().includes(t)) ||
-            (item.documento && item.documento.includes(t))
+            (item.telefono && item.telefono.includes(t))
         );
+    },
+
+    _generarId(tipo) {
+        const prefijo = tipo === 'clientes' ? 'CLI-' :
+            tipo === 'proveedores' ? 'PROV-' :
+                tipo === 'categorias' ? 'CAT-' : 'GEN-';
+        const timestamp = Date.now().toString().slice(-8);
+        const random = Math.random().toString(36).substring(2, 7).toUpperCase();
+        return `${prefijo}${timestamp}${random}`;
     }
 };
 

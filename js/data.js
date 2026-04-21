@@ -3,20 +3,12 @@ const STORAGE_PRODUCTOS_KEY = "productos";
 const STORAGE_CODIGO_CONTADOR_KEY = "productosCodigoContador";
 const CATEGORIAS_PERMITIDAS = ["Escolar", "Oficina", "Arte", "Papeleria"];
 
-const productosIniciales = [
-  { id: 1, nombre: "Cuaderno Profesional", categoria: "Escolar", precioVenta: 12000, costo: 7000, imagen: "../../images/cuaderno.png", descripcion: "Cuaderno argollado profesional", seguimientoInventario: true, stock: 15, activo: true },
-  { id: 2, nombre: "Pegastick", categoria: "Escolar", precioVenta: 3000, costo: 1200, imagen: "../../images/Pegastick.png", descripcion: "Pegante en barra de alta calidad", seguimientoInventario: true, stock: 25, activo: true },
-  { id: 3, nombre: "Marcador Permanente", categoria: "Escolar", precioVenta: 4000, costo: 1800, imagen: "../../images/marcadores.png", descripcion: "Marcador negro punta gruesa", seguimientoInventario: true, stock: 30, activo: true },
-  { id: 4, nombre: "Pinturas", categoria: "Arte", precioVenta: 12000, costo: 6500, imagen: "../../images/pintura.png", descripcion: "Set de pinturas acrilicas", seguimientoInventario: true, stock: 12, activo: true },
-  { id: 5, nombre: "Plastilina", categoria: "Arte", precioVenta: 3000, costo: 1300, imagen: "../../images/plastilina.png", descripcion: "Barra de plastilina de colores", seguimientoInventario: true, stock: 40, activo: true },
-  { id: 6, nombre: "Pinceles", categoria: "Arte", precioVenta: 4000, costo: 1700, imagen: "../../images/pinceles.jpeg", descripcion: "Set de pinceles variados", seguimientoInventario: true, stock: 20, activo: true },
-  { id: 7, nombre: "Carpeta Plastica", categoria: "Oficina", precioVenta: 5000, costo: 2100, imagen: "../../images/carpeta.png", descripcion: "Carpeta con broche resistente", seguimientoInventario: true, stock: 50, activo: true },
-  { id: 8, nombre: "Calculadora Basica", categoria: "Oficina", precioVenta: 25000, costo: 16000, imagen: "../../images/calculadora.webp", descripcion: "Calculadora de 8 digitos", seguimientoInventario: true, stock: 15, activo: true },
-  { id: 9, nombre: "Agenda 2026", categoria: "Oficina", precioVenta: 18000, costo: 9800, imagen: "../../images/agenda.png", descripcion: "Agenda diaria ejecutiva", seguimientoInventario: true, stock: 100, activo: true },
-  { id: 10, nombre: "Cinta Adhesiva", categoria: "Papeleria", precioVenta: 12000, costo: 6700, imagen: "../../images/cinta.png", descripcion: "Cinta adhesiva transparente", seguimientoInventario: true, stock: 60, activo: true },
-  { id: 11, nombre: "Papel de Pintura", categoria: "Papeleria", precioVenta: 3000, costo: 1100, imagen: "../../images/papelp.jpeg", descripcion: "Pliego de papel para arte", seguimientoInventario: true, stock: 80, activo: true },
-  { id: 12, nombre: "Tijeras", categoria: "Papeleria", precioVenta: 4000, costo: 2200, imagen: "../../images/tijeras.png", descripcion: "Tijeras de corte preciso", seguimientoInventario: true, stock: 35, activo: true }
-];
+/**
+ * DATOS FALLBACK (se usan solo si la API no responde)
+ * En MVP2, los datos DEBEN provenir de Google Sheets
+ * Estos datos iniciales son solo para desarrollo local
+ */
+const productosIniciales = [];
 
 function limpiarTexto(valor) {
   return String(valor || "").trim();
@@ -33,6 +25,7 @@ function normalizarCategoriaPermitida(categoria) {
   const entrada = textoNormalizado(categoria);
   return (
     CATEGORIAS_PERMITIDAS.find((cat) => textoNormalizado(cat) === entrada) ||
+    categoria || // Si no coincide, devuelve la categoría original
     ""
   );
 }
@@ -41,6 +34,178 @@ function toNumber(valor) {
   const n = Number(valor);
   return Number.isFinite(n) ? n : 0;
 }
+
+function toBoolean(valor) {
+  if (typeof valor === 'boolean') return valor;
+  return String(valor).toUpperCase() === 'TRUE';
+}
+
+function obtenerSiguienteId(lista) {
+  return lista.length ? Math.max(...lista.map((p) => Number(p.id) || 0)) + 1 : 1;
+}
+
+function obtenerProductos() {
+  return productos;
+}
+
+function guardarProductos(nuevosProductos = productos) {
+  productos = nuevosProductos.map((item) => normalizarProducto(item, nuevosProductos));
+  localStorage.setItem(STORAGE_PRODUCTOS_KEY, JSON.stringify(productos));
+  // Mantener referencia global actualizada
+  window.productos = productos;
+  // Notificar a toda la aplicación que los datos cambiaron para reflejo inmediato
+  window.dispatchEvent(new CustomEvent("productosActualizados", { detail: productos }));
+  return productos;
+}
+
+function cargarProductos() {
+  const saved = localStorage.getItem(STORAGE_PRODUCTOS_KEY);
+  const base = saved ? JSON.parse(saved) : productosIniciales.slice();
+  return base.map((item) => normalizarProducto(item, base));
+}
+
+/**
+ * Carga productos desde la API de Google Sheets y actualiza el estado local
+ */
+async function sincronizarProductosAPI() {
+  try {
+    if (typeof window.API !== 'undefined') {
+      console.log("🔄 Sincronizando productos desde Google Sheets...");
+      const productosAPI = await window.API.get('productos');
+      if (productosAPI && Array.isArray(productosAPI)) {
+        guardarProductos(productosAPI);
+        console.log("✅ Productos sincronizados desde API:", productosAPI.length, "registros");
+        // Disparar evento para que el catálogo se refresque solo
+        window.dispatchEvent(new CustomEvent("productosActualizados", { detail: productosAPI }));
+        return true;
+      }
+    }
+  } catch (error) {
+    console.error("❌ Error sincronizando con API:", error);
+  }
+  return false;
+}
+
+// Autoejecutar sincronización al cargar el script
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  sincronizarProductosAPI();
+} else {
+  document.addEventListener("DOMContentLoaded", sincronizarProductosAPI);
+}
+
+var productos = cargarProductos();
+
+if (!localStorage.getItem(STORAGE_PRODUCTOS_KEY)) {
+  guardarProductos(productos);
+}
+
+function normalizarProducto(producto, listaExistente = []) {
+  const precioVenta = toNumber(producto.precioVenta ?? producto.precio);
+  const seguimientoInventario = toBoolean(producto.seguimientoInventario ?? true);
+  const stock = seguimientoInventario ? Math.max(0, toNumber(producto.stock)) : 0;
+  const categoria = normalizarCategoriaPermitida(producto.categoria) || "";
+
+  return {
+    id: producto.id != null ? producto.id : obtenerSiguienteId(listaExistente),
+    nombre: limpiarTexto(producto.nombre),
+    categoria,
+    precioVenta: Math.max(0, precioVenta),
+    precio: Math.max(0, precioVenta),
+    costo: Math.max(0, toNumber(producto.costo)),
+    seguimientoInventario,
+    stock,
+    imagen: limpiarTexto(producto.imagen),
+    descripcion: limpiarTexto(producto.descripcion),
+    activo: producto.activo !== false
+  };
+}
+
+function validarProducto(input) {
+  const errores = [];
+  const nombre = limpiarTexto(input.nombre);
+  const precioVenta = toNumber(input.precioVenta);
+  const costo = toNumber(input.costo);
+  const seguimientoInventario = Boolean(input.seguimientoInventario);
+  const stock = toNumber(input.stock);
+
+  if (!nombre) errores.push("El nombre es obligatorio.");
+  if (!Number.isFinite(precioVenta) || precioVenta < 0) errores.push("El precio de venta debe ser un numero no negativo.");
+  if (!Number.isFinite(costo) || costo < 0) errores.push("El costo debe ser un numero no negativo.");
+  if (seguimientoInventario && (!Number.isFinite(stock) || stock < 0)) {
+    errores.push("El stock debe ser un numero no negativo cuando hay seguimiento de inventario.");
+  }
+
+  return errores;
+}
+
+function crearProducto(input) {
+  const errores = validarProducto(input);
+  if (errores.length) {
+    return { ok: false, errores };
+  }
+
+  const listaActual = obtenerProductos();
+  const nuevoId = obtenerSiguienteId(listaActual);
+  const nuevo = normalizarProducto(
+    {
+      ...input,
+      id: nuevoId,
+      activo: true
+    },
+    listaActual
+  );
+
+  const nuevaLista = [...listaActual, nuevo];
+  guardarProductos(nuevaLista);
+  return { ok: true, producto: nuevo, productos: nuevaLista };
+}
+
+function actualizarProducto(id, cambios) {
+  const listaActual = obtenerProductos();
+  const index = listaActual.findIndex((p) => Number(p.id) === Number(id));
+  if (index < 0) {
+    return { ok: false, errores: ["Producto no encontrado."] };
+  }
+
+  const productoBase = listaActual[index];
+  const payload = { ...productoBase, ...cambios };
+  const errores = validarProducto(payload);
+  if (errores.length) {
+    return { ok: false, errores };
+  }
+
+  const actualizado = normalizarProducto(payload, listaActual);
+  const nuevaLista = [...listaActual];
+  nuevaLista[index] = actualizado;
+  guardarProductos(nuevaLista);
+  return { ok: true, producto: actualizado, productos: nuevaLista };
+}
+
+function inactivarProducto(id) {
+  return actualizarProducto(id, { activo: false });
+}
+
+function reactivarProducto(id) {
+  return actualizarProducto(id, { activo: true });
+}
+
+function eliminarProducto(id) {
+  const listaActual = obtenerProductos();
+  const nuevaLista = listaActual.filter((p) => Number(p.id) !== Number(id));
+  if (nuevaLista.length === listaActual.length) {
+    return { ok: false, errores: ["Producto no encontrado."] };
+  }
+  guardarProductos(nuevaLista);
+  return { ok: true, productos: nuevaLista };
+}
+
+// Exponer en global para uso sin módulos
+window.obtenerProductos = obtenerProductos;
+window.guardarProductos = guardarProductos;
+window.productos = productos;
+window.validarProducto = validarProducto;
+window.crearProducto = crearProducto;
+window.actualizarProducto = actualizarProducto;
 
 function slugCategoria(categoria) {
   const base = limpiarTexto(categoria)

@@ -1,13 +1,17 @@
 // js/compras.js
+// Estructura sincronizada con Google Sheets
 
 /**
  * Registra una compra en el sistema, actualiza el inventario y envía los datos
- * a un servicio externo.
+ * a Google Sheets.
+ * 
+ * Estructura: { id, fecha, proveedor, total, itemsJson }
  * 
  * @param {Array} items - Lista de objetos { id, cantidad, costo }
+ * @param {string} proveedorId - ID del proveedor (opcional)
  * @returns {Object} La compra registrada
  */
-async function registrarCompra(items) {
+async function registrarCompra(items, proveedorId = "") {
     if (!items || items.length === 0) {
         throw new Error("La compra debe tener al menos un producto.");
     }
@@ -26,11 +30,13 @@ async function registrarCompra(items) {
 
     const totalCompra = itemsProcesados.reduce((sum, it) => sum + it.subtotal, 0);
 
+    // Estructura que coincide con Google Sheets
     const nuevaCompra = {
-        id: Date.now(),
-        fecha: new Date().toLocaleString(),
-        items: itemsProcesados,
-        total: totalCompra
+        id: `COMPRA-${Date.now()}${Math.random().toString(36).substring(2, 5)}`,
+        fecha: new Date().toLocaleString('es-CO'),
+        proveedor: proveedorId || "",
+        total: totalCompra,
+        itemsJson: JSON.stringify(itemsProcesados)
     };
 
     // 1. Persistencia Local (Historial de Compras)
@@ -51,25 +57,28 @@ async function registrarCompra(items) {
         return p;
     });
     window.guardarProductos(nuevosProductos);
+    console.log("✅ Stock actualizado para", itemsProcesados.length, "productos");
 
-    // 3. Envío a servicio externo
+    // 3. Envío a servicio externo (Google Sheets)
     try {
         await enviarCompraAServicioExterno(nuevaCompra);
     } catch (error) {
-        console.error("Error al sincronizar con servicio externo:", error);
-        // Opcional: Podrías lanzar el error o manejar un estado de "pendiente de sincronización"
+        console.error("❌ Error al sincronizar compra con API:", error);
+        console.warn("⚠️ Compra guardada localmente pero no sincronizada");
     }
 
     return nuevaCompra;
 }
 
 /**
- * Simulación de envío a un servicio externo (API REST / Webhook)
+ * Envía una compra a Google Sheets
  */
 async function enviarCompraAServicioExterno(compra) {
-    console.log("📤 Enviando compra al servicio externo...", compra);
+    console.log("📤 Enviando compra a Google Sheets...", compra.id);
     if (window.API) {
-        return await window.API.post('compras', compra);
+        const resultado = await window.API.post('compras', compra);
+        console.log("✅ Compra enviada:", resultado);
+        return resultado;
     }
     return { success: false, message: "API no disponible" };
 }

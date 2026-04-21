@@ -24,16 +24,12 @@
                         <input type="text" id="prov-nombre" required placeholder="Ej: Distribuidora Papelera S.A." />
                     </label>
                     <label>
-                        Persona de Contacto
-                        <input type="text" id="prov-contacto" placeholder="Nombre del asesor" />
-                    </label>
-                    <label>
                         Teléfono / WhatsApp
-                        <input type="text" id="prov-tel" placeholder="300 000 0000" />
+                        <input type="text" id="prov-telefono" placeholder="300 000 0000" />
                     </label>
                     <label>
                         Correo Electrónico
-                        <input type="email" id="prov-email" placeholder="contacto@proveedor.com" />
+                        <input type="email" id="prov-correo" placeholder="contacto@proveedor.com" />
                     </label>
                 </div>
                 <div class="form-actions">
@@ -46,10 +42,10 @@
                 <table class="tabla-productos">
                     <thead>
                         <tr>
+                            <th>ID</th>
                             <th>Nombre</th>
-                            <th>Contacto</th>
                             <th>Teléfono</th>
-                            <th>Email</th>
+                            <th>Correo</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -58,6 +54,101 @@
                     </tbody>
                 </table>
             </div>
+        </section>
+    </main>
+
+    <script src="admin-auth.js"></script>
+    <script type="module">
+        import { Entidades } from '../js/entidades.js';
+
+        document.addEventListener("DOMContentLoaded", () => {
+            if (window.validarSesionAdmin && !window.validarSesionAdmin()) return;
+
+            const form = document.getElementById('proveedor-form');
+            const tbody = document.getElementById('lista-proveedores');
+            const btnSync = document.getElementById('btn-sync');
+            const btnCancelar = document.getElementById('btn-cancelar');
+            let editId = null;
+
+            const render = () => {
+                const provs = Entidades.obtener('proveedores');
+                tbody.innerHTML = provs.map(p => `
+                    <tr>
+                        <td><small>${p.id || '-'}</small></td>
+                        <td><strong>${p.nombre || '-'}</strong></td>
+                        <td>${p.telefono || '-'}</td>
+                        <td>${p.correo || '-'}</td>
+                        <td>
+                            <button class="btn-admin" onclick="window.prepararEdicion('${p.id}', '${(p.nombre || '').replace(/'/g, "\\'")}', '${p.telefono || ''}', '${p.correo || ''}')">Editar</button>
+                            <button class="btn-admin" style="background:#fee2e2; color:#b91c1c;" onclick="window.eliminarProv('${p.id}')">Eliminar</button>
+                        </td>
+                    </tr>
+                `).join('');
+            };
+
+            window.prepararEdicion = (id, nombre, telefono, correo) => {
+                editId = id;
+                document.getElementById('prov-nombre').value = nombre;
+                document.getElementById('prov-telefono').value = telefono;
+                document.getElementById('prov-correo').value = correo;
+                document.getElementById('form-title').textContent = "Editando Proveedor";
+                document.getElementById('btn-guardar').textContent = "Actualizar Cambios";
+            };
+
+            window.eliminarProv = async (id) => {
+                if(confirm('¿Eliminar este proveedor de la lista?')) {
+                    await Entidades.eliminar('proveedores', id);
+                    render();
+                }
+            };
+
+            form.onsubmit = async (e) => {
+                e.preventDefault();
+                const data = {
+                    nombre: document.getElementById('prov-nombre').value.trim(),
+                    telefono: document.getElementById('prov-telefono').value.trim(),
+                    correo: document.getElementById('prov-correo').value.trim()
+                };
+
+                if (!data.nombre) {
+                    alert('El nombre es obligatorio');
+                    return;
+                }
+
+                if(editId) {
+                    await Entidades.actualizar('proveedores', editId, data);
+                } else {
+                    await Entidades.crear('proveedores', data);
+                }
+                
+                form.reset();
+                editId = null;
+                document.getElementById('form-title').textContent = "Registrar Nuevo Proveedor";
+                document.getElementById('btn-guardar').textContent = "Guardar Proveedor";
+                render();
+            };
+
+            btnCancelar.onclick = () => {
+                form.reset();
+                editId = null;
+                document.getElementById('form-title').textContent = "Registrar Nuevo Proveedor";
+                document.getElementById('btn-guardar').textContent = "Guardar Proveedor";
+            };
+
+            btnSync.onclick = async () => {
+                btnSync.textContent = "⏳ Sincronizando...";
+                btnSync.disabled = true;
+                await Entidades.sincronizar('proveedores');
+                render();
+                btnSync.textContent = "🔄 Sincronizar Nube";
+                btnSync.disabled = false;
+            };
+
+            render();
+        });
+    </script>
+</body>
+</html>
         </section>
     </main>
 
