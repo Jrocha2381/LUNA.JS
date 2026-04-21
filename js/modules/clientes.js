@@ -13,12 +13,14 @@ export function render() {
     <div style="margin-bottom: 20px;">
       <button class="btn btn-primary" id="btn-new-${RESOURCE}"><i class="ph ph-plus"></i> Nuevo Cliente</button>
     </div>
-    <table style="width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: var(--radius); overflow: hidden;">
-      <thead style="background: var(--primary-light); text-align: left;">
-        <tr><th style="padding: 12px;">Nombre</th><th style="padding: 12px;">Teléfono</th><th style="padding: 12px;">Correo</th><th style="padding: 12px; text-align: right;">Acciones</th></tr>
-      </thead>
-      <tbody id="tbl-${RESOURCE}-body"></tbody>
-    </table>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr><th style="padding: 12px;">Nombre</th><th style="padding: 12px;">Teléfono</th><th style="padding: 12px;">Correo</th><th style="padding: 12px; text-align: right;">Acciones</th></tr>
+        </thead>
+        <tbody id="tbl-${RESOURCE}-body"></tbody>
+      </table>
+    </div>
   `;
   renderTable(cacheData);
   document.getElementById(`btn-new-${RESOURCE}`).addEventListener("click", () => openFormModal());
@@ -34,8 +36,10 @@ function renderTable(data) {
       <td style="padding: 12px;">${escapeHtml(i.telefono)}</td>
       <td style="padding: 12px;">${escapeHtml(i.correo)}</td>
       <td style="padding: 12px; text-align: right;">
-        <button class="btn btn-secondary btn-sm" onclick="window.appEditCliente('${escapeHtml(i.id)}')" style="padding: 6px 10px;"><i class="ph ph-pencil-simple"></i></button>
-        <button class="btn btn-danger btn-sm" onclick="window.appDeleteCliente('${escapeHtml(i.id)}')" style="padding: 6px 10px;"><i class="ph ph-trash"></i></button>
+        <div class="action-buttons">
+          <button class="btn btn-secondary btn-sm" onclick="window.appEditCliente('${escapeHtml(i.id)}')" style="padding: 6px 10px;"><i class="ph ph-pencil-simple"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="window.appDeleteCliente('${escapeHtml(i.id)}')" style="padding: 6px 10px;"><i class="ph ph-trash"></i></button>
+        </div>
       </td>
     </tr>
   `).join('');
@@ -67,18 +71,40 @@ function openFormModal(item) {
   `;
   showFormModal(i.id ? "Editar Cliente" : "Nuevo Cliente", formHtml, async (form) => {
     const fd = getFormData(form);
-    if(!fd.id) delete fd.id;
-    const result = await saveEntity(RESOURCE, fd);
-    showToast(i.id ? "Actualizado" : "Creado");
+    const isNew = !fd.id;
     
-    const savedItem = result.data;
-    if(i.id && savedItem?.id) {
-        cacheData[cacheData.findIndex(x => x.id === savedItem.id)] = savedItem;
-    } else if(savedItem) {
-        cacheData.push(savedItem);
+    // UI optimista al instante
+    if(isNew) {
+      fd.id = "temp-" + Date.now();
+      cacheData.push(fd);
     } else {
-        cacheData = await getEntities(RESOURCE);
+      const idx = cacheData.findIndex(x => String(x.id) === String(fd.id));
+      if(idx > -1) cacheData[idx] = { ...cacheData[idx], ...fd };
     }
     renderTable(cacheData);
+    showToast(isNew ? "Creando (en segundo plano)..." : "Actualizando (en segundo plano)...");
+    
+    if(isNew) delete fd.id; // Quitar ID temporal antes de enviar a Sheets
+    
+    // Guardar silenciosamente
+    saveEntity(RESOURCE, fd).then(result => {
+      const savedItem = result.data || fd;
+      if(isNew) {
+        const tempIdx = cacheData.findIndex(x => String(x.id).startsWith("temp-"));
+        if(tempIdx > -1 && savedItem?.id) {
+          cacheData[tempIdx] = savedItem;
+        } else if(tempIdx > -1 && !savedItem.id) {
+          cacheData[tempIdx].id = "ID-" + Date.now();
+        }
+      } else if(savedItem?.id) {
+        const idx = cacheData.findIndex(x => String(x.id) === String(savedItem.id));
+        if(idx > -1) cacheData[idx] = savedItem;
+      }
+      renderTable(cacheData);
+    }).catch(() => {
+      showToast("Error guardando. Refresca la pestaña.", "error");
+      cacheData = cacheData.filter(x => !String(x.id).startsWith("temp-"));
+      renderTable(cacheData);
+    });
   });
 }

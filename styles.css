@@ -467,3 +467,292 @@ th { background: rgba(43,122,75,0.05); font-weight: 600; color: var(--text-muted
     font-size: 52px;
   }
 }
+
+/* ==================================================
+   RESPONSIVE LAYOUTS PARA COMPRAS Y VENTAS
+   ================================================== */
+.dual-pane-container {
+  display: flex;
+  gap: 24px;
+  height: calc(100vh - 120px);
+}
+
+.dual-pane-left {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.dual-pane-right {
+  flex: 1;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.cart-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.cart-footer {
+  padding: 20px;
+  background: var(--primary-light);
+  border-top: 1px solid var(--border-color);
+}
+
+@media (max-width: 1024px) {
+  .dual-pane-container {
+    flex-direction: column;
+    height: auto;
+    gap: 16px;
+  }
+
+  .dual-pane-left {
+    flex: 1;
+    min-height: 400px;
+  }
+
+  .dual-pane-right {
+    flex: 1;
+    min-height: 400px;
+    min-width: unset;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .dual-pane-container {
+    height: auto;
+    gap: 12px;
+    padding: 0;
+  }
+
+  .dual-pane-left,
+  .dual-pane-right {
+    padding: 16px;
+    border-radius: 12px;
+    min-height: 300px;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+  }
+
+  .cart-footer {
+    padding: 16px;
+  }
+
+  .cart-footer h3,
+  .cart-footer > div {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dual-pane-container {
+    gap: 10px;
+  }
+
+  .dual-pane-left,
+  .dual-pane-right {
+    padding: 12px;
+    min-height: 250px;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 8px;
+  }
+
+  .product-card {
+    padding: 8px !important;
+    font-size: 12px !important;
+  }
+
+  .product-card div:first-child {
+    font-size: 11px !important;
+  }
+
+  .product-card div:nth-child(2) {
+    font-size: 10px !important;
+  }
+
+  .product-card div:nth-child(3) {
+    font-size: 10px !important;
+  }
+
+  .cart-footer {
+    padding: 12px;
+  }
+
+  .cart-footer h3 {
+    font-size: 14px;
+  }
+
+  .cart-footer div {
+    font-size: 14px;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 10px 12px;
+  }
+}
+
+/* ==================================================
+   RESPONSIVE TABLES
+   ================================================== */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.data-table thead {
+  background: var(--primary-light);
+  text-align: left;
+  position: sticky;
+  top: 0;
+}
+
+.data-table th {
+  padding: 12px;
+  border-bottom: 2px solid var(--border-color);
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.data-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.data-table tr:hover {
+  background: var(--primary-light);
+}
+
+@media (max-width: 768px) {
+  .data-table th,
+  .data-table td {
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+
+  .data-table .action-buttons {
+    display: flex;
+    gap: 4px;
+    flex-direction: column;
+  }
+
+  .data-table .action-buttons .btn {
+    padding: 6px 8px;
+    font-size: 12px;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .data-table th,
+  .data-table td {
+    padding: 8px 6px;
+    font-size: 12px;
+  }
+
+  .data-table {
+    font-size: 12px;
+  }
+
+  .data-table .action-buttons .btn {
+    padding: 5px 6px;
+    font-size: 11px;
+  }
+
+  .data-table th {
+    font-size: 11px;
+  }
+}
+
+/* ==================================================
+   MODAL RESPONSIVO
+   ================================================== */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    max-width: calc(100vw - 20px);
+  }
+
+  .modal-body {
+    max-height: 60vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-content {
+    width: 98%;
+    max-width: calc(100vw - 10px);
+    border-radius: 12px;
+  }
+
+  .modal-header,
+  .modal-footer {
+    padding: 12px 16px;
+  }
+
+  .modal-body {
+    padding: 16px;
+    max-height: 70vh;
+    font-size: 14px;
+  }
+
+  .modal-header h2 {
+    font-size: 16px;
+  }
+}
+
+/* ==================================================
+   TOAST RESPONSIVO
+   ================================================== */
+@media (max-width: 480px) {
+  .toast-container {
+    bottom: 12px;
+    right: 12px;
+    left: 12px;
+  }
+
+  .toast {
+    width: 100%;
+    font-size: 13px;
+    padding: 12px 16px;
+  }
+}

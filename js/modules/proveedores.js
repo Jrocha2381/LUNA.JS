@@ -21,12 +21,14 @@ export function render() {
     <div style="margin-bottom: 20px;">
       <button class="btn btn-primary" id="btn-new-${RESOURCE}"><i class="ph ph-plus"></i> Nuevo Proveedor</button>
     </div>
-    <table style="width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: var(--radius); overflow: hidden;">
-      <thead style="background: var(--primary-light); text-align: left;">
-        <tr><th style="padding: 12px;">Empresa/Nombre</th><th style="padding: 12px;">NIT</th><th style="padding: 12px;">Contacto</th><th style="padding: 12px; text-align: right;">Acciones</th></tr>
-      </thead>
-      <tbody id="tbl-${RESOURCE}-body"></tbody>
-    </table>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr><th style="padding: 12px;">Empresa/Nombre</th><th style="padding: 12px;">Teléfono</th><th style="padding: 12px;">Correo</th><th style="padding: 12px; text-align: right;">Acciones</th></tr>
+        </thead>
+        <tbody id="tbl-${RESOURCE}-body"></tbody>
+      </table>
+    </div>
   `;
   renderTable(cacheData);
   document
@@ -44,11 +46,13 @@ function renderTable(data) {
       (i) => `
     <tr style="border-bottom: 1px solid var(--border-color);">
       <td style="padding: 12px;"><strong>${escapeHtml(i.nombre)}</strong></td>
-      <td style="padding: 12px;">${escapeHtml(i.nit)}</td>
-      <td style="padding: 12px;">${escapeHtml(i.contacto)}</td>
+      <td style="padding: 12px;">${escapeHtml(i.telefono)}</td>
+      <td style="padding: 12px;">${escapeHtml(i.correo)}</td>
       <td style="padding: 12px; text-align: right;">
-        <button class="btn btn-secondary btn-sm" onclick="window.appEditProveedor('${escapeHtml(i.id)}')" style="padding: 6px 10px;"><i class="ph ph-pencil-simple"></i></button>
-        <button class="btn btn-danger btn-sm" onclick="window.appDeleteProveedor('${escapeHtml(i.id)}')" style="padding: 6px 10px;"><i class="ph ph-trash"></i></button>
+        <div class="action-buttons">
+          <button class="btn btn-secondary btn-sm" onclick="window.appEditProveedor('${escapeHtml(i.id)}')" style="padding: 6px 10px;"><i class="ph ph-pencil-simple"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="window.appDeleteProveedor('${escapeHtml(i.id)}')" style="padding: 6px 10px;"><i class="ph ph-trash"></i></button>
+        </div>
       </td>
     </tr>
   `,
@@ -76,12 +80,12 @@ function openFormModal(item) {
       <input type="text" name="nombre" value="${escapeHtml(i.nombre)}" required style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
     </div>
     <div style="margin-bottom: 15px;">
-      <label style="display:block; margin-bottom:4px; font-weight:600;">NIT/RUT</label>
-      <input type="text" name="nit" value="${escapeHtml(i.nit)}" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
+      <label style="display:block; margin-bottom:4px; font-weight:600;">Teléfono</label>
+      <input type="text" name="telefono" value="${escapeHtml(i.telefono)}" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
     </div>
     <div style="margin-bottom: 15px;">
-      <label style="display:block; margin-bottom:4px; font-weight:600;">Teléfono de Contacto</label>
-      <input type="text" name="contacto" value="${escapeHtml(i.contacto)}" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
+      <label style="display:block; margin-bottom:4px; font-weight:600;">Correo Electrónico</label>
+      <input type="email" name="correo" value="${escapeHtml(i.correo)}" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
     </div>
   `;
   showFormModal(
@@ -89,26 +93,41 @@ function openFormModal(item) {
     formHtml,
     async (form) => {
       const fd = getFormData(form);
-      if (!fd.id) delete fd.id;
-      const result = await saveEntity(RESOURCE, fd);
-      showToast(i.id ? "Actualizado" : "Creado");
-
-      const savedItem = result.data || fd;
-      if (!savedItem.id) {
-        savedItem.id = fd.id || Date.now().toString();
-      }
-
-      if (i.id) {
-        const index = cacheData.findIndex(
-          (x) => String(x.id) === String(savedItem.id),
-        );
-        if (index > -1)
-          cacheData[index] = { ...cacheData[index], ...savedItem };
-        else cacheData.unshift(savedItem);
+      const isNew = !fd.id;
+      
+      // UI optimista al instante
+      if(isNew) {
+        fd.id = "temp-" + Date.now();
+        cacheData.unshift(fd);
       } else {
-        cacheData.unshift(savedItem);
+        const idx = cacheData.findIndex(x => String(x.id) === String(fd.id));
+        if(idx > -1) cacheData[idx] = { ...cacheData[idx], ...fd };
       }
       renderTable(cacheData);
+      showToast(isNew ? "Creando (en segundo plano)..." : "Actualizando (en segundo plano)...");
+      
+      if(isNew) delete fd.id; // Quitar ID temporal antes de enviar a Sheets
+      
+      // Guardar silenciosamente
+      saveEntity(RESOURCE, fd).then(result => {
+        const savedItem = result.data || fd;
+        if(isNew) {
+          const tempIdx = cacheData.findIndex(x => String(x.id).startsWith("temp-"));
+          if(tempIdx > -1 && savedItem?.id) {
+            cacheData[tempIdx] = savedItem;
+          } else if(tempIdx > -1 && !savedItem.id) {
+            cacheData[tempIdx].id = "ID-" + Date.now();
+          }
+        } else if(savedItem?.id) {
+          const idx = cacheData.findIndex(x => String(x.id) === String(savedItem.id));
+          if(idx > -1) cacheData[idx] = savedItem;
+        }
+        renderTable(cacheData);
+      }).catch(() => {
+        showToast("Error guardando. Refresca la pestaña.", "error");
+        cacheData = cacheData.filter(x => !String(x.id).startsWith("temp-"));
+        renderTable(cacheData);
+      });
     },
   );
 }

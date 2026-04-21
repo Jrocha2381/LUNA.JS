@@ -29,41 +29,41 @@ export async function init(container) {
 
 export function render() {
   containerElement.innerHTML = `
-    <div style="display: flex; gap: 24px; height: calc(100vh - 120px);">
+    <div class="dual-pane-container">
       <!-- Pane Izquierdo: Catálogo y Buscador -->
-      <div style="flex: 2; display: flex; flex-direction: column; background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; overflow-y: auto;">
+      <div class="dual-pane-left">
         
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
            <h2 style="font-size: 18px; font-weight: 600;">Productos</h2>
            <button class="btn btn-secondary btn-sm" id="btn-load-open"><i class="ph ph-folder-open"></i> Ventas en Espera (${openSales.length})</button>
         </div>
 
         <input type="text" id="pos-search" placeholder="Buscar producto por nombre o código..." style="background: var(--input-bg); color: var(--text-dark); padding: 12px; width: 100%; border: 1px solid var(--border-color); border-radius: var(--radius); margin-bottom: 20px; font-size: 16px;">
         
-        <div id="pos-catalog-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; overflow-y: auto;">
+        <div id="pos-catalog-grid" class="product-grid">
            <!-- Se llena dinámicamente -->
         </div>
       </div>
 
       <!-- Pane Derecho: Carrito / Ticket -->
-      <div style="flex: 1; min-width: 300px; display: flex; flex-direction: column; background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow);">
-        <div style="padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+      <div class="dual-pane-right">
+        <div style="padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
            <h2 style="font-size: 18px; font-weight: 600;" id="cart-title">Ticket Actual</h2>
            <button class="btn btn-secondary btn-sm" onclick="window.posClearCart()"><i class="ph ph-trash"></i></button>
         </div>
         
-        <div id="pos-cart-items" style="flex: 1; overflow-y: auto; padding: 20px;">
+        <div id="pos-cart-items" class="cart-container">
            <!-- Items del Carrito -->
         </div>
 
-        <div style="padding: 20px; background: var(--primary-light); border-top: 1px solid var(--border-color);">
+        <div class="cart-footer">
            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 20px; font-weight: 700; color: var(--primary-color);">
              <span>TOTAL:</span>
              <span id="pos-total">$0.00</span>
            </div>
-           <div style="display: flex; gap: 8px;">
+           <div style="display: flex; gap: 8px; flex-direction: column;">
              <button class="btn btn-secondary" style="flex:1" onclick="window.posHoldSale()"><i class="ph ph-pause"></i> Pausar</button>
-             <button class="btn btn-primary" style="flex:2" onclick="window.posCheckout()"><i class="ph ph-check-square"></i> Cobrar</button>
+             <button class="btn btn-primary" style="flex:1" onclick="window.posCheckout()"><i class="ph ph-check-square"></i> Cobrar</button>
            </div>
         </div>
       </div>

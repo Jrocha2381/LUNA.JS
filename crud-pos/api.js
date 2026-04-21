@@ -1,4 +1,4 @@
-﻿export const BASE_API = "https://script.google.com/macros/s/AKfycbz505Z0SE9dm3mmjw8A_Wkinazb-z6aasNImDa_JNcBotOBOMTRtSSB1AkNF9j_mfqx/exec"; 
+﻿export const BASE_API = "https://script.google.com/macros/s/AKfycbwBqWV20EZVA9HEyMCYUwCo_vy9U2lH5byRYNg5vGI68rwp_raTbMA8f1l4aEFJ6rmI/exec"; 
 
 // Data falsa temporal por si el servidor falla y limpiar cache viejo
 const localDB = {

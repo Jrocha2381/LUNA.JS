@@ -21,25 +21,29 @@ export async function init(container) {
 
 export function render() {
   let html = `
-    <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-      <input type="text" id="search-productos" placeholder="Buscar por nombre o código..." style="padding: 10px; width: 300px; border: 1px solid var(--border-color); border-radius: var(--radius);">
+    <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <input type="text" id="search-productos" placeholder="Buscar por nombre o código..." style="padding: 10px; flex: 1; min-width: 250px; border: 1px solid var(--border-color); border-radius: var(--radius);">
       <button class="btn btn-primary" id="btn-new-producto"><i class="ph ph-plus"></i> Nuevo Producto</button>
     </div>
   `;
   
-  html += `<table class="data-table" style="width: 100%; border-collapse: collapse; background: var(--bg-card); box-shadow: var(--shadow); border-radius: var(--radius); overflow: hidden;">
-    <thead style="background: var(--primary-light); text-align: left;">
-      <tr>
-        <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Código / Nombre</th>
-        <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Categoría</th>
-        <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Precios (C/V)</th>
-        <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Inventario (Stock)</th>
-        <th style="padding: 12px; border-bottom: 2px solid var(--border-color); text-align: right;">Acciones</th>
-      </tr>
-    </thead>
-    <tbody id="tbl-productos-body">
-    </tbody>
-  </table>`;
+  html += `
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Código / Nombre</th>
+            <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Categoría</th>
+            <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Precios (C/V)</th>
+            <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Inventario (Stock)</th>
+            <th style="padding: 12px; border-bottom: 2px solid var(--border-color); text-align: right;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tbl-productos-body">
+        </tbody>
+      </table>
+    </div>
+  `;
   
   containerElement.innerHTML = html;
   
@@ -68,8 +72,10 @@ function renderTable(data) {
         ${p.segimientoInventario === true || p.segimientoInventario === "TRUE" || p.segimientoInventario === "true" ? `<span style="color: ${p.stock <= 5 ? 'var(--danger-color)' : 'var(--primary-color)'}; font-weight: bold;">${p.stock || 0}</span>` : `<span style="color: var(--text-muted);">Sin seguimiento</span>`}
       </td>
       <td style="padding: 12px; text-align: right;">
-        <button class="btn btn-secondary btn-sm" onclick="window.appEditProducto('${escapeHtml(p.id)}')" style="padding: 6px 10px; margin-right: 4px;"><i class="ph ph-pencil-simple"></i></button>
-        <button class="btn btn-danger btn-sm" onclick="window.appDeleteProducto('${escapeHtml(p.id)}')" style="padding: 6px 10px;"><i class="ph ph-trash"></i></button>
+        <div class="action-buttons">
+          <button class="btn btn-secondary btn-sm" onclick="window.appEditProducto('${escapeHtml(p.id)}')" style="padding: 6px 10px;"><i class="ph ph-pencil-simple"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="window.appDeleteProducto('${escapeHtml(p.id)}')" style="padding: 6px 10px;"><i class="ph ph-trash"></i></button>
+        </div>
       </td>
     </tr>
   `).join('');

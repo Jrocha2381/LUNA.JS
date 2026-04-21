@@ -17,9 +17,9 @@ export async function init(container) {
 
 export function render() {
   containerElement.innerHTML = `
-    <div style="display: flex; gap: 24px; height: calc(100vh - 120px);">
+    <div class="dual-pane-container">
       <!-- Pane Izquierdo: Catálogo y Buscador -->
-      <div style="flex: 2; display: flex; flex-direction: column; background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; overflow-y: auto;">
+      <div class="dual-pane-left">
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
            <h2 style="font-size: 18px; font-weight: 600;">Productos para Comprar (Reabastecer)</h2>
@@ -27,13 +27,13 @@ export function render() {
 
         <input type="text" id="compra-search" placeholder="Buscar producto existente..." style="padding: 12px; width: 100%; border: 1px solid var(--border-color); border-radius: var(--radius); margin-bottom: 20px; font-size: 16px;">
         
-        <div id="compra-catalog-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; overflow-y: auto;">
+        <div id="compra-catalog-grid" class="product-grid">
            <!-- Se llena dinámicamente -->
         </div>
       </div>
 
       <!-- Pane Derecho: Orden de Compra -->
-      <div style="flex: 1; min-width: 300px; display: flex; flex-direction: column; background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow);">
+      <div class="dual-pane-right">
         <div style="padding: 20px; border-bottom: 1px solid var(--border-color);">
            <h2 style="font-size: 18px; font-weight: 600;">Orden de Compra</h2>
            <div style="margin-top: 10px;">
@@ -45,11 +45,11 @@ export function render() {
            </div>
         </div>
         
-        <div id="compra-cart-items" style="flex: 1; overflow-y: auto; padding: 20px;">
+        <div id="compra-cart-items" class="cart-container">
            <!-- Items de la Compra -->
         </div>
 
-        <div style="padding: 20px; background: var(--primary-light); border-top: 1px solid var(--border-color);">
+        <div class="cart-footer">
            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 20px; font-weight: 700; color: var(--primary-color);">
              <span>TOTAL COSTO:</span>
              <span id="compra-total">$0.00</span>
@@ -80,7 +80,7 @@ function renderCatalog(filter = "") {
   }
 
   grid.innerHTML = filtered.map(p => `
-    <div style="border: 1px solid var(--border-color); border-radius: var(--radius); padding: 12px; text-align: center; cursor: pointer;" onclick="window.compraAddToCart('${escapeHtml(p.id)}')">
+    <div class="product-card" style="border: 1px solid var(--border-color); border-radius: var(--radius); padding: 12px; text-align: center; cursor: pointer;" onclick="window.compraAddToCart('${escapeHtml(p.id)}')">
       <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">${escapeHtml(p.nombre)}</div>
       <div style="color: var(--text-muted); font-size: 12px;">Costo act: $${p.costo || 0}</div>
       <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Stock: ${p.stock || 0}</div>
@@ -185,13 +185,15 @@ window.compraCheckout = () => {
   showFormModal("Confirmar Registro de Compra", formHtml, async (form) => {
      const fd = getFormData(form);
      
+     const provider = providers.find(p => p.id === providerId);
+     const providerName = provider ? provider.nombre : providerId;
+     
      const compraObj = {
        id: "",
        fecha: new Date().toISOString(),
-       proveedorId: providerId,
-       metodoPago: fd.metodoPago,
+       proveedor: providerName,
        total: total,
-       itemsJson: JSON.stringify(currentPurchase)
+       items: JSON.stringify(currentPurchase)
      };
 
      // 1. Guardar Compra
