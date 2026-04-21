@@ -911,10 +911,11 @@
     grid.innerHTML = filtered
       .map(
         (p) => `
-    <div style="border: 1px solid var(--border-color); border-radius: var(--radius); padding: 12px; text-align: center; cursor: pointer;" onclick="window.compraAddToCart('${escapeHtml(p.id)}')">
+    <div style="border: 1px solid var(--border-color); border-radius: var(--radius); padding: 12px; text-align: center;">
       <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">${escapeHtml(p.nombre)}</div>
       <div style="color: var(--text-muted); font-size: 12px;">Costo act: $${p.costo || 0}</div>
       <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Stock: ${p.stock || 0}</div>
+      <button class="btn btn-primary btn-sm" style="margin-top: 8px;" onclick="window.compraAddToCart('${escapeHtml(p.id)}')"><i class="ph ph-plus"></i> Agregar</button>
     </div>
   `,
       )
@@ -964,10 +965,10 @@
       catalog2 = [];
       providers = [];
       window.compraAddToCart = (productId) => {
-        const prod = catalog2.find((p) => p.id === productId);
+        const prod = catalog2.find((p) => String(p.id) === String(productId));
         if (!prod) return;
         const existingIdx = currentPurchase.findIndex(
-          (item) => item.id === productId,
+          (item) => String(item.id) === String(productId),
         );
         if (existingIdx > -1) {
           currentPurchase[existingIdx].cantidad++;
@@ -1027,13 +1028,15 @@
           formHtml,
           async (form) => {
             const fd = getFormData(form);
+            const provider = providers.find(p => p.id === providerId);
+            const providerName = provider ? provider.nombre : providerId;
             const compraObj = {
               id: "",
-              fecha: /* @__PURE__ */ new Date().toISOString(),
-              proveedorId: providerId,
+              fecha: new Date().toISOString(),
+              proveedor: providerName,
               metodoPago: fd.metodoPago,
-              total,
-              itemsJSON: JSON.stringify(currentPurchase),
+              total: total,
+              itemsJSON: JSON.stringify(currentPurchase)
             };
             await saveEntity(RESOURCE, compraObj);
             for (let item of currentPurchase) {
@@ -1275,7 +1278,7 @@
         (i) => `
     <tr style="border-bottom: 1px solid var(--border-color);">
       <td style="padding: 12px;"><strong>${escapeHtml(i.nombre)}</strong></td>
-      <td style="padding: 12px;">${escapeHtml(i.telefono)}</td>
+      <td style="padding: 12px;">${escapeHtml(i.teléfono || i.telefono)}</td>
       <td style="padding: 12px;">${escapeHtml(i.correo)}</td>
       <td style="padding: 12px; text-align: right;">
         <button class="btn btn-secondary btn-sm" onclick="window.appEditCliente('${escapeHtml(i.id)}')" style="padding: 6px 10px;"><i class="ph ph-pencil-simple"></i></button>
@@ -1291,12 +1294,12 @@
     const formHtml = `
     <input type="hidden" name="id" value="${i.id || ""}">
     <div style="margin-bottom: 15px;">
-      <label style="display:block; margin-bottom:4px; font-weight:600;">Nombre Completo *</label>
-      <input type="text" name="nombre" value="${escapeHtml(i.nombre)}" required style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
+      <label style="display:block; margin-bottom:4px; font-weight:600;">Teléfono</label>
+      <input type="text" name="teléfono" value="${escapeHtml(i.teléfono || i.telefono)}" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
     </div>
     <div style="margin-bottom: 15px;">
-      <label style="display:block; margin-bottom:4px; font-weight:600;">Tel\xE9fono</label>
-      <input type="text" name="telefono" value="${escapeHtml(i.telefono)}" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
+      <label style="display:block; margin-bottom:4px; font-weight:600;">Correo Electrónico</label>
+      <input type="email" name="correo" value="${escapeHtml(i.correo)}" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
     </div>
     <div style="margin-bottom: 15px;">
       <label style="display:block; margin-bottom:4px; font-weight:600;">Correo Electr\xF3nico</label>

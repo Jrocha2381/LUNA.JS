@@ -80,10 +80,11 @@ function renderCatalog(filter = "") {
   }
 
   grid.innerHTML = filtered.map(p => `
-    <div class="product-card" style="border: 1px solid var(--border-color); border-radius: var(--radius); padding: 12px; text-align: center; cursor: pointer;" onclick="window.compraAddToCart('${escapeHtml(p.id)}')">
+    <div class="product-card" style="border: 1px solid var(--border-color); border-radius: var(--radius); padding: 12px; text-align: center;">
       <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">${escapeHtml(p.nombre)}</div>
       <div style="color: var(--text-muted); font-size: 12px;">Costo act: $${p.costo || 0}</div>
       <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Stock: ${p.stock || 0}</div>
+      <button class="btn btn-primary btn-sm" style="margin-top: 8px;" onclick="window.compraAddToCart('${escapeHtml(p.id)}')"><i class="ph ph-plus"></i> Agregar</button>
     </div>
   `).join('');
 }
@@ -125,10 +126,10 @@ function renderCart() {
 }
 
 window.compraAddToCart = (productId) => {
-  const prod = catalog.find(p => p.id === productId);
+  const prod = catalog.find(p => String(p.id) === String(productId));
   if (!prod) return;
 
-  const existingIdx = currentPurchase.findIndex(item => item.id === productId);
+  const existingIdx = currentPurchase.findIndex(item => String(item.id) === String(productId));
   if (existingIdx > -1) {
     currentPurchase[existingIdx].cantidad++;
   } else {

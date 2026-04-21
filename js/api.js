@@ -85,9 +85,8 @@ export async function saveEntity(resource, dataObj, action = "upsert") {
 
     const postData = {
       method: "POST",
-      mode: "no-cors", // Ayuda a mitigar bloqueos en entornos locales restringidos
-      // Eliminamos el header de JSON para evitar errores de CORS (Preflight OPTIONS) 
-      // Google Apps Script recibirá el body igualmente en e.postData.contents
+      // Eliminamos mode: "no-cors" para poder leer la respuesta JSON del servidor
+      // Google Apps Script requiere que la petición sea estándar para devolver success:true
       body: JSON.stringify(payload),
     };
 
