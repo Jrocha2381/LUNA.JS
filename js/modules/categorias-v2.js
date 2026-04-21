@@ -233,23 +233,28 @@ function openCategoryModal(category = null) {
     formHtml,
     async (form) => {
       const data = getFormData(form);
+      let success = false;
       
       if (isNew) {
-        return await createCategory(data);
+        success = await createCategory(data);
       } else {
-        const success = await updateCategory(category.id, data);
-        if (success) {
-          // Re-renderizar tabla después de actualizar
-          const tbody = document.querySelector('#categories-tbody');
-          if (tbody?.parentElement?.parentElement) {
-            renderCategoriesTable(tbody.parentElement.parentElement);
-          }
-        }
-        return success;
+        success = await updateCategory(category.id, data);
       }
+      
+      if (success && categoriesContainer) {
+        // Re-renderizar tabla después de operación exitosa
+        setTimeout(() => {
+          renderCategoriesTable(categoriesContainer);
+        }, 300);
+      }
+      
+      return success;
     }
   );
 }
+
+// Variable global para guardar la referencia del contenedor
+let categoriesContainer = null;
 
 /**
  * INICIALIZAR módulo de categorías
@@ -257,6 +262,7 @@ function openCategoryModal(category = null) {
  * @param {HTMLElement} container
  */
 export function initCategories(container) {
-  console.log('📂 Inicializando módulo de categorías...');
+  console.log('📂 Inicializando categorías...');
+  categoriesContainer = container;
   renderCategoriesTable(container);
 }

@@ -98,30 +98,32 @@ export async function saveItem(resource, item) {
     
     // ✅ PASO 2: Intentar sincronizar con Sheets
     try {
-      const payload = JSON.stringify({
-        action: 'save',
-        resource: resource,
-        id: item.id,
-        data: item
-      });
-      
       const response = await fetch(BASE_API, {
         method: 'POST',
         headers: { 
-          'Content-Type': 'application/json'
+          'Content-Type': 'text/plain;charset=utf-8'
         },
-        body: payload
+        body: JSON.stringify({
+          action: 'save',
+          resource: resource,
+          id: item.id,
+          data: item
+        })
       });
       
       if (response.ok) {
         const json = await response.json();
         if (json.success) {
           remoteSaved = true;
-          console.log(`☁️ Sincronizado con Sheets: ${resource}/${item.id}`);
+          console.log(`☁️ Sheets OK: ${resource}/${item.id}`);
+        } else {
+          console.warn(`⚠️ API respondió pero success=false:`, json);
         }
+      } else {
+        console.warn(`⚠️ HTTP ${response.status}`);
       }
     } catch (apiError) {
-      console.warn(`⚠️ API no disponible, guardado solo en localStorage:`, apiError.message);
+      console.warn(`⚠️ API error:`, apiError.message);
     }
     
     return { 
