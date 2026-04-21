@@ -23,9 +23,10 @@ export function render() {
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
            <h2 style="font-size: 18px; font-weight: 600;">Productos para Comprar (Reabastecer)</h2>
+           <button class="btn btn-secondary btn-sm" id="btn-new-producto-compra" style="white-space: nowrap;"><i class="ph ph-plus"></i> Crear Producto</button>
         </div>
 
-        <input type="text" id="compra-search" placeholder="Buscar producto existente..." style="padding: 12px; width: 100%; border: 1px solid var(--border-color); border-radius: var(--radius); margin-bottom: 20px; font-size: 16px;">
+        <input type="text" id="compra-search" placeholder="Buscar producto existente o crear nuevo..." style="padding: 12px; width: 100%; border: 1px solid var(--border-color); border-radius: var(--radius); margin-bottom: 20px; font-size: 16px;">
         
         <div id="compra-catalog-grid" class="product-grid">
            <!-- Se llena dinámicamente -->
@@ -62,6 +63,8 @@ export function render() {
     </div>
   `;
 
+  document.getElementById("btn-new-producto-compra").addEventListener("click", () => openProductFormModal());
+  
   document.getElementById("compra-search").addEventListener("input", (e) => {
     renderCatalog(e.target.value.toLowerCase());
   });
@@ -219,3 +222,69 @@ window.compraCheckout = () => {
      renderCatalog(document.getElementById("compra-search").value);
   });
 };
+
+// NUEVA FUNCIÓN: Crear Producto desde Compras
+function openProductFormModal() {
+  const formHtml = `
+    <div style="margin-bottom: 15px;">
+      <label style="display:block; margin-bottom:4px; font-weight:600;">Nombre del Producto *</label>
+      <input type="text" name="nombre" required style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
+    </div>
+    <div style="margin-bottom: 15px;">
+      <label style="display:block; margin-bottom:4px; font-weight:600;">Código (SKU)</label>
+      <input type="text" name="codigo" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
+    </div>
+    <div style="margin-bottom: 15px;">
+      <label style="display:block; margin-bottom:4px; font-weight:600;">Costo de Compra $</label>
+      <input type="number" step="0.01" min="0" name="costo" value="0" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
+    </div>
+    <div style="margin-bottom: 15px;">
+      <label style="display:block; margin-bottom:4px; font-weight:600;">Precio de Venta $</label>
+      <input type="number" step="0.01" min="0" name="precio" value="0" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
+    </div>
+    <div style="margin-bottom: 15px;">
+      <label style="display:block; margin-bottom:4px; font-weight:600;">Stock Inicial</label>
+      <input type="number" min="0" name="stock" value="0" style="width:100%; padding:8px; border:1px solid var(--border-color); border-radius:4px;">
+    </div>
+  `;
+
+  showFormModal("Crear Producto Nuevo", formHtml, async (form) => {
+    const fd = getFormData(form);
+    
+    // Generar ID temporal único
+    const tempId = "temp-" + Date.now() + "-" + Math.floor(Math.random() * 10000);
+    
+    const newProduct = {
+      id: tempId,
+      nombre: fd.nombre,
+      codigo: fd.codigo || "",
+      costo: Number(fd.costo) || 0,
+      precio: Number(fd.precio) || 0,
+      stock: Number(fd.stock) || 0,
+      categoria: "Sin categoría",
+      segimientoInventario: false
+    };
+
+    // Agregar al catálogo local para poder comprarlo inmediatamente
+    catalog.push(newProduct);
+    showToast("Producto creado y listo para comprar ✓");
+
+    // Guardar en background
+    saveEntity("productos", newProduct).then(result => {
+      const savedProduct = result.data || newProduct;
+      if(savedProduct?.id && savedProduct.id !== tempId) {
+        // Actualizar el ID temporal con el ID real del servidor
+        const idx = catalog.findIndex(p => p.id === tempId);
+        if(idx > -1) {
+          catalog[idx] = savedProduct;
+        }
+      }
+    }).catch(err => {
+      console.error("Error guardando producto:", err);
+    });
+
+    // Renderizar de nuevo para mostrar el nuevo producto
+    renderCatalog(document.getElementById("compra-search").value);
+    return true;
+  });
+}

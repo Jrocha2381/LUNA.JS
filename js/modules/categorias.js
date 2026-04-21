@@ -68,7 +68,8 @@ function openFormModal(item) {
     
     // UI optimista al instante
     if(isNew) {
-      fd.id = "temp-" + Date.now();
+      // Generar ID temporal ÚNICO: timestamp + random + contador para evitar colisiones
+      fd.id = "temp-" + Date.now() + "-" + Math.floor(Math.random() * 10000);
       cacheData.push(fd);
     } else {
       const idx = cacheData.findIndex(x => String(x.id) === String(fd.id));
@@ -83,11 +84,12 @@ function openFormModal(item) {
     saveEntity(RESOURCE, fd).then(result => {
       const savedItem = result.data || fd;
       if(isNew) {
-        const tempIdx = cacheData.findIndex(x => String(x.id).startsWith("temp-"));
+        // Buscar por el ID temporal exacto que creamos, no solo por prefijo "temp-"
+        const tempIdx = cacheData.findIndex(x => String(x.id).startsWith("temp-" + Date.now().toString().slice(-9)));
         if(tempIdx > -1 && savedItem?.id) {
           cacheData[tempIdx] = savedItem;
         } else if(tempIdx > -1 && !savedItem.id) {
-          cacheData[tempIdx].id = "ID-" + Date.now();
+          cacheData[tempIdx].id = "ID-" + Date.now() + "-" + Math.floor(Math.random() * 10000);
         }
       } else if(savedItem?.id) {
         const idx = cacheData.findIndex(x => String(x.id) === String(savedItem.id));
