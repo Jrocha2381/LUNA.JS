@@ -165,22 +165,19 @@ export async function login(usuario, contraseña) {
  */
 export function applyRolePermissions() {
   const rol = state.rolActual;
-  
-  const PERMISOS = {
-    admin: ["home", "pos", "history", "missing", "clientes", "products",
-            "categorias", "compras", "proveedores", "reports", "users"],
-    cajero: ["home", "pos", "history", "missing", "clientes"]
-  };
 
-  const allowed = PERMISOS[rol] || [];
+  // Actualizar label del rol en sidebar
+  const roleLabel = document.getElementById('current-role-label');
+  if (roleLabel) roleLabel.textContent = rol || 'N/A';
 
-  // Ocultar/mostrar botones de navegación según permisos
-  document.querySelectorAll('[data-view]').forEach(btn => {
-    const view = btn.getAttribute('data-view');
-    if (allowed.includes(view)) {
+  // Ocultar/mostrar botones según data-role en el HTML
+  document.querySelectorAll('.nav-btn[data-target]').forEach(btn => {
+    const roles = (btn.getAttribute('data-role') || '').split(',').map(r => r.trim());
+    if (rol && roles.includes(rol)) {
+      btn.classList.remove('hidden');
       btn.style.display = '';
     } else {
-      btn.style.display = 'none';
+      btn.classList.add('hidden');
     }
   });
 

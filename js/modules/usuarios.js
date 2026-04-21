@@ -1,9 +1,9 @@
-﻿import { getEntities, saveEntity, deleteEntity } from '../api.js';
-import { showConfirmModal, showToast } from '../ui.js';
+import { getEntities, saveEntity, deleteEntity } from '../api.js';
+import { showConfirmModal, showToast, escapeHtml } from '../ui.js';
 
 let containerElement;
 let cacheData = [];
-let mode = "table"; 
+let mode = 'table';
 let currentId = null;
 
 export async function init(container) {
@@ -11,26 +11,20 @@ export async function init(container) {
 }
 
 export async function render() {
-  if (mode === "form") {
+  if (mode === 'form') {
     renderForm();
     return;
   }
-  
+
   containerElement.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 40px;">Cargando usuarios...</div>`;
+
   try {
-    try {
-      cacheData = await getEntities("usuarios");
-    } catch(err) {
-      cacheData = [];
-      console.warn("Sheet usuarios not found. Falling back to local.");
-    }
-    
-    // Inyectar el admin por defecto si la base estÃ¡ vacia o no existe
-    if (cacheData.length === 0) {
-      const defaultAdmin = { id: 1, username: 'admin', role: 'admin', password: 'admin' };
-      cacheData.push(defaultAdmin);
-      // Guardar silenciosamente el admin en la base local para que no desaparezca
-      saveEntity("usuarios", defaultAdmin).catch(() => {});
+    cacheData = await getEntities('usuarios');
+
+    if (!cacheData || cacheData.length === 0) {
+      const defaultAdmin = { id: 'USER-1', usuario: 'admin', contraseña: 'admin', nombre: 'Administrador', rol: 'admin', activo: true };
+      cacheData = [defaultAdmin];
+      saveEntity('usuarios', defaultAdmin).catch(() => {});
     }
 
     containerElement.innerHTML = `
@@ -41,54 +35,80 @@ export async function render() {
         </div>
         <div style="overflow-x: auto;">
           <table style="width: 100%; border-collapse: collapse;">
-             <thead style="background: var(--primary-light); text-align: left;">
-               <tr>
-                 <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Usuario</th>
-                 <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Rol</th>
-                 <th style="padding: 12px; border-bottom: 2px solid var(--border-color); text-align: right;">Acciones</th>
-               </tr>
-             </thead>
-             <tbody>
-               ` + cacheData.map(u => `
-                 <tr style="border-bottom: 1px solid var(--border-color);">
-                   <td style="padding: 12px; font-weight: 500;">` + u.username + `</td>
-                   <td style="padding: 12px;"><span style="background: var(--bg-solid); padding: 4px 8px; border-radius: 12px; font-size: 12px; text-transform: uppercase;">` + u.role + `</span></td>
-                   <td style="padding: 12px; text-align: right; display: flex; gap: 8px; justify-content: flex-end;">
-                     <button class="btn btn-secondary btn-sm" onclick="window.posEditUsuario('` + u.id + `')"><i class="ph ph-pencil-simple"></i> Editar</button>
-                     <button class="btn btn-danger btn-sm" onclick="window.posDeleteUsuario('` + u.id + `')"><i class="ph ph-trash"></i></button>
-                   </td>
-                 </tr>
-               `).join('') + `
-             </tbody>
+            <thead style="background: var(--primary-light); text-align: left;">
+              <tr>
+                <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Usuario</th>
+                <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Nombre</th>
+                <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Rol</th>
+                <th style="padding: 12px; border-bottom: 2px solid var(--border-color);">Estado</th>
+                <th style="padding: 12px; border-bottom: 2px solid var(--border-color); text-align: right;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${cacheData.map(u => `
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                  <td style="padding: 12px; font-weight: 500;">${escapeHtml(u.usuario || u.username || '')}</td>
+                  <td style="padding: 12px;">${escapeHtml(u.nombre || '')}</td>
+                  <td style="padding: 12px;">
+                    <span style="background: var(--bg-solid); padding: 4px 8px; border-radius: 12px; font-size: 12px; text-transform: uppercase;">
+                      ${escapeHtml(u.rol || u.role || '')}
+                    </span>
+                  </td>
+                  <td style="padding: 12px;">
+                    <span style="color: ${u.activo === false ? 'var(--danger-color)' : 'var(--primary-color)'}; font-size: 12px;">
+                      ${u.activo === false ? 'Inactivo' : 'Activo'}
+                    </span>
+                  </td>
+                  <td style="padding: 12px; text-align: right;">
+                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                      <button class="btn btn-secondary btn-sm" onclick="window.posEditUsuario('${escapeHtml(u.id)}')"><i class="ph ph-pencil-simple"></i> Editar</button>
+                      <button class="btn btn-danger btn-sm" onclick="window.posDeleteUsuario('${escapeHtml(u.id)}')"><i class="ph ph-trash"></i></button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
           </table>
         </div>
       </div>
     `;
-  } catch(e) {
+  } catch (e) {
+    console.error('Error cargando usuarios:', e);
     containerElement.innerHTML = `<div style="text-align: center; color: var(--danger-color); padding: 40px;">Error al cargar usuarios</div>`;
   }
 }
 
 function renderForm() {
   const isEdit = currentId !== null;
-  const user = isEdit ? cacheData.find(u => String(u.id) === String(currentId)) : { username: "", password: "", role: "cajero" };
+  const user = isEdit ? cacheData.find(u => String(u.id) === String(currentId)) : { usuario: '', nombre: '', rol: 'cajero', activo: true };
 
   containerElement.innerHTML = `
     <div style="background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; max-width: 500px; margin: 0 auto;">
-      <h2 style="margin-bottom: 20px; font-weight: 600; color: var(--primary-color);">` + (isEdit ? "Editar Usuario" : "Nuevo Usuario") + `</h2>
+      <h2 style="margin-bottom: 20px; font-weight: 600; color: var(--primary-color);">${isEdit ? 'Editar Usuario' : 'Nuevo Usuario'}</h2>
       <div class="form-group" style="margin-bottom: 15px;">
-        <label style="display: block; margin-bottom: 5px; font-weight: 500;">Nombre de Usuario</label>
-        <input type="text" id="usr-name" class="input" style="width: 100%; box-sizing: border-box;" value="` + (user.username || '') + `">
+        <label style="display: block; margin-bottom: 5px; font-weight: 500;">Nombre de Usuario *</label>
+        <input type="text" id="usr-username" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius); background: var(--input-bg); color: var(--text-dark); box-sizing: border-box;" value="${escapeHtml(user?.usuario || '')}">
       </div>
       <div class="form-group" style="margin-bottom: 15px;">
-        <label style="display: block; margin-bottom: 5px; font-weight: 500;">Contraseña ` + (isEdit ? "(dejar en blanco para no cambiar)" : "") + `</label>
-        <input type="password" id="usr-pass" class="input" style="width: 100%; box-sizing: border-box;">
+        <label style="display: block; margin-bottom: 5px; font-weight: 500;">Nombre Completo</label>
+        <input type="text" id="usr-nombre" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius); background: var(--input-bg); color: var(--text-dark); box-sizing: border-box;" value="${escapeHtml(user?.nombre || '')}">
+      </div>
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 5px; font-weight: 500;">Contraseña ${isEdit ? '(dejar en blanco para no cambiar)' : '*'}</label>
+        <input type="password" id="usr-pass" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius); background: var(--input-bg); color: var(--text-dark); box-sizing: border-box;">
+      </div>
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 5px; font-weight: 500;">Rol</label>
+        <select id="usr-role" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius); background: var(--input-bg); color: var(--text-dark); box-sizing: border-box;">
+          <option value="cajero" ${(user?.rol || user?.role) === 'cajero' ? 'selected' : ''}>Cajero</option>
+          <option value="admin" ${(user?.rol || user?.role) === 'admin' ? 'selected' : ''}>Administrador</option>
+        </select>
       </div>
       <div class="form-group" style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 5px; font-weight: 500;">Rol</label>
-        <select id="usr-role" class="input" style="width: 100%; box-sizing: border-box;">
-          <option value="cajero" ` + (user.role === 'cajero' ? 'selected' : '') + `>Cajero</option>
-          <option value="admin" ` + (user.role === 'admin' ? 'selected' : '') + `>Administrador</option>
+        <label style="display: block; margin-bottom: 5px; font-weight: 500;">Estado</label>
+        <select id="usr-activo" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius); background: var(--input-bg); color: var(--text-dark); box-sizing: border-box;">
+          <option value="true" ${user?.activo !== false ? 'selected' : ''}>Activo</option>
+          <option value="false" ${user?.activo === false ? 'selected' : ''}>Inactivo</option>
         </select>
       </div>
       <div style="display: flex; gap: 10px; justify-content: flex-end;">
@@ -100,70 +120,71 @@ function renderForm() {
 }
 
 window.posNewUsuario = () => {
-  mode = "form";
+  mode = 'form';
   currentId = null;
   render();
 };
 
 window.posEditUsuario = (id) => {
-  mode = "form";
+  mode = 'form';
   currentId = id;
   render();
 };
 
 window.posCancelUsuario = () => {
-  mode = "table";
+  mode = 'table';
   render();
 };
 
 window.posDeleteUsuario = (id) => {
-  showConfirmModal("Eliminar Usuario", "¿Estás seguro de eliminar este usuario? No podrá entrar logearse más.", async () => {
+  showConfirmModal('Eliminar Usuario', '¿Estás seguro de eliminar este usuario?', async () => {
     cacheData = cacheData.filter(x => String(x.id) !== String(id));
     render();
-    showToast("Eliminando Usuario...");
-    await deleteEntity("usuarios", id);
-    showToast("Usuario eliminado", "success");
+    showToast('Eliminando usuario...');
+    await deleteEntity('usuarios', id);
+    showToast('Usuario eliminado', 'success');
   });
 };
 
 window.posSaveUsuario = async () => {
-  const username = document.getElementById("usr-name").value.trim();
-  const pass = document.getElementById("usr-pass").value;
-  const role = document.getElementById("usr-role").value;
+  const usuario = document.getElementById('usr-username')?.value?.trim();
+  const nombre = document.getElementById('usr-nombre')?.value?.trim();
+  const pass = document.getElementById('usr-pass')?.value;
+  const rol = document.getElementById('usr-role')?.value;
+  const activo = document.getElementById('usr-activo')?.value !== 'false';
 
-  if (!username) return showToast("Falta nombre de usuario", "warning");
-  if (!currentId && !pass) return showToast("Agrega una contraseña para el nuevo usuario", "warning");
+  if (!usuario) return showToast('Falta nombre de usuario', 'error');
+  if (!currentId && !pass) return showToast('Agrega una contraseña para el nuevo usuario', 'error');
 
   const isEdit = currentId !== null;
-  let oldUser = isEdit ? cacheData.find(u => String(u.id) === String(currentId)) : null;
+  const oldUser = isEdit ? cacheData.find(u => String(u.id) === String(currentId)) : null;
 
   const newUser = {
-    id: isEdit ? oldUser.id : new Date().getTime(),
-    username,
-    role
+    id: isEdit ? oldUser.id : ('USER-' + Date.now()),
+    usuario,
+    nombre: nombre || usuario,
+    rol,
+    activo,
+    contraseña: pass || (isEdit ? oldUser.contraseña : '')
   };
-  
-  if (pass) {
-    newUser.password = pass; // En producción acá va hash
-  } else if (isEdit) {
-    newUser.password = oldUser.password;
-  }
 
   if (isEdit) {
-    Object.assign(oldUser, newUser);
+    const idx = cacheData.findIndex(u => String(u.id) === String(currentId));
+    if (idx > -1) cacheData[idx] = newUser;
   } else {
     cacheData.push(newUser);
   }
-  
-  mode = "table";
+
+  mode = 'table';
   render();
-  showToast("Guardando usuario...");
+  showToast('Guardando usuario...');
+
   try {
-     await saveEntity('usuarios', newUser);
-     showToast("Usuario guardado con éxito", "success");
-     cacheData = await getEntities("usuarios"); // Recargar info fresca del server/local
-  } catch(e) {
-     showToast("Error guardando el usuario", "error");
+    await saveEntity('usuarios', newUser);
+    showToast('Usuario guardado con éxito', 'success');
+    cacheData = await getEntities('usuarios');
+    render();
+  } catch (e) {
+    showToast('Error guardando el usuario', 'error');
   }
 };
-

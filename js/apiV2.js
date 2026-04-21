@@ -15,12 +15,14 @@ const BASE_API = "https://script.google.com/macros/s/AKfycbwBqWV20EZVA9HEyMCYUwC
  * @returns {Promise<Array>} Array de datos
  */
 export async function loadResource(resource) {
-  const cacheKey = `cache_${resource}`;
+  const cacheKey = `cpos_cache_${resource}`;
   
   try {
     console.log(`📥 Cargando ${resource}...`);
     
-    const response = await fetch(`${BASE_API}?resource=${resource}&_t=${Date.now()}`);
+    const response = await fetch(`${BASE_API}?resource=${resource}&_t=${Date.now()}`, {
+      signal: AbortSignal.timeout(5000) // 5 segundo timeout
+    });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     
     const json = await response.json();
@@ -38,24 +40,45 @@ export async function loadResource(resource) {
     return data;
     
   } catch (error) {
-    console.warn(`⚠️ Error cargando ${resource}, usando localStorage:`, error.message);
+    console.warn(`⚠️ Error cargando ${resource}:`, error.message);
     
-    // Fallback: cargar del localStorage
+    // Fallback 1: cargar del localStorage
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
       try {
         const data = JSON.parse(cached);
         updateState(resource, data);
-        console.log(`📦 ${resource} restaurados desde cache local (${data.length} items)`);
+        console.log(`📦 ${resource} desde cache local (${data.length} items)`);
         return data;
       } catch (e) {
         console.error('❌ Error parseando cache:', e);
       }
     }
     
+    // Fallback 2: usar datos por defecto
+    const defaults = getDefaultData(resource);
+    if (defaults && defaults.length > 0) {
+      updateState(resource, defaults);
+      console.log(`✅ ${resource} usando defaults (${defaults.length} items)`);
+      return defaults;
+    }
+    
     // Fallback final: devolver array vacío
     return [];
   }
+}
+
+/**
+ * Retornar datos por defecto según recurso
+ */
+function getDefaultData(resource) {
+  if (resource === 'usuarios') {
+    return state.usuarios || [];
+  }
+  if (resource === 'categorias') {
+    return [];
+  }
+  return [];
 }
 
 /**
@@ -76,7 +99,7 @@ export async function saveItem(resource, item) {
 
   try {
     // ✅ PASO 1: Guardar en localStorage
-    const cacheKey = `cache_${resource}`;
+    const cacheKey = `cpos_cache_${resource}`;
     let items = [];
     
     const cached = localStorage.getItem(cacheKey);
@@ -153,7 +176,7 @@ export async function saveItem(resource, item) {
 export async function deleteItem(resource, id) {
   try {
     // ✅ PASO 1: Eliminar de localStorage
-    const cacheKey = `cache_${resource}`;
+    const cacheKey = `cpos_cache_${resource}`;
     let items = [];
     
     const cached = localStorage.getItem(cacheKey);
@@ -195,7 +218,9 @@ export async function loadAllResources() {
     'compras',
     'clientes',
     'proveedores',
-    'usuarios'
+    'usuarios',
+    'descuentos',
+    'faltantes'
   ];
   
   await Promise.all(resources.map(r => loadResource(r)));

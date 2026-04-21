@@ -8,7 +8,7 @@ const USUARIOS_DEFAULT = [
   {
     id: 'USER-1',
     usuario: 'admin',
-    contraseña: '123456',
+    contraseña: 'admin',
     nombre: 'Administrador',
     rol: 'admin',
     activo: true
