@@ -1,242 +1,157 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gestión de Clientes | Papel y Luna</title>
-    <link rel="stylesheet" href="stylecarrito.css">
-</head>
-<body>
+    <link rel="stylesheet" href="stylecarrito.css" />
+  </head>
+  <body>
     <header>
-        <h1>Gestión de Clientes</h1>
-        <div style="display:flex; gap:10px; align-items:center;">
-            <button id="btn-sync" class="btn-admin-secundario" style="padding: 5px 10px; font-size: 0.8rem;">🔄 Sincronizar Nube</button>
-        </div>
+      <h1>Gestión de Clientes</h1>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button id="btn-sync" class="btn-admin-secundario" style="padding: 5px 10px; font-size: 0.8rem;">
+          🔄 Sincronizar
+        </button>
+      </div>
     </header>
 
     <main>
-        <section class="admin-productos">
-            <form id="cliente-form" class="producto-form">
-                <h3 id="form-title">Registrar Nuevo Cliente</h3>
-                <div class="form-grid">
-                    <label>
-                        Nombre Completo *
-                        <input type="text" id="cli-nombre" required placeholder="Ej: Juan Pérez" />
-                    </label>
-                    <label>
-                        Teléfono / WhatsApp
-                        <input type="text" id="cli-telefono" placeholder="310 000 0000" />
-                    </label>
-                    <label>
-                        Correo Electrónico
-                        <input type="email" id="cli-correo" placeholder="cliente@correo.com" />
-                    </label>
-                </div>
-                <div class="form-actions">
-                    <button type="submit" id="btn-guardar" class="btn-admin-primario">Guardar Cliente</button>
-                    <button type="button" id="btn-cancelar" class="btn-admin-secundario">Cancelar</button>
-                </div>
-            </form>
+      <section class="admin-productos">
+        <form id="cliente-form" class="producto-form">
+          <h3 id="form-title">Registrar Nuevo Cliente</h3>
+          <div class="form-grid">
+            <label>
+              Nombre Completo *
+              <input type="text" id="cli-nombre" required placeholder="Ej: Juan Pérez" />
+            </label>
+            <label>
+              Teléfono / WhatsApp
+              <input type="text" id="cli-telefono" placeholder="310 000 0000" />
+            </label>
+            <label>
+              Correo Electrónico
+              <input type="email" id="cli-correo" placeholder="cliente@correo.com" />
+            </label>
+          </div>
+          <div class="form-actions">
+            <button type="submit" id="btn-guardar" class="btn-admin-primario">Guardar Cliente</button>
+            <button type="button" id="btn-cancelar" class="btn-admin-secundario">Cancelar</button>
+          </div>
+        </form>
 
-            <div class="tabla-wrapper">
-                <table class="tabla-productos">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Nombre</th>
-                            <th>Teléfono</th>
-                            <th>Correo</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="lista-clientes">
-                        <!-- Cargado dinámicamente -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
+        <div class="tabla-wrapper">
+          <table class="tabla-productos">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Teléfono</th>
+                <th>Correo</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="lista-clientes"></tbody>
+          </table>
+        </div>
+      </section>
     </main>
 
     <script src="admin-auth.js"></script>
     <script src="../js/backend.js"></script>
     <script type="module">
-        import { Entidades } from '../js/entidades.js';
+      import { Entidades } from "../js/entidades.js";
 
-        document.addEventListener("DOMContentLoaded", () => {
-            if (window.validarSesionAdmin && !window.validarSesionAdmin()) return;
+      document.addEventListener("DOMContentLoaded", () => {
+        if (window.validarSesionAdmin && !window.validarSesionAdmin()) return;
 
-            const form = document.getElementById('cliente-form');
-            const tbody = document.getElementById('lista-clientes');
-            const btnSync = document.getElementById('btn-sync');
-            const btnCancelar = document.getElementById('btn-cancelar');
-            let editId = null;
+        const form = document.getElementById("cliente-form");
+        const tbody = document.getElementById("lista-clientes");
+        const btnSync = document.getElementById("btn-sync");
+        const btnCancelar = document.getElementById("btn-cancelar");
+        let editId = null;
 
-            const render = () => {
-                const clientes = Entidades.obtener('clientes');
-                tbody.innerHTML = clientes.map(c => `
-                    <tr>
-                        <td><small>${c.id || '-'}</small></td>
-                        <td><strong>${c.nombre || '-'}</strong></td>
-                        <td>${c.telefono || '-'}</td>
-                        <td>${c.correo || '-'}</td>
-                        <td>
-                            <button class="btn-admin" onclick="window.prepararEdicion('${c.id}', '${(c.nombre || '').replace(/'/g, "\\'")}', '${c.telefono || ''}', '${c.correo || ''}')">Editar</button>
-                            <button class="btn-admin" style="background:#fee2e2; color:#b91c1c;" onclick="window.eliminarCliente('${c.id}')">Eliminar</button>
-                        </td>
-                    </tr>
-                `).join('');
-            };
+        const render = () => {
+          const clientes = Entidades.obtener("clientes");
+          tbody.innerHTML = clientes
+            .map(
+              (c) => `
+                <tr>
+                  <td><small>${c.id || "-"}</small></td>
+                  <td><strong>${c.nombre || "-"}</strong></td>
+                  <td>${c.telefono || "-"}</td>
+                  <td>${c.correo || "-"}</td>
+                  <td>
+                    <button class="btn-admin" onclick="window.prepararEdicion('${c.id}', '${(c.nombre || "").replace(/'/g, "\\'")}', '${c.telefono || ""}', '${c.correo || ""}')">Editar</button>
+                    <button class="btn-admin" style="background:#fee2e2; color:#b91c1c;" onclick="window.eliminarCliente('${c.id}')">Eliminar</button>
+                  </td>
+                </tr>
+              `
+            )
+            .join("");
+        };
 
-            window.prepararEdicion = (id, nombre, telefono, correo) => {
-                editId = id;
-                document.getElementById('cli-nombre').value = nombre;
-                document.getElementById('cli-telefono').value = telefono;
-                document.getElementById('cli-correo').value = correo;
-                document.getElementById('form-title').textContent = "Editando Cliente";
-                document.getElementById('btn-guardar').textContent = "Actualizar Cambios";
-            };
+        window.prepararEdicion = (id, nombre, telefono, correo) => {
+          editId = id;
+          document.getElementById("cli-nombre").value = nombre;
+          document.getElementById("cli-telefono").value = telefono;
+          document.getElementById("cli-correo").value = correo;
+          document.getElementById("form-title").textContent = "Editando Cliente";
+          document.getElementById("btn-guardar").textContent = "Actualizar Cambios";
+        };
 
-            window.eliminarCliente = async (id) => {
-                if(confirm('¿Eliminar este cliente de la base de datos?')) {
-                    await Entidades.eliminar('clientes', id);
-                    render();
-                }
-            };
-
-            form.onsubmit = async (e) => {
-                e.preventDefault();
-                const data = {
-                    nombre: document.getElementById('cli-nombre').value.trim(),
-                    telefono: document.getElementById('cli-telefono').value.trim(),
-                    correo: document.getElementById('cli-correo').value.trim()
-                };
-
-                if (!data.nombre) {
-                    alert('El nombre es obligatorio');
-                    return;
-                }
-
-                if(editId) {
-                    await Entidades.actualizar('clientes', editId, data);
-                } else {
-                    await Entidades.crear('clientes', data);
-                }
-                
-                form.reset();
-                editId = null;
-                document.getElementById('form-title').textContent = "Registrar Nuevo Cliente";
-                document.getElementById('btn-guardar').textContent = "Guardar Cliente";
-                render();
-            };
-
-            btnCancelar.onclick = () => {
-                form.reset();
-                editId = null;
-                document.getElementById('form-title').textContent = "Registrar Nuevo Cliente";
-                document.getElementById('btn-guardar').textContent = "Guardar Cliente";
-            };
-
-            btnSync.onclick = async () => {
-                btnSync.textContent = "⏳ Sincronizando...";
-                btnSync.disabled = true;
-                await Entidades.sincronizar('clientes');
-                render();
-                btnSync.textContent = "🔄 Sincronizar Nube";
-                btnSync.disabled = false;
-            };
-
+        window.eliminarCliente = async (id) => {
+          if (confirm("¿Eliminar este cliente de la base de datos?")) {
+            await Entidades.eliminar("clientes", id);
             render();
-        });
+          }
+        };
+
+        form.onsubmit = async (e) => {
+          e.preventDefault();
+          const data = {
+            nombre: document.getElementById("cli-nombre").value.trim(),
+            telefono: document.getElementById("cli-telefono").value.trim(),
+            correo: document.getElementById("cli-correo").value.trim()
+          };
+
+          if (!data.nombre) {
+            alert("El nombre es obligatorio");
+            return;
+          }
+
+          if (editId) {
+            await Entidades.actualizar("clientes", editId, data);
+          } else {
+            await Entidades.crear("clientes", data);
+          }
+
+          form.reset();
+          editId = null;
+          document.getElementById("form-title").textContent = "Registrar Nuevo Cliente";
+          document.getElementById("btn-guardar").textContent = "Guardar Cliente";
+          render();
+        };
+
+        btnCancelar.onclick = () => {
+          form.reset();
+          editId = null;
+          document.getElementById("form-title").textContent = "Registrar Nuevo Cliente";
+          document.getElementById("btn-guardar").textContent = "Guardar Cliente";
+        };
+
+        btnSync.onclick = async () => {
+          btnSync.textContent = "⏳ Sincronizando...";
+          btnSync.disabled = true;
+          await Entidades.sincronizar("clientes");
+          render();
+          btnSync.textContent = "🔄 Sincronizar";
+          btnSync.disabled = false;
+        };
+
+        render();
+      });
     </script>
-</body>
+  </body>
 </html>
-        </section>
-    </main>
 
-    <script src="admin-auth.js"></script>
-    <script src="../js/backend.js"></script>
-    <script type="module">
-        import { Entidades } from '../js/entidades.js';
-
-        document.addEventListener("DOMContentLoaded", () => {
-            if (window.validarSesionAdmin && !window.validarSesionAdmin()) return;
-
-            const form = document.getElementById('cliente-form');
-            const tbody = document.getElementById('lista-clientes');
-            const btnSync = document.getElementById('btn-sync');
-            const btnCancelar = document.getElementById('btn-cancelar');
-            let editId = null;
-
-            const render = () => {
-                const clientes = Entidades.obtener('clientes');
-                tbody.innerHTML = clientes.map(c => `
-                    <tr>
-                        <td><strong>${c.nombre}</strong></td>
-                        <td>${c.documento || '-'}</td>
-                        <td>${c.telefono || '-'}</td>
-                        <td>${c.email || '-'}</td>
-                        <td>
-                            <button class="btn-admin" onclick="prepararEdicion(${c.id}, '${c.nombre}', '${c.documento || ''}', '${c.telefono || ''}', '${c.email || ''}')">Editar</button>
-                            <button class="btn-admin" style="background:#fee2e2; color:#b91c1c;" onclick="eliminarCliente(${c.id})">Eliminar</button>
-                        </td>
-                    </tr>
-                `).join('');
-            };
-
-            window.prepararEdicion = (id, nombre, documento, tel, email) => {
-                editId = id;
-                document.getElementById('cli-nombre').value = nombre;
-                document.getElementById('cli-documento').value = documento;
-                document.getElementById('cli-tel').value = tel;
-                document.getElementById('cli-email').value = email;
-                document.getElementById('form-title').textContent = "Editando Cliente";
-                document.getElementById('btn-guardar').textContent = "Actualizar Cambios";
-            };
-
-            window.eliminarCliente = async (id) => {
-                if(confirm('¿Eliminar este cliente de la base de datos?')) {
-                    await Entidades.eliminar('clientes', id);
-                    render();
-                }
-            };
-
-            form.onsubmit = async (e) => {
-                e.preventDefault();
-                const data = {
-                    nombre: document.getElementById('cli-nombre').value,
-                    documento: document.getElementById('cli-documento').value,
-                    telefono: document.getElementById('cli-tel').value,
-                    email: document.getElementById('cli-email').value
-                };
-
-                if(editId) {
-                    await Entidades.actualizar('clientes', editId, data);
-                } else {
-                    await Entidades.crear('clientes', data);
-                }
-                
-                form.reset();
-                editId = null;
-                document.getElementById('form-title').textContent = "Registrar Nuevo Cliente";
-                document.getElementById('btn-guardar').textContent = "Guardar Cliente";
-                render();
-            };
-
-            btnCancelar.onclick = () => {
-                form.reset();
-                editId = null;
-                document.getElementById('form-title').textContent = "Registrar Nuevo Cliente";
-            };
-
-            btnSync.onclick = async () => {
-                btnSync.textContent = "⏳...";
-                await Entidades.sincronizar('clientes');
-                render();
-                btnSync.textContent = "🔄 Sincronizar Nube";
-            };
-
-            render();
-        });
-    </script>
-</body>
-</html>

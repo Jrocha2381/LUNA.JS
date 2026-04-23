@@ -10,7 +10,7 @@
     <header>
         <h1>Gestión de Categorías</h1>
         <div style="display:flex; gap:10px; align-items:center;">
-            <button id="btn-sync" class="btn-admin-secundario" style="padding: 5px 10px; font-size: 0.8rem;">🔄 Sincronizar Nube</button>
+            <button id="btn-sync" class="btn-admin-secundario" style="padding: 5px 10px; font-size: 0.8rem;">🔄 Sincronizar</button>
         </div>
     </header>
 
@@ -126,7 +126,7 @@
                 btnSync.disabled = true;
                 await Entidades.sincronizar('categorias');
                 render();
-                btnSync.textContent = "🔄 Sincronizar Nube";
+                btnSync.textContent = "🔄 Sincronizar";
                 btnSync.disabled = false;
             };
 
