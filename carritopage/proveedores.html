@@ -65,13 +65,14 @@
     <script src="admin-auth.js"></script>
     <script src="../js/backend.js"></script>
     <script src="../js/entidades-global.js"></script>
+    <script src="carrito.js"></script>
     <script>
       document.addEventListener("DOMContentLoaded", async () => {
         if (window.validarSesionAdmin && !window.validarSesionAdmin()) return;
 
         const Entidades = window.Entidades;
         if (!Entidades) {
-          alert("No se pudo inicializar Entidades.");
+          if (window.mostrarToast) window.mostrarToast("error", "Proveedores", "No se pudo inicializar Entidades.");
           return;
         }
 
@@ -86,7 +87,6 @@
 
         const notify = (tipo, mensaje) => {
           if (window.mostrarToast) window.mostrarToast(tipo, "Proveedores", mensaje);
-          else alert(mensaje);
         };
 
         const resetForm = () => {

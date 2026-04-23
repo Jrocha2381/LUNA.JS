@@ -18,6 +18,16 @@
 
     <main>
       <section class="admin-productos">
+        <div style="display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:12px;">
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <button id="btn-nueva" type="button" class="btn-admin-primario">+ Crear cliente</button>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <input id="cli-buscar" type="text" placeholder="Buscar cliente..." style="padding:10px 12px; border:1px solid #ddd; border-radius:10px; min-width:220px;">
+              <span id="cli-contador" style="color:#666; font-size:13px;"></span>
+            </div>
+          </div>
+        </div>
+
         <form id="cliente-form" class="producto-form">
           <h3 id="form-title">Registrar Nuevo Cliente</h3>
           <div class="form-grid">
@@ -30,8 +40,8 @@
               <input type="text" id="cli-telefono" placeholder="310 000 0000" />
             </label>
             <label>
-              Correo Electrónico
-              <input type="email" id="cli-correo" placeholder="cliente@correo.com" />
+              Email
+              <input type="email" id="cli-email" placeholder="cliente@correo.com" />
             </label>
           </div>
           <div class="form-actions">
@@ -47,7 +57,7 @@
                 <th>ID</th>
                 <th>Nombre</th>
                 <th>Teléfono</th>
-                <th>Correo</th>
+                <th>Email</th>
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -60,46 +70,90 @@
     <script src="admin-auth.js"></script>
     <script src="../js/backend.js"></script>
     <script src="../js/entidades-global.js"></script>
+    <script src="carrito.js"></script>
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         if (window.validarSesionAdmin && !window.validarSesionAdmin()) return;
 
         const Entidades = window.Entidades;
-        if (!Entidades) return;
+        if (!Entidades) {
+          if (window.mostrarToast) window.mostrarToast("error", "Clientes", "No se pudo inicializar Entidades.");
+          return;
+        }
 
         const form = document.getElementById("cliente-form");
         const tbody = document.getElementById("lista-clientes");
         const btnSync = document.getElementById("btn-sync");
         const btnCancelar = document.getElementById("btn-cancelar");
+        const btnNueva = document.getElementById("btn-nueva");
+        const inputBuscar = document.getElementById("cli-buscar");
+        const contador = document.getElementById("cli-contador");
         let editId = null;
+
+        const notify = (tipo, mensaje) => {
+          if (window.mostrarToast) window.mostrarToast(tipo, "Clientes", mensaje);
+        };
+
+        const resetForm = () => {
+          form.reset();
+          editId = null;
+          document.getElementById("form-title").textContent = "Registrar Nuevo Cliente";
+          document.getElementById("btn-guardar").textContent = "Guardar Cliente";
+        };
+
+        const mostrarForm = () => {
+          form.style.display = "block";
+          document.getElementById("cli-nombre").focus();
+        };
+
+        const ocultarForm = () => {
+          form.style.display = "none";
+        };
+
+        const normalizarTexto = (valor) => String(valor || "").trim().toLowerCase();
 
         const render = () => {
           const clientes = Entidades.obtener("clientes");
-          tbody.innerHTML = clientes
+          const q = normalizarTexto(inputBuscar.value);
+          const filtrados = q
+            ? clientes.filter((c) => {
+                const email = c.email || c.correo || "";
+                return (
+                  normalizarTexto(c.nombre).includes(q) ||
+                  normalizarTexto(c.telefono).includes(q) ||
+                  normalizarTexto(email).includes(q)
+                );
+              })
+            : clientes;
+
+          tbody.innerHTML = filtrados
             .map(
               (c) => `
                 <tr>
                   <td><small>${c.id || "-"}</small></td>
                   <td><strong>${c.nombre || "-"}</strong></td>
                   <td>${c.telefono || "-"}</td>
-                  <td>${c.correo || "-"}</td>
+                  <td>${c.email || c.correo || "-"}</td>
                   <td>
-                    <button class="btn-admin" onclick="window.prepararEdicion('${c.id}', '${(c.nombre || "").replace(/'/g, "\\'")}', '${c.telefono || ""}', '${c.correo || ""}')">Editar</button>
+                    <button class="btn-admin" onclick="window.prepararEdicion('${c.id}', '${(c.nombre || "").replace(/'/g, "\\'")}', '${c.telefono || ""}', '${(c.email || c.correo || "").replace(/'/g, "\\'")}')">Editar</button>
                     <button class="btn-admin" style="background:#fee2e2; color:#b91c1c;" onclick="window.eliminarCliente('${c.id}')">Eliminar</button>
                   </td>
                 </tr>
               `
             )
             .join("");
+
+          if (contador) contador.textContent = `${filtrados.length}/${clientes.length}`;
         };
 
-        window.prepararEdicion = (id, nombre, telefono, correo) => {
+        window.prepararEdicion = (id, nombre, telefono, email) => {
           editId = id;
           document.getElementById("cli-nombre").value = nombre;
           document.getElementById("cli-telefono").value = telefono;
-          document.getElementById("cli-correo").value = correo;
+          document.getElementById("cli-email").value = email;
           document.getElementById("form-title").textContent = "Editando Cliente";
           document.getElementById("btn-guardar").textContent = "Actualizar Cambios";
+          mostrarForm();
         };
 
         window.eliminarCliente = async (id) => {
@@ -114,32 +168,30 @@
           const data = {
             nombre: document.getElementById("cli-nombre").value.trim(),
             telefono: document.getElementById("cli-telefono").value.trim(),
-            correo: document.getElementById("cli-correo").value.trim()
+            email: document.getElementById("cli-email").value.trim()
           };
 
           if (!data.nombre) {
-            alert("El nombre es obligatorio");
+            notify("error", "El nombre es obligatorio.");
             return;
           }
 
           if (editId) {
             await Entidades.actualizar("clientes", editId, data);
+            notify("success", "Cliente actualizado.");
           } else {
             await Entidades.crear("clientes", data);
+            notify("success", "Cliente creado.");
           }
 
-          form.reset();
-          editId = null;
-          document.getElementById("form-title").textContent = "Registrar Nuevo Cliente";
-          document.getElementById("btn-guardar").textContent = "Guardar Cliente";
+          resetForm();
+          ocultarForm();
           render();
         };
 
         btnCancelar.onclick = () => {
-          form.reset();
-          editId = null;
-          document.getElementById("form-title").textContent = "Registrar Nuevo Cliente";
-          document.getElementById("btn-guardar").textContent = "Guardar Cliente";
+          resetForm();
+          ocultarForm();
         };
 
         btnSync.onclick = async () => {
@@ -151,6 +203,14 @@
           btnSync.disabled = false;
         };
 
+        btnNueva.onclick = () => {
+          resetForm();
+          mostrarForm();
+        };
+
+        inputBuscar.addEventListener("input", render);
+
+        ocultarForm();
         render();
       });
     </script>

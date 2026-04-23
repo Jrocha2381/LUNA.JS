@@ -4,7 +4,7 @@ const ENTIDADES_CONFIG = {
     clientes: {
         key: "pos_clientes",
         route: "clientes",
-        campos: ['id', 'nombre', 'telefono', 'correo']
+        campos: ['id', 'nombre', 'telefono', 'email']
     },
     proveedores: {
         key: "pos_proveedores",
