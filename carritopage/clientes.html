@@ -59,11 +59,13 @@
 
     <script src="admin-auth.js"></script>
     <script src="../js/backend.js"></script>
-    <script type="module">
-      import { Entidades } from "../js/entidades.js";
-
+    <script src="../js/entidades-global.js"></script>
+    <script>
       document.addEventListener("DOMContentLoaded", () => {
         if (window.validarSesionAdmin && !window.validarSesionAdmin()) return;
+
+        const Entidades = window.Entidades;
+        if (!Entidades) return;
 
         const form = document.getElementById("cliente-form");
         const tbody = document.getElementById("lista-clientes");
@@ -154,4 +156,3 @@
     </script>
   </body>
 </html>
-

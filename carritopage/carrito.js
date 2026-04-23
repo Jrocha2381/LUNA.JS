@@ -153,6 +153,15 @@ function obtenerCarrito() {
   return JSON.parse(localStorage.getItem("carrito")) || [];
 }
 
+function persistirCarrito(nuevoCarrito) {
+  localStorage.setItem("carrito", JSON.stringify(nuevoCarrito));
+  try {
+    updateCartBadge();
+  } catch (e) {
+    // noop
+  }
+}
+
 function guardarCarrito(nuevoCarrito) {
   localStorage.setItem("carrito", JSON.stringify(nuevoCarrito));
   renderCarrito();
@@ -183,6 +192,13 @@ function getProductoActual(idProducto) {
 
 function precioProducto(producto) {
   return Number(producto?.precioVenta ?? producto?.precio ?? 0);
+}
+
+function precioUnitarioItemCarrito(item, productoActual) {
+  const manual = Number(item?.precioUnitario ?? item?.precioVenta ?? item?.precio);
+  if (Number.isFinite(manual) && manual >= 0) return manual;
+  if (productoActual) return precioProducto(productoActual);
+  return 0;
 }
 
 function stockDisponible(producto) {
@@ -225,8 +241,11 @@ function agregarAlCarrito(producto) {
   if (existe) {
     if (existe.cantidad < disponible) {
       existe.cantidad += 1;
-      existe.precio = precio;
-      existe.precioVenta = precio;
+      if (existe.precioUnitario == null) {
+        existe.precioUnitario = precio;
+        existe.precio = precio;
+        existe.precioVenta = precio;
+      }
       mostrarToast("success", "Producto anadido", `${productoOriginal.nombre} anadido. (Total: ${existe.cantidad})`);
     } else {
       mostrarToast("error", "Limite alcanzado", `Solo hay ${disponible} unidades disponibles.`);
@@ -234,7 +253,7 @@ function agregarAlCarrito(producto) {
     }
   } else {
     if (disponible > 0 || disponible === Number.POSITIVE_INFINITY) {
-      carrito.push({ ...productoOriginal, precio, precioVenta: precio, cantidad: 1 });
+      carrito.push({ ...productoOriginal, precioUnitario: precio, precio, precioVenta: precio, cantidad: 1 });
       mostrarToast("success", "Anadido al carrito", `${productoOriginal.nombre} anadido al carrito.`);
     } else {
       mostrarToast("error", "Producto agotado", "Este producto no tiene stock disponible.");
@@ -254,7 +273,7 @@ function pausarVentaActual() {
     id: Date.now(),
     nombre: `Venta ${new Date().toLocaleTimeString()}`,
     items: [...carrito],
-    total: carrito.reduce((s, i) => s + (precioProducto(i) * i.cantidad), 0)
+    total: carrito.reduce((s, i) => s + (precioUnitarioItemCarrito(i, getProductoActual(i.id)) * Number(i.cantidad || 0)), 0)
   };
 
   ventasAbiertas.push(nuevaVentaAbierta);
@@ -333,7 +352,7 @@ function renderCarrito() {
   carrito.forEach((item, index) => {
     const productoActual = getProductoActual(item.id);
     const inactivo = !productoActual || productoActual.activo === false;
-    const precioActual = productoActual ? precioProducto(productoActual) : precioProducto(item);
+    const precioActual = precioUnitarioItemCarrito(item, productoActual);
     const subtotal = precioActual * Number(item.cantidad || 0);
     totalGeneral += subtotal;
 
@@ -343,18 +362,18 @@ function renderCarrito() {
         <img src="${imagen}" alt="${item.nombre}" class="img-carrito">
         <div class="info-carrito">
           <h4>${item.nombre}</h4>
-          <p>Precio: ${formatearMoneda(precioActual)}</p>
+          <p style="margin-bottom:6px;">Precio unitario:</p>
+          <input type="number" min="0" step="0.01" class="input-precio input-precio-edit" data-index="${index}" value="${precioActual}" style="width:140px; padding:6px 8px; border:1px solid #ddd; border-radius:8px;" ${inactivo ? "disabled" : ""} />
           ${inactivo ? '<p class="estado-inactivo">Producto inactivo</p>' : ""}
           <div class="controles-cantidad">
             <button class="btn-qty" data-action="restar" data-index="${index}">-</button>
-            <input type="number" value="${item.cantidad}" readonly class="input-cantidad">
+            <input type="number" min="1" value="${item.cantidad}" class="input-cantidad input-cantidad-edit" data-index="${index}" style="width:70px;" ${inactivo ? "disabled" : ""}>
             <button class="btn-qty" data-action="sumar" data-index="${index}" ${inactivo ? "disabled" : ""}>+</button>
           </div>
         </div>
         <div class="controles-item">
-          <p><strong>Subtotal: ${formatearMoneda(subtotal)}</strong></p>
+          <p><strong>Subtotal: <span class="subtotal-valor" data-index="${index}">${formatearMoneda(subtotal)}</span></strong></p>
           <div style="display:flex; gap:5px;">
-            <button class="btn-admin-edit" onclick="window.abrirEditorFlujo(${item.id})" style="padding:5px 10px; background:#f0f2f5; border:1px solid #ddd; border-radius:5px; cursor:pointer;">✏️</button>
             <button class="btn-eliminar" data-index="${index}">Eliminar</button>
           </div>
         </div>
@@ -365,7 +384,7 @@ function renderCarrito() {
   html += `
     <div class="carrito-total" style="margin-bottom: 2.5rem;">
       <hr>
-      <h3>Total a pagar: ${formatearMoneda(totalGeneral)}</h3>
+      <h3>Total a pagar: <span id="total-general">${formatearMoneda(totalGeneral)}</span></h3>
       <div class="botones-finales">
         <button id="vaciar-carrito" class="btn-vaciar">Vaciar Carrito</button>
         <button id="pausar-venta" class="btn-secundario" style="background:#6c757d; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">Guardar venta</button>
@@ -424,6 +443,26 @@ window.eliminarVentaAbierta = (id) => {
 function asignarEventosBotones() {
   const carrito = obtenerCarrito();
 
+  const recalcularTotalEnVista = () => {
+    const total = carrito.reduce((sum, item) => {
+      const productoActual = getProductoActual(item.id);
+      const precio = precioUnitarioItemCarrito(item, productoActual);
+      return sum + (precio * Number(item.cantidad || 0));
+    }, 0);
+    const el = document.getElementById("total-general");
+    if (el) el.textContent = formatearMoneda(total);
+  };
+
+  const actualizarSubtotalEnVista = (index) => {
+    const item = carrito[index];
+    if (!item) return;
+    const productoActual = getProductoActual(item.id);
+    const precio = precioUnitarioItemCarrito(item, productoActual);
+    const subtotal = precio * Number(item.cantidad || 0);
+    const el = document.querySelector(`.subtotal-valor[data-index="${index}"]`);
+    if (el) el.textContent = formatearMoneda(subtotal);
+  };
+
   document.querySelectorAll(".btn-qty").forEach((btn) => {
     btn.onclick = (e) => {
       const index = Number(e.target.dataset.index);
@@ -448,9 +487,57 @@ function asignarEventosBotones() {
         item.cantidad -= 1;
       }
 
-      item.precio = precioProducto(original);
-      item.precioVenta = precioProducto(original);
-      guardarCarrito(carrito);
+      const inputCantidad = document.querySelector(`.input-cantidad-edit[data-index="${index}"]`);
+      if (inputCantidad) inputCantidad.value = String(item.cantidad);
+      persistirCarrito(carrito);
+      actualizarSubtotalEnVista(index);
+      recalcularTotalEnVista();
+    };
+  });
+
+  document.querySelectorAll(".input-cantidad-edit").forEach((input) => {
+    input.oninput = (e) => {
+      const index = Number(e.target.dataset.index);
+      const item = carrito[index];
+      if (!item) return;
+
+      const original = getProductoActual(item.id);
+      if (!original || original.activo === false) return;
+
+      const disponible = stockDisponible(original);
+      let n = Number(e.target.value);
+      if (!Number.isFinite(n)) return;
+      n = Math.max(1, Math.floor(n));
+      if (Number.isFinite(disponible) && n > disponible) {
+        n = disponible;
+        mostrarToast("warning", "Stock maximo", `No puedes agregar mas. El stock maximo es ${disponible}.`);
+      }
+      e.target.value = String(n);
+      item.cantidad = n;
+      persistirCarrito(carrito);
+      actualizarSubtotalEnVista(index);
+      recalcularTotalEnVista();
+    };
+  });
+
+  document.querySelectorAll(".input-precio-edit").forEach((input) => {
+    input.oninput = (e) => {
+      const index = Number(e.target.dataset.index);
+      const item = carrito[index];
+      if (!item) return;
+
+      const original = getProductoActual(item.id);
+      if (!original || original.activo === false) return;
+
+      let p = Number(e.target.value);
+      if (!Number.isFinite(p)) return;
+      p = Math.max(0, p);
+      item.precioUnitario = p;
+      item.precioVenta = p;
+      item.precio = p;
+      persistirCarrito(carrito);
+      actualizarSubtotalEnVista(index);
+      recalcularTotalEnVista();
     };
   });
 
@@ -511,7 +598,7 @@ function mostrarModalPago(carrito) {
   // Calcular total
   const totalGeneral = carrito.reduce((sum, item) => {
     const producto = getProductoActual(item.id);
-    const precio = producto ? precioProducto(producto) : precioProducto(item);
+    const precio = precioUnitarioItemCarrito(item, producto);
     return sum + (precio * (item.cantidad || 1));
   }, 0);
 

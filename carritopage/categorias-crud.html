@@ -16,6 +16,16 @@
 
     <main>
         <section class="admin-productos">
+            <div style="display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:12px;">
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <button id="btn-nueva" type="button" class="btn-admin-primario">+ Crear categoría</button>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <input id="cat-buscar" type="text" placeholder="Buscar categoría..." style="padding:10px 12px; border:1px solid #ddd; border-radius:10px; min-width:220px;">
+                        <span id="cat-contador" style="color:#666; font-size:13px;"></span>
+                    </div>
+                </div>
+            </div>
+
             <form id="categoria-form" class="producto-form">
                 <h3 id="form-title">Crear Nueva Categoría</h3>
                 <div class="form-grid">
@@ -49,22 +59,53 @@
 
     <script src="admin-auth.js"></script>
     <script src="../js/backend.js"></script>
-    <script type="module">
-        import { Entidades } from '../js/entidades.js';
-
+    <script src="../js/entidades-global.js"></script>
+    <script>
         document.addEventListener("DOMContentLoaded", () => {
             // Verificar sesión
             if (window.validarSesionAdmin && !window.validarSesionAdmin()) return;
+
+            const Entidades = window.Entidades;
+            if (!Entidades) return;
 
             const form = document.getElementById('categoria-form');
             const tbody = document.getElementById('lista-categorias');
             const btnSync = document.getElementById('btn-sync');
             const btnCancelar = document.getElementById('btn-cancelar');
+            const btnNueva = document.getElementById('btn-nueva');
+            const inputBuscar = document.getElementById('cat-buscar');
+            const contador = document.getElementById('cat-contador');
             let editId = null;
+
+            const notify = (tipo, mensaje) => {
+                if (window.mostrarToast) window.mostrarToast(tipo, "Categorías", mensaje);
+                else alert(mensaje);
+            };
+
+            const resetForm = () => {
+                form.reset();
+                editId = null;
+                document.getElementById('form-title').textContent = "Crear Nueva Categoría";
+                document.getElementById('btn-guardar').textContent = "Guardar Categoría";
+            };
+
+            const mostrarForm = () => {
+                form.style.display = "block";
+                document.getElementById('cat-nombre').focus();
+            };
+
+            const ocultarForm = () => {
+                form.style.display = "none";
+            };
+
+            const normalizarNombre = (valor) => String(valor || "").trim().toLowerCase();
 
             const render = () => {
                 const cats = Entidades.obtener('categorias');
-                tbody.innerHTML = cats.map(c => `
+                const q = normalizarNombre(inputBuscar.value);
+                const filtradas = q ? cats.filter(c => normalizarNombre(c.nombre).includes(q)) : cats;
+
+                tbody.innerHTML = filtradas.map(c => `
                     <tr>
                         <td><small>${c.id || '-'}</small></td>
                         <td><strong>${c.nombre || '-'}</strong></td>
@@ -74,6 +115,8 @@
                         </td>
                     </tr>
                 `).join('');
+
+                if (contador) contador.textContent = `${filtradas.length}/${cats.length}`;
             };
 
             window.prepararEdicion = (id, nombre) => {
@@ -81,6 +124,7 @@
                 document.getElementById('cat-nombre').value = nombre;
                 document.getElementById('form-title').textContent = "Editando Categoría: " + nombre;
                 document.getElementById('btn-guardar').textContent = "Actualizar Cambios";
+                mostrarForm();
             };
 
             window.eliminarCat = async (id) => {
@@ -97,7 +141,15 @@
                 };
 
                 if (!data.nombre) {
-                    alert('El nombre es obligatorio');
+                    notify("error", "El nombre es obligatorio.");
+                    return;
+                }
+
+                const existentes = Entidades.obtener('categorias');
+                const nombreNorm = normalizarNombre(data.nombre);
+                const duplicada = existentes.find(c => normalizarNombre(c.nombre) === nombreNorm && String(c.id) !== String(editId || ""));
+                if (duplicada) {
+                    notify("error", "Ya existe una categoría con ese nombre.");
                     return;
                 }
 
@@ -106,19 +158,15 @@
                 } else {
                     await Entidades.crear('categorias', data);
                 }
-                
-                form.reset();
-                editId = null;
-                document.getElementById('form-title').textContent = "Crear Nueva Categoría";
-                document.getElementById('btn-guardar').textContent = "Guardar Categoría";
+
+                resetForm();
+                ocultarForm();
                 render();
             };
 
             btnCancelar.onclick = () => {
-                form.reset();
-                editId = null;
-                document.getElementById('form-title').textContent = "Crear Nueva Categoría";
-                document.getElementById('btn-guardar').textContent = "Guardar Categoría";
+                resetForm();
+                ocultarForm();
             };
 
             btnSync.onclick = async () => {
@@ -130,7 +178,15 @@
                 btnSync.disabled = false;
             };
 
+            btnNueva.onclick = () => {
+                resetForm();
+                mostrarForm();
+            };
+
+            inputBuscar.addEventListener("input", render);
+
             // Carga inicial
+            ocultarForm();
             render();
         });
     </script>

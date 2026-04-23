@@ -15,15 +15,33 @@ async function registrarCompra(items, proveedorId = "") {
         throw new Error("La compra debe tener al menos un producto.");
     }
 
+    const itemsLimpios = items.map((it) => ({
+        id: it.id,
+        cantidad: Number(it.cantidad),
+        costo: Number(it.costo)
+    }));
+
+    for (const it of itemsLimpios) {
+        if (it.id == null || String(it.id).trim() === "") {
+            throw new Error("Hay items sin producto seleccionado.");
+        }
+        if (!Number.isFinite(it.cantidad) || it.cantidad <= 0) {
+            throw new Error("La cantidad debe ser un número mayor o igual a 1.");
+        }
+        if (!Number.isFinite(it.costo) || it.costo < 0) {
+            throw new Error("El costo unitario debe ser un número válido (>= 0).");
+        }
+    }
+
     const productosBase = window.obtenerProductos();
-    const itemsProcesados = items.map(item => {
+    const itemsProcesados = itemsLimpios.map(item => {
         const prodOriginal = productosBase.find(p => p.id === Number(item.id));
         return {
             id: Number(item.id),
             nombre: prodOriginal ? prodOriginal.nombre : "Producto desconocido",
-            cantidad: Number(item.cantidad),
-            costo: Number(item.costo),
-            subtotal: Number(item.cantidad) * Number(item.costo)
+            cantidad: Math.max(1, Math.floor(Number(item.cantidad))),
+            costo: Math.max(0, Number(item.costo)),
+            subtotal: Math.max(1, Math.floor(Number(item.cantidad))) * Math.max(0, Number(item.costo))
         };
     });
 
@@ -58,14 +76,15 @@ async function registrarCompra(items, proveedorId = "") {
     console.log("✅ Stock actualizado para", itemsProcesados.length, "productos");
 
     // 3. Envío a servicio externo (backend futuro)
+    let sync = null;
     try {
-        await enviarCompraAServicioExterno(nuevaCompra);
+        sync = await enviarCompraAServicioExterno(nuevaCompra);
     } catch (error) {
         console.error("❌ Error al sincronizar compra con API:", error);
         console.warn("⚠️ Compra guardada localmente pero no sincronizada");
     }
 
-    return nuevaCompra;
+    return { ...nuevaCompra, sync };
 }
 
 /**

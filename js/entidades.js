@@ -9,7 +9,7 @@ const ENTIDADES_CONFIG = {
     proveedores: {
         key: "pos_proveedores",
         route: "proveedores",
-        campos: ['id', 'nombre', 'telefono', 'correo']
+        campos: ['id', 'nombre', 'contacto']
     },
     categorias: {
         key: "pos_categorias",
@@ -128,6 +128,7 @@ export const Entidades = {
         const t = termino.toLowerCase();
         return lista.filter(item =>
             (item.nombre && item.nombre.toLowerCase().includes(t)) ||
+            (item.contacto && item.contacto.toLowerCase().includes(t)) ||
             (item.correo && item.correo.toLowerCase().includes(t)) ||
             (item.email && item.email.toLowerCase().includes(t)) ||
             (item.telefono && item.telefono.includes(t))

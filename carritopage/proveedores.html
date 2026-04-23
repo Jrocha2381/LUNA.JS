@@ -18,6 +18,16 @@
 
     <main>
       <section class="admin-productos">
+        <div style="display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:12px;">
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <button id="btn-nueva" type="button" class="btn-admin-primario">+ Crear proveedor</button>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <input id="prov-buscar" type="text" placeholder="Buscar proveedor..." style="padding:10px 12px; border:1px solid #ddd; border-radius:10px; min-width:220px;">
+              <span id="prov-contador" style="color:#666; font-size:13px;"></span>
+            </div>
+          </div>
+        </div>
+
         <form id="proveedor-form" class="producto-form">
           <h3 id="form-title">Registrar Nuevo Proveedor</h3>
           <div class="form-grid">
@@ -26,12 +36,8 @@
               <input type="text" id="prov-nombre" required placeholder="Ej: Distribuidora Papelera S.A." />
             </label>
             <label>
-              Teléfono / WhatsApp
-              <input type="text" id="prov-telefono" placeholder="300 000 0000" />
-            </label>
-            <label>
-              Correo Electrónico
-              <input type="email" id="prov-correo" placeholder="contacto@proveedor.com" />
+              Contacto (teléfono, email, etc.)
+              <input type="text" id="prov-contacto" placeholder="Ej: 300 000 0000 / contacto@proveedor.com" />
             </label>
           </div>
           <div class="form-actions">
@@ -46,8 +52,7 @@
               <tr>
                 <th>ID</th>
                 <th>Nombre</th>
-                <th>Teléfono</th>
-                <th>Correo</th>
+                <th>Contacto</th>
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -59,45 +64,88 @@
 
     <script src="admin-auth.js"></script>
     <script src="../js/backend.js"></script>
-    <script type="module">
-      import { Entidades } from "../js/entidades.js";
-
-      document.addEventListener("DOMContentLoaded", () => {
+    <script src="../js/entidades-global.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", async () => {
         if (window.validarSesionAdmin && !window.validarSesionAdmin()) return;
+
+        const Entidades = window.Entidades;
+        if (!Entidades) {
+          alert("No se pudo inicializar Entidades.");
+          return;
+        }
 
         const form = document.getElementById("proveedor-form");
         const tbody = document.getElementById("lista-proveedores");
         const btnSync = document.getElementById("btn-sync");
         const btnCancelar = document.getElementById("btn-cancelar");
+        const btnNueva = document.getElementById("btn-nueva");
+        const inputBuscar = document.getElementById("prov-buscar");
+        const contador = document.getElementById("prov-contador");
         let editId = null;
+
+        const notify = (tipo, mensaje) => {
+          if (window.mostrarToast) window.mostrarToast(tipo, "Proveedores", mensaje);
+          else alert(mensaje);
+        };
+
+        const resetForm = () => {
+          form.reset();
+          editId = null;
+          document.getElementById("form-title").textContent = "Registrar Nuevo Proveedor";
+          document.getElementById("btn-guardar").textContent = "Guardar Proveedor";
+        };
+
+        const mostrarForm = () => {
+          form.style.display = "block";
+          document.getElementById("prov-nombre").focus();
+        };
+
+        const ocultarForm = () => {
+          form.style.display = "none";
+        };
+
+        const normalizarTexto = (valor) => String(valor || "").trim().toLowerCase();
 
         const render = () => {
           const provs = Entidades.obtener("proveedores");
-          tbody.innerHTML = provs
+          const q = normalizarTexto(inputBuscar.value);
+          const filtrados = q
+            ? provs.filter((p) => {
+                const contacto = p.contacto || p.telefono || p.correo || p.email || "";
+                return (
+                  normalizarTexto(p.nombre).includes(q) ||
+                  normalizarTexto(contacto).includes(q)
+                );
+              })
+            : provs;
+
+          tbody.innerHTML = filtrados
             .map(
               (p) => `
                 <tr>
                   <td><small>${p.id || "-"}</small></td>
                   <td><strong>${p.nombre || "-"}</strong></td>
-                  <td>${p.telefono || "-"}</td>
-                  <td>${p.correo || "-"}</td>
+                  <td>${p.contacto || p.telefono || p.correo || p.email || "-"}</td>
                   <td>
-                    <button class="btn-admin" onclick="window.prepararEdicion('${p.id}', '${(p.nombre || "").replace(/'/g, "\\'")}', '${p.telefono || ""}', '${p.correo || ""}')">Editar</button>
+                    <button class="btn-admin" onclick="window.prepararEdicion('${p.id}', '${(p.nombre || "").replace(/'/g, "\\'")}', '${(p.contacto || p.telefono || p.correo || p.email || "").replace(/'/g, "\\'")}')">Editar</button>
                     <button class="btn-admin" style="background:#fee2e2; color:#b91c1c;" onclick="window.eliminarProv('${p.id}')">Eliminar</button>
                   </td>
                 </tr>
               `
             )
             .join("");
+
+          if (contador) contador.textContent = `${filtrados.length}/${provs.length}`;
         };
 
-        window.prepararEdicion = (id, nombre, telefono, correo) => {
+        window.prepararEdicion = (id, nombre, contacto) => {
           editId = id;
           document.getElementById("prov-nombre").value = nombre;
-          document.getElementById("prov-telefono").value = telefono;
-          document.getElementById("prov-correo").value = correo;
+          document.getElementById("prov-contacto").value = contacto;
           document.getElementById("form-title").textContent = "Editando Proveedor";
           document.getElementById("btn-guardar").textContent = "Actualizar Cambios";
+          mostrarForm();
         };
 
         window.eliminarProv = async (id) => {
@@ -111,33 +159,30 @@
           e.preventDefault();
           const data = {
             nombre: document.getElementById("prov-nombre").value.trim(),
-            telefono: document.getElementById("prov-telefono").value.trim(),
-            correo: document.getElementById("prov-correo").value.trim()
+            contacto: document.getElementById("prov-contacto").value.trim()
           };
 
           if (!data.nombre) {
-            alert("El nombre es obligatorio");
+            notify("error", "El nombre es obligatorio.");
             return;
           }
 
           if (editId) {
             await Entidades.actualizar("proveedores", editId, data);
+            notify("success", "Proveedor actualizado.");
           } else {
             await Entidades.crear("proveedores", data);
+            notify("success", "Proveedor creado.");
           }
 
-          form.reset();
-          editId = null;
-          document.getElementById("form-title").textContent = "Registrar Nuevo Proveedor";
-          document.getElementById("btn-guardar").textContent = "Guardar Proveedor";
+          resetForm();
+          ocultarForm();
           render();
         };
 
         btnCancelar.onclick = () => {
-          form.reset();
-          editId = null;
-          document.getElementById("form-title").textContent = "Registrar Nuevo Proveedor";
-          document.getElementById("btn-guardar").textContent = "Guardar Proveedor";
+          resetForm();
+          ocultarForm();
         };
 
         btnSync.onclick = async () => {
@@ -149,9 +194,16 @@
           btnSync.disabled = false;
         };
 
+        btnNueva.onclick = () => {
+          resetForm();
+          mostrarForm();
+        };
+
+        inputBuscar.addEventListener("input", render);
+
+        ocultarForm();
         render();
       });
     </script>
   </body>
 </html>
-
