@@ -1,5 +1,4 @@
 // js/ventas.js
-// Estructura sincronizada con Google Sheets
 
 function obtenerVentas() {
     return JSON.parse(localStorage.getItem("ventas")) || [];
@@ -36,14 +35,14 @@ async function registrarVenta(carrito, total, metodoPago, clienteId = null, valo
     ventas.push(nuevaVenta);
     localStorage.setItem("ventas", JSON.stringify(ventas));
 
-    // Sincronización con Google Sheets
+    // Sincronización futura con backend (si está habilitado)
     try {
-        if (window.API) {
-            await window.API.post('ventas', nuevaVenta);
-            console.log("✅ Venta sincronizada con Google Sheets:", nuevaVenta.id);
+        if (window.Backend && window.Backend.isEnabled && window.Backend.isEnabled()) {
+            await window.Backend.post('ventas', nuevaVenta);
+            console.log("✅ Venta sincronizada con backend:", nuevaVenta.id);
         }
     } catch (error) {
-        console.warn("⚠️ Venta guardada localmente, pero falló la sincronización API:", error);
+        console.warn("⚠️ Venta guardada localmente, pero falló la sincronización con backend:", error);
     }
 
     return nuevaVenta; // Devolvemos la venta para mostrar la factura

@@ -54,10 +54,20 @@ function obtenerProductosActivos() {
 }
 
 function renderizarProductos(productosFiltrados = obtenerProductosActivos()) {
+  // Ahora acepta un array de productos como parámetro principal, por defecto obtiene los activos
+  let productos = productosFiltrados;
+  if (!Array.isArray(productos)) {
+    productos = obtenerProductosActivos();
+  }
   if (!contenedor) return;
   contenedor.innerHTML = "";
 
-  productosFiltrados.forEach((producto) => {
+  if (!productos || productos.length === 0) {
+    contenedor.innerHTML = '<div class="catalogo-vacio">No hay productos disponibles.</div>';
+    return;
+  }
+
+  productos.forEach((producto) => {
     const tieneStock = !producto.seguimientoInventario || producto.stock > 0;
 
     contenedor.innerHTML += `
@@ -69,7 +79,7 @@ function renderizarProductos(productosFiltrados = obtenerProductosActivos()) {
         <button class="btn-agregar"
                 data-id="${producto.id}"
                 ${!tieneStock ? 'disabled style="background: #ccc; border-color: #ccc; cursor: not-allowed;"' : ""}>
-          ${tieneStock ? "Anadir al carrito" : "Agotado"}
+          ${tieneStock ? "Agregar" : "Agotado"}
         </button>
       </div>
     `;

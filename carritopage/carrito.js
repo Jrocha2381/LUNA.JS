@@ -269,11 +269,50 @@ function activarEventosCarrito() {
   activarEventosAdmin();
 }
 
+function obtenerVentasAbiertas() {
+  try {
+    const ventas = JSON.parse(localStorage.getItem("ventas_abiertas") || "[]");
+    return Array.isArray(ventas) ? ventas : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function guardarVentasAbiertas(ventas) {
+  localStorage.setItem("ventas_abiertas", JSON.stringify(Array.isArray(ventas) ? ventas : []));
+}
+
+function renderVentasAbiertasSection(ventasAbiertas) {
+  if (!ventasAbiertas || ventasAbiertas.length === 0) return "";
+
+  return `
+    <div class="ventas-abiertas-seccion" style="margin-top:30px; border-top:2px dashed #eee; padding-top:20px; background: #f8f9fa; border-radius: 10px;">
+      <h4 style="color:#8a9b2f; margin-bottom: 10px;">🔄 Ventas en pausa (${ventasAbiertas.length})</h4>
+      <div style="display:grid; gap:10px; margin-top:10px;">
+        ${ventasAbiertas.map(v => `
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; background:white; padding:10px; border-radius:8px; border:1px solid #eee; box-shadow:0 2px 8px #0001;">
+            <span style="flex:1;">
+              <b>${v.nombre || "Venta en pausa"}</b>
+              <span style='color:#888'>(${formatearMoneda(Number(v.total) || 0)})</span>
+            </span>
+            <div style="display:flex; gap:8px; flex-shrink:0;">
+              <button onclick="window.confirmarRetomarVenta(${v.id})" style="background:#8a9b2f; color:white; border:none; padding:5px 14px; border-radius:5px; cursor:pointer; font-weight:600;">Retomar</button>
+              <button onclick="window.confirmarEliminarVentaAbierta(${v.id})" style="background:#fee2e2; color:#b91c1c; border:none; padding:5px 14px; border-radius:5px; cursor:pointer; font-weight:700;">Eliminar</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <p style="font-size:13px; color:#666; margin-top:10px;">Puedes retomar cualquier venta en pausa o eliminarla si ya no la necesitas.</p>
+    </div>
+  `;
+}
+
 function renderCarrito() {
   const contenedor = document.getElementById("carrito");
   if (!contenedor) return;
 
   const carrito = obtenerCarrito();
+  const ventasAbiertas = obtenerVentasAbiertas();
 
   if (carrito.length === 0) {
     contenedor.innerHTML = `
@@ -283,10 +322,11 @@ function renderCarrito() {
         <a href="../index.html" style="color: #8a9b2f; font-weight: bold;">Volver a la tienda</a>
       </div>
     `;
+    // Importante: aun con el carrito vacio, mostrar ventas en pausa para poder retomarlas o eliminarlas.
+    contenedor.innerHTML += renderVentasAbiertasSection(ventasAbiertas);
     return;
   }
 
-  const ventasAbiertas = JSON.parse(localStorage.getItem("ventas_abiertas") || "[]");
   let html = "";
   let totalGeneral = 0;
 
@@ -323,32 +363,18 @@ function renderCarrito() {
   });
 
   html += `
-    <div class="carrito-total">
+    <div class="carrito-total" style="margin-bottom: 2.5rem;">
       <hr>
       <h3>Total a pagar: ${formatearMoneda(totalGeneral)}</h3>
       <div class="botones-finales">
         <button id="vaciar-carrito" class="btn-vaciar">Vaciar Carrito</button>
-        <button id="pausar-venta" class="btn-secundario" style="background:#6c757d; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">Pausar Venta</button>
-        <button id="finalizar-compra" class="btn-finalizar">Finalizar Compra</button>
+        <button id="pausar-venta" class="btn-secundario" style="background:#6c757d; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">Guardar venta</button>
+        <button id="finalizar-compra" class="btn-finalizar">Cerrar venta</button>
       </div>
     </div>
   `;
 
-  if (ventasAbiertas.length > 0) {
-    html += `
-      <div class="ventas-abiertas-seccion" style="margin-top:30px; border-top:2px dashed #eee; padding-top:20px;">
-        <h4>🔄 Ventas Abiertas (${ventasAbiertas.length})</h4>
-        <div style="display:grid; gap:10px; margin-top:10px;">
-          ${ventasAbiertas.map(v => `
-            <div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:10px; border-radius:8px; border:1px solid #eee;">
-              <span>${v.nombre} (${formatearMoneda(v.total)})</span>
-              <button onclick="window.retomarVenta(${v.id})" style="background:#8a9b2f; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">Retomar</button>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `;
-  }
+  html += renderVentasAbiertasSection(ventasAbiertas);
 
   contenedor.innerHTML = html;
   asignarEventosBotones();
@@ -367,15 +393,32 @@ function validarCarritoParaCompra(carrito) {
   return "";
 }
 
+
+window.confirmarRetomarVenta = (id) => {
+  mostrarConfirmacion("¿Deseas retomar esta venta en pausa?", () => window.retomarVenta(id));
+};
+
 window.retomarVenta = (id) => {
-  const ventasAbiertas = JSON.parse(localStorage.getItem("ventas_abiertas") || "[]");
-  const index = ventasAbiertas.findIndex(v => v.id === id);
+  const ventasAbiertas = obtenerVentasAbiertas();
+  const index = ventasAbiertas.findIndex(v => String(v.id) === String(id));
   if (index === -1) return;
 
   const venta = ventasAbiertas.splice(index, 1)[0];
-  localStorage.setItem("ventas_abiertas", JSON.stringify(ventasAbiertas));
+  guardarVentasAbiertas(ventasAbiertas);
   guardarCarrito(venta.items);
   mostrarToast("success", "Venta retomada", "Puedes continuar con la edición.");
+};
+
+window.confirmarEliminarVentaAbierta = (id) => {
+  mostrarConfirmacion("¿Deseas eliminar esta venta en pausa? Esta acción no se puede deshacer.", () => window.eliminarVentaAbierta(id));
+};
+
+window.eliminarVentaAbierta = (id) => {
+  const ventasAbiertas = obtenerVentasAbiertas();
+  const nuevas = ventasAbiertas.filter(v => String(v.id) !== String(id));
+  guardarVentasAbiertas(nuevas);
+  renderCarrito();
+  mostrarToast("success", "Venta eliminada", "La venta en pausa fue eliminada.");
 };
 
 function asignarEventosBotones() {

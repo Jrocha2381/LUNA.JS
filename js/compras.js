@@ -1,9 +1,8 @@
 // js/compras.js
-// Estructura sincronizada con Google Sheets
 
 /**
  * Registra una compra en el sistema, actualiza el inventario y envía los datos
- * a Google Sheets.
+ * a un backend (futuro).
  * 
  * Estructura: { id, fecha, proveedor, total, itemsJson }
  * 
@@ -30,7 +29,6 @@ async function registrarCompra(items, proveedorId = "") {
 
     const totalCompra = itemsProcesados.reduce((sum, it) => sum + it.subtotal, 0);
 
-    // Estructura que coincide con Google Sheets
     const nuevaCompra = {
         id: `COMPRA-${Date.now()}${Math.random().toString(36).substring(2, 5)}`,
         fecha: new Date().toLocaleString('es-CO'),
@@ -59,7 +57,7 @@ async function registrarCompra(items, proveedorId = "") {
     window.guardarProductos(nuevosProductos);
     console.log("✅ Stock actualizado para", itemsProcesados.length, "productos");
 
-    // 3. Envío a servicio externo (Google Sheets)
+    // 3. Envío a servicio externo (backend futuro)
     try {
         await enviarCompraAServicioExterno(nuevaCompra);
     } catch (error) {
@@ -71,16 +69,15 @@ async function registrarCompra(items, proveedorId = "") {
 }
 
 /**
- * Envía una compra a Google Sheets
+ * Envía una compra a backend (si está habilitado)
  */
 async function enviarCompraAServicioExterno(compra) {
-    console.log("📤 Enviando compra a Google Sheets...", compra.id);
-    if (window.API) {
-        const resultado = await window.API.post('compras', compra);
+    if (window.Backend && window.Backend.isEnabled && window.Backend.isEnabled()) {
+        const resultado = await window.Backend.post('compras', compra);
         console.log("✅ Compra enviada:", resultado);
         return resultado;
     }
-    return { success: false, message: "API no disponible" };
+    return { success: false, message: "Backend no disponible" };
 }
 
 window.registrarCompra = registrarCompra;

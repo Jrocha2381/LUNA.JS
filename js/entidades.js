@@ -1,5 +1,4 @@
 // js/entidades.js - Gestión de Clientes, Proveedores y Categorías
-// Estructura sincronizada con Google Sheets
 
 const ENTIDADES_CONFIG = {
     clientes: {
@@ -28,10 +27,12 @@ export const Entidades = {
 
     async sincronizar(tipo) {
         const config = ENTIDADES_CONFIG[tipo];
-        if (!config || !window.API) return [];
+        if (!config || !window.Backend || !window.Backend.isEnabled || !window.Backend.isEnabled()) {
+            return this.obtener(tipo);
+        }
         try {
             console.log(`🔄 Sincronizando ${tipo}...`);
-            const datos = await window.API.get(config.route);
+            const datos = await window.Backend.get(config.route);
             if (Array.isArray(datos)) {
                 localStorage.setItem(config.key, JSON.stringify(datos));
                 console.log(`✅ ${tipo} sincronizados:`, datos.length, 'registros');
@@ -56,10 +57,10 @@ export const Entidades = {
         lista.push(nuevo);
         localStorage.setItem(config.key, JSON.stringify(lista));
 
-        // Sincronizar con Google Sheets
-        if (window.API) {
+        // Sincronizar con backend (si está habilitado)
+        if (window.Backend && window.Backend.isEnabled && window.Backend.isEnabled()) {
             try {
-                await window.API.post(config.route, { action: 'create', data: nuevo });
+                await window.Backend.post(config.route, { action: 'create', data: nuevo });
                 console.log(`✅ ${tipo} creado:`, nuevo);
             } catch (e) {
                 console.error(`❌ Error al crear ${tipo} en API:`, e);
@@ -83,10 +84,10 @@ export const Entidades = {
         lista[index] = { ...lista[index], ...cambios };
         localStorage.setItem(config.key, JSON.stringify(lista));
 
-        // Sincronizar con Google Sheets
-        if (window.API) {
+        // Sincronizar con backend (si está habilitado)
+        if (window.Backend && window.Backend.isEnabled && window.Backend.isEnabled()) {
             try {
-                await window.API.post(config.route, {
+                await window.Backend.post(config.route, {
                     action: 'update',
                     id: lista[index].id,
                     data: lista[index]
@@ -108,10 +109,10 @@ export const Entidades = {
 
         localStorage.setItem(config.key, JSON.stringify(lista));
 
-        // Sincronizar con Google Sheets
-        if (window.API && itemAEliminar) {
+        // Sincronizar con backend (si está habilitado)
+        if (window.Backend && window.Backend.isEnabled && window.Backend.isEnabled() && itemAEliminar) {
             try {
-                await window.API.post(config.route, {
+                await window.Backend.post(config.route, {
                     action: 'delete',
                     id: itemAEliminar.id
                 });
@@ -148,6 +149,7 @@ window.Entidades = Entidades;
 
 // Sincronización automática al cargar el módulo
 const sincronizarTodo = async () => {
+    if (!window.Backend || !window.Backend.isEnabled || !window.Backend.isEnabled()) return;
     console.log("🔄 Iniciando sincronización de entidades...");
     await Promise.all([
         Entidades.sincronizar('clientes'),
