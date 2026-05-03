@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración | Papel y Luna</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR */
+        .admin-sidebar {
+            width: 250px;
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .admin-sidebar h2 {
+            margin-bottom: 20px;
+            font-size: 18px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .admin-sidebar ul {
+            list-style: none;
+        }
+
+        .admin-sidebar li {
+            margin-bottom: 10px;
+        }
+
+        .admin-sidebar button {
+            width: 100%;
+            padding: 12px 15px;
+            background: #34495e;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            text-align: left;
+            transition: background 0.3s;
+        }
+
+        .admin-sidebar button:hover,
+        .admin-sidebar button.active {
+            background: #3498db;
+        }
+
+        /* MAIN CONTENT */
+        .admin-main {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .admin-header h1 {
+            font-size: 28px;
+            color: #2c3e50;
+        }
+
+        .admin-header .btn-volver {
+            padding: 10px 20px;
+            background: #95a5a6;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .admin-header .btn-volver:hover {
+            background: #7f8c8d;
+        }
+
+        /* VISTAS */
+        .admin-view {
+            display: none;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .admin-view.active {
+            display: block;
+        }
+
+        .admin-view h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        /* FORMULARIOS */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-primary {
+            padding: 12px 25px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-danger {
+            padding: 8px 15px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-warning {
+            padding: 8px 15px;
+            background: #f39c12;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn-warning:hover {
+            background: #d68910;
+        }
+
+        /* TABLAS */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th {
+            background: #ecf0f1;
+            color: #2c3e50;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #bdc3c7;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        tr:hover {
+            background: #f9f9f9;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .modal-header h3 {
+            color: #2c3e50;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #95a5a6;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .stat-card.blue {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .stat-card.green {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .stat-card.orange {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            .admin-container {
+                flex-direction: column;
+            }
+
+            .admin-sidebar {
+                width: 100%;
+                display: flex;
+                gap: 10px;
+                padding: 10px;
+                overflow-x: auto;
+            }
+
+            .admin-sidebar ul {
+                display: flex;
+                gap: 10px;
+                flex-wrap: nowrap;
+            }
+
+            .admin-sidebar li {
+                margin-bottom: 0;
+                min-width: 120px;
+            }
+
+            .admin-main {
+                padding: 15px;
+            }
+
+            .admin-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- SIDEBAR NAVEGACIÓN -->
+        <aside class="admin-sidebar">
+            <h2>⚙️ Panel Admin</h2>
+            <ul>
+                <li><button class="nav-btn" data-view="dashboard">📊 Dashboard</button></li>
+                <li><button class="nav-btn" data-view="productos">📦 Productos</button></li>
+                <li><button class="nav-btn" data-view="ventas-abiertas">🛒 Ventas Abiertas</button></li>
+                <li><button class="nav-btn" data-view="compras">📥 Compras</button></li>
+                <li><button class="nav-btn" data-view="clientes">👥 Clientes</button></li>
+                <li><button class="nav-btn" data-view="proveedores">🏭 Proveedores</button></li>
+                <li><button class="nav-btn" data-view="categorias">🏷️ Categorías</button></li>
+            </ul>
+        </aside>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="admin-main">
+            <div class="admin-header">
+                <h1>Panel de Administración</h1>
+                <a href="../index.html" class="btn-volver">← Volver a la tienda</a>
+            </div>
+
+            <!-- DASHBOARD -->
+            <section id="dashboard" class="admin-view active">
+                <h2>📊 Dashboard</h2>
+                <div class="stats">
+                    <div class="stat-card blue">
+                        <div class="stat-number" id="stat-productos">0</div>
+                        <div class="stat-label">Productos</div>
+                    </div>
+                    <div class="stat-card green">
+                        <div class="stat-number" id="stat-ventas">0</div>
+                        <div class="stat-label">Ventas Abiertas</div>
+                    </div>
+                    <div class="stat-card orange">
+                        <div class="stat-number" id="stat-clientes">0</div>
+                        <div class="stat-label">Clientes</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PRODUCTOS -->
+            <section id="productos" class="admin-view">
+                <h2>📦 Productos</h2>
+                <button class="btn-primary" onclick="abrirModalProducto()">+ Nuevo Producto</button>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Categoría</th>
+                            <th>Precio</th>
+                            <th>Stock</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-productos"></tbody>
+                </table>
+            </section>
+
+            <!-- VENTAS ABIERTAS -->
+            <section id="ventas-abiertas" class="admin-view">
+                <h2>🛒 Ventas Abiertas</h2>
+                <button class="btn-primary" onclick="crearNuevaVenta()">+ Nueva Venta</button>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID Venta</th>
+                            <th>Creada</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-ventas-abiertas"></tbody>
+                </table>
+            </section>
+
+            <!-- COMPRAS -->
+            <section id="compras" class="admin-view">
+                <h2>📥 Compras</h2>
+                <button class="btn-primary" onclick="abrirModalCompra()">+ Registrar Compra</button>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID Compra</th>
+                            <th>Fecha</th>
+                            <th>Proveedor</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-compras"></tbody>
+                </table>
+            </section>
+
+            <!-- CLIENTES -->
+            <section id="clientes" class="admin-view">
+                <h2>👥 Clientes</h2>
+                <button class="btn-primary" onclick="abrirModalCliente()">+ Nuevo Cliente</button>
+                <div style="margin-bottom: 20px;">
+                    <input type="text" id="input-buscar-cliente" placeholder="Buscar cliente..." style="padding: 10px; width: 300px; border: 1px solid #ddd; border-radius: 5px;">
+                    <button class="btn-primary" style="margin-left: 10px;" onclick="buscarClientes()">Buscar</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Teléfono</th>
+                            <th>Email</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-clientes"></tbody>
+                </table>
+            </section>
+
+            <!-- PROVEEDORES -->
+            <section id="proveedores" class="admin-view">
+                <h2>🏭 Proveedores</h2>
+                <button class="btn-primary" onclick="abrirModalProveedor()">+ Nuevo Proveedor</button>
+                <div style="margin-bottom: 20px;">
+                    <input type="text" id="input-buscar-proveedor" placeholder="Buscar proveedor..." style="padding: 10px; width: 300px; border: 1px solid #ddd; border-radius: 5px;">
+                    <button class="btn-primary" style="margin-left: 10px;" onclick="buscarProveedores()">Buscar</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Contacto</th>
+                            <th>Teléfono</th>
+                            <th>Email</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-proveedores"></tbody>
+                </table>
+            </section>
+
+            <!-- CATEGORÍAS -->
+            <section id="categorias" class="admin-view">
+                <h2>🏷️ Categorías</h2>
+                <button class="btn-primary" onclick="abrirModalCategoria()">+ Nueva Categoría</button>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-categorias"></tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODALES -->
+    <div id="modal-cliente" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-cliente-titulo">Nuevo Cliente</h3>
+                <button class="modal-close" onclick="cerrarModal('modal-cliente')">&times;</button>
+            </div>
+            <form onsubmit="guardarCliente(event)">
+                <div class="form-group">
+                    <label for="input-cliente-nombre">Nombre *</label>
+                    <input type="text" id="input-cliente-nombre" required>
+                </div>
+                <div class="form-group">
+                    <label for="input-cliente-telefono">Teléfono</label>
+                    <input type="tel" id="input-cliente-telefono">
+                </div>
+                <div class="form-group">
+                    <label for="input-cliente-email">Email</label>
+                    <input type="email" id="input-cliente-email">
+                </div>
+                <button type="submit" class="btn-primary">Guardar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-proveedor" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-proveedor-titulo">Nuevo Proveedor</h3>
+                <button class="modal-close" onclick="cerrarModal('modal-proveedor')">&times;</button>
+            </div>
+            <form onsubmit="guardarProveedor(event)">
+                <div class="form-group">
+                    <label for="input-proveedor-nombre">Nombre *</label>
+                    <input type="text" id="input-proveedor-nombre" required>
+                </div>
+                <div class="form-group">
+                    <label for="input-proveedor-contacto">Contacto</label>
+                    <input type="text" id="input-proveedor-contacto">
+                </div>
+                <div class="form-group">
+                    <label for="input-proveedor-telefono">Teléfono</label>
+                    <input type="tel" id="input-proveedor-telefono">
+                </div>
+                <div class="form-group">
+                    <label for="input-proveedor-email">Email</label>
+                    <input type="email" id="input-proveedor-email">
+                </div>
+                <button type="submit" class="btn-primary">Guardar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-categoria" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-categoria-titulo">Nueva Categoría</h3>
+                <button class="modal-close" onclick="cerrarModal('modal-categoria')">&times;</button>
+            </div>
+            <form onsubmit="guardarCategoria(event)">
+                <div class="form-group">
+                    <label for="input-categoria-nombre">Nombre *</label>
+                    <input type="text" id="input-categoria-nombre" required>
+                </div>
+                <button type="submit" class="btn-primary">Guardar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="../js/backend.js"></script>
+    <script src="../js/data.js"></script>
+    <script src="../js/ventas.js"></script>
+    <script src="../js/compras.js"></script>
+    <script src="../js/entidades.js"></script>
+    <script src="../js/admin-funciones.js"></script>
+    <script src="admin-dashboard.js"></script>
+</body>
+</html>

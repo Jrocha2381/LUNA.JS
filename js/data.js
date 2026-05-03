@@ -90,9 +90,11 @@ function normalizarProducto(producto, listaExistente = []) {
     id: producto.id != null ? Number(producto.id) : obtenerSiguienteId(listaExistente),
     nombre: limpiarTexto(producto.nombre),
     categoria,
+    categoriaId: producto.categoriaId || null, // NEW: Relación a entidad categoría
     precioVenta: Math.max(0, precioVenta),
     precio: Math.max(0, precioVenta),
     costo: Math.max(0, toNumber(producto.costo)),
+    proveedorId: producto.proveedorId || null, // NEW: Relación a entidad proveedor
     seguimientoInventario,
     stock,
     codigoInterno,
@@ -248,6 +250,248 @@ window.inactivarProducto = inactivarProducto;
 window.reactivarProducto = reactivarProducto;
 window.eliminarProducto = eliminarProducto;
 window.CATEGORIAS_PERMITIDAS = CATEGORIAS_PERMITIDAS;
+
+// ============================================
+// SISTEMA DE VENTAS ABIERTAS (NEW)
+// ============================================
+const STORAGE_VENTAS_ABIERTAS_KEY = "ventas_abiertas";
+const STORAGE_CARRITO_ACTUAL_KEY = "carrito_actual";
+
+/**
+ * Obtiene lista de ventas abiertas desde localStorage
+ * Estructura: { id, creada, ultimaEdicion, items: [...] }
+ */
+function obtenerVentasAbiertas() {
+  const saved = localStorage.getItem(STORAGE_VENTAS_ABIERTAS_KEY);
+  return saved ? JSON.parse(saved) : [];
+}
+
+/**
+ * Guarda lista de ventas abiertas
+ */
+function guardarVentasAbiertas(ventas) {
+  localStorage.setItem(STORAGE_VENTAS_ABIERTAS_KEY, JSON.stringify(ventas || []));
+  window.dispatchEvent(new CustomEvent("ventasAbiertasActualizadas", { detail: ventas }));
+}
+
+/**
+ * Obtiene el carrito actual en progreso
+ */
+function obtenerCarritoActual() {
+  const saved = localStorage.getItem(STORAGE_CARRITO_ACTUAL_KEY);
+  return saved ? JSON.parse(saved) : { items: [], total: 0 };
+}
+
+/**
+ * Guarda carrito actual en progreso
+ */
+function guardarCarritoActual(carrito) {
+  localStorage.setItem(STORAGE_CARRITO_ACTUAL_KEY, JSON.stringify(carrito || { items: [], total: 0 }));
+  window.dispatchEvent(new CustomEvent("carritoActualActualizado", { detail: carrito }));
+}
+
+/**
+ * Limpia el carrito actual (después de cerrar venta)
+ */
+function limpiarCarritoActual() {
+  localStorage.removeItem(STORAGE_CARRITO_ACTUAL_KEY);
+  window.dispatchEvent(new CustomEvent("carritoActualActualizado", { detail: { items: [], total: 0 } }));
+}
+
+/**
+ * Crea una nueva venta abierta
+ * @returns { id, creada, ultimaEdicion, items: [], clienteId, clienteNombre, metodoPago }
+ */
+function crearVentaAbierta() {
+  const nuevaVenta = {
+    id: `VENTA-${Date.now()}${Math.random().toString(36).substring(2, 5)}`,
+    creada: new Date().toLocaleString('es-CO'),
+    ultimaEdicion: new Date().toLocaleString('es-CO'),
+    items: [],
+    clienteId: null,
+    clienteNombre: null, // NEW: Cache de nombre de cliente
+    metodoPago: "Efectivo"
+  };
+
+  const ventas = obtenerVentasAbiertas();
+  ventas.push(nuevaVenta);
+  guardarVentasAbiertas(ventas);
+  guardarCarritoActual(nuevaVenta.items);
+
+  return nuevaVenta;
+}
+
+/**
+ * Agrega un producto al carrito de una venta abierta
+ */
+function agregarItemVentaAbierta(ventaId, producto, cantidad = 1) {
+  const ventas = obtenerVentasAbiertas();
+  const ventaIndex = ventas.findIndex(v => v.id === ventaId);
+
+  if (ventaIndex < 0) {
+    throw new Error(`Venta ${ventaId} no encontrada`);
+  }
+
+  const venta = ventas[ventaIndex];
+  cantidad = Math.max(1, Math.floor(Number(cantidad)));
+
+  const itemExistente = venta.items.find(item => Number(item.id) === Number(producto.id));
+
+  if (itemExistente) {
+    itemExistente.cantidad += cantidad;
+  } else {
+    venta.items.push({
+      id: producto.id,
+      nombre: producto.nombre,
+      precioVenta: producto.precioVenta || producto.precio,
+      cantidad: cantidad,
+      costo: producto.costo || 0
+    });
+  }
+
+  venta.ultimaEdicion = new Date().toLocaleString('es-CO');
+  guardarVentasAbiertas(ventas);
+  guardarCarritoActual(venta.items);
+
+  return venta;
+}
+
+/**
+ * Actualiza cantidad de un item en venta abierta
+ */
+function actualizarItemVentaAbierta(ventaId, productoId, cantidad) {
+  const ventas = obtenerVentasAbiertas();
+  const ventaIndex = ventas.findIndex(v => v.id === ventaId);
+
+  if (ventaIndex < 0) throw new Error(`Venta ${ventaId} no encontrada`);
+
+  const venta = ventas[ventaIndex];
+  const item = venta.items.find(it => Number(it.id) === Number(productoId));
+
+  if (!item) throw new Error(`Producto ${productoId} no en venta`);
+
+  cantidad = Math.max(1, Math.floor(Number(cantidad)));
+  item.cantidad = cantidad;
+  venta.ultimaEdicion = new Date().toLocaleString('es-CO');
+
+  guardarVentasAbiertas(ventas);
+  guardarCarritoActual(venta.items);
+
+  return venta;
+}
+
+/**
+ * Elimina item de venta abierta
+ */
+function eliminarItemVentaAbierta(ventaId, productoId) {
+  const ventas = obtenerVentasAbiertas();
+  const ventaIndex = ventas.findIndex(v => v.id === ventaId);
+
+  if (ventaIndex < 0) throw new Error(`Venta ${ventaId} no encontrada`);
+
+  const venta = ventas[ventaIndex];
+  venta.items = venta.items.filter(it => Number(it.id) !== Number(productoId));
+  venta.ultimaEdicion = new Date().toLocaleString('es-CO');
+
+  guardarVentasAbiertas(ventas);
+  guardarCarritoActual(venta.items);
+
+  return venta;
+}
+
+/**
+ * Obtiene una venta abierta específica
+ */
+function obtenerVentaAbierta(ventaId) {
+  const ventas = obtenerVentasAbiertas();
+  return ventas.find(v => v.id === ventaId) || null;
+}
+
+/**
+ * Calcula total de una venta abierta
+ */
+function calcularTotalVenta(venta) {
+  if (!venta || !venta.items) return 0;
+  return venta.items.reduce((sum, item) => sum + (item.precioVenta * item.cantidad), 0);
+}
+
+/**
+ * Edita datos de una venta abierta (cliente, método pago, etc)
+ */
+function actualizarDatosVentaAbierta(ventaId, cambios) {
+  const ventas = obtenerVentasAbiertas();
+  const ventaIndex = ventas.findIndex(v => v.id === ventaId);
+
+  if (ventaIndex < 0) throw new Error(`Venta ${ventaId} no encontrada`);
+
+  const venta = ventas[ventaIndex];
+  venta.clienteId = cambios.clienteId !== undefined ? cambios.clienteId : venta.clienteId;
+  venta.metodoPago = cambios.metodoPago || venta.metodoPago;
+  venta.ultimaEdicion = new Date().toLocaleString('es-CO');
+
+  guardarVentasAbiertas(ventas);
+  return venta;
+}
+
+/**
+ * Cierra una venta abierta (la mueve a historial de ventas)
+ * No elimina de ventas abiertas, solo marca como cerrada
+ */
+function cerrarVentaAbierta(ventaId, total, valorRecibido = 0) {
+  const ventas = obtenerVentasAbiertas();
+  const venta = ventas.find(v => v.id === ventaId);
+
+  if (!venta) throw new Error(`Venta ${ventaId} no encontrada`);
+
+  // Crear snapshot para historial
+  const ventaCerrada = {
+    id: ventaId,
+    fecha: venta.creada,
+    clienteId: venta.clienteId || "",
+    metodoPago: venta.metodoPago || "Efectivo",
+    total: Number(total) || 0,
+    itemsJson: JSON.stringify(venta.items.map(item => ({
+      id: item.id,
+      nombre: item.nombre,
+      precio: item.precioVenta,
+      costo: item.costo || 0,
+      cantidad: item.cantidad
+    })))
+  };
+
+  // Eliminar de ventas abiertas
+  const ventasActualizadas = ventas.filter(v => v.id !== ventaId);
+  guardarVentasAbiertas(ventasActualizadas);
+  limpiarCarritoActual();
+
+  return ventaCerrada;
+}
+
+/**
+ * Elimina una venta abierta (sin guardar historial)
+ */
+function eliminarVentaAbierta(ventaId) {
+  const ventas = obtenerVentasAbiertas();
+  const ventasActualizadas = ventas.filter(v => v.id !== ventaId);
+  guardarVentasAbiertas(ventasActualizadas);
+  limpiarCarritoActual();
+}
+
+// Exponer funciones de ventas abiertas globalmente
+window.obtenerVentasAbiertas = obtenerVentasAbiertas;
+window.guardarVentasAbiertas = guardarVentasAbiertas;
+window.obtenerCarritoActual = obtenerCarritoActual;
+window.guardarCarritoActual = guardarCarritoActual;
+window.limpiarCarritoActual = limpiarCarritoActual;
+window.crearVentaAbierta = crearVentaAbierta;
+window.agregarItemVentaAbierta = agregarItemVentaAbierta;
+window.actualizarItemVentaAbierta = actualizarItemVentaAbierta;
+window.eliminarItemVentaAbierta = eliminarItemVentaAbierta;
+window.obtenerVentaAbierta = obtenerVentaAbierta;
+window.calcularTotalVenta = calcularTotalVenta;
+window.actualizarDatosVentaAbierta = actualizarDatosVentaAbierta;
+window.cerrarVentaAbierta = cerrarVentaAbierta;
+window.eliminarVentaAbierta = eliminarVentaAbierta;
 window.sincronizarProductosAPI = sincronizarProductosAPI;
 window.sincronizarProductosBackend = sincronizarProductosBackend;
 

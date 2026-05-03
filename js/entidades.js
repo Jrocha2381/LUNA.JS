@@ -1,5 +1,7 @@
 // js/entidades.js - Gestión de Clientes, Proveedores y Categorías
+// IIFE para evitar contaminación global (pero expone window.Entidades)
 
+(function() {
 const ENTIDADES_CONFIG = {
     clientes: {
         key: "pos_clientes",
@@ -18,7 +20,7 @@ const ENTIDADES_CONFIG = {
     }
 };
 
-export const Entidades = {
+const Entidades = {
     obtener(tipo) {
         const config = ENTIDADES_CONFIG[tipo];
         if (!config) return [];
@@ -145,7 +147,7 @@ export const Entidades = {
     }
 };
 
-// Exponer globalmente inmediatamente antes de la sincronización
+// Exponer globalmente
 window.Entidades = Entidades;
 
 // Sincronización automática al cargar el módulo
@@ -161,3 +163,4 @@ const sincronizarTodo = async () => {
 };
 
 sincronizarTodo();
+})();

@@ -4,7 +4,7 @@
  * Registra una compra en el sistema, actualiza el inventario y envía los datos
  * a un backend (futuro).
  * 
- * Estructura: { id, fecha, proveedor, total, itemsJson }
+ * Estructura: { id, fecha, proveedorId, proveedorNombre, total, itemsJson }
  * 
  * @param {Array} items - Lista de objetos { id, cantidad, costo }
  * @param {string} proveedorId - ID del proveedor (opcional)
@@ -47,10 +47,16 @@ async function registrarCompra(items, proveedorId = "") {
 
     const totalCompra = itemsProcesados.reduce((sum, it) => sum + it.subtotal, 0);
 
+    // Obtener nombre del proveedor si existe
+    const proveedorNombre = proveedorId 
+        ? (window.Resolvers?.getNombreProveedor?.(proveedorId) || "Proveedor desconocido")
+        : null;
+
     const nuevaCompra = {
         id: `COMPRA-${Date.now()}${Math.random().toString(36).substring(2, 5)}`,
         fecha: new Date().toLocaleString('es-CO'),
-        proveedor: proveedorId || "",
+        proveedorId: proveedorId || null, // NEW: ID del proveedor
+        proveedorNombre: proveedorNombre, // NEW: Cache de nombre
         total: totalCompra,
         itemsJson: JSON.stringify(itemsProcesados)
     };
@@ -67,7 +73,8 @@ async function registrarCompra(items, proveedorId = "") {
             return {
                 ...p,
                 stock: (p.stock || 0) + itemCompra.cantidad,
-                costo: itemCompra.costo // Actualizamos al último costo de compra
+                costo: itemCompra.costo, // Actualizamos al último costo de compra
+                proveedorId: proveedorId || p.proveedorId // Asociar proveedor a producto
             };
         }
         return p;
