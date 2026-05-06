@@ -6,138 +6,107 @@
     <title>Papel y Luna</title>
 
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="carritopage/admin-panel.css" />
+    <style>
+      /* Ajustes para integrar Buscador y Carrito en la Top Bar */
+      .top-bar {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        padding: 0 30px;
+        background: white;
+        height: 70px;
+        border-bottom: 1px solid #eee;
+      }
+      .header__icons {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+      .main-view-container {
+        padding: 30px;
+        height: calc(100vh - 70px);
+        overflow-y: auto;
+      }
+    </style>
   </head>
 
-  <body>
-    <!-- ================= HEADER ================= -->
+  <body class="admin-mode">
+    <!-- Estructura de Barra Lateral (Sidebar) -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>Papel y Luna</h2>
+      </div>
+      <nav class="nav-menu">
+        <a href="#" class="nav-item active" data-categoria="todos">
+          <span class="icon">🏠</span> Inicio
+        </a>
+        <a href="carritopage/acceso-admin.html" class="nav-item">
+          <span class="icon">👤</span> Mi Cuenta
+        </a>
+        <a href="#" class="nav-item" data-categoria="Escolar">
+          <span class="icon">🎒</span> Escolar
+        </a>
+        <a href="#" class="nav-item" data-categoria="Oficina">
+          <span class="icon">💼</span> Oficina
+        </a>
+      </nav>
+    </aside>
 
-    <header class="header">
-      <div class="header__container">
-        <div class="header__logo">
-          <h1>Papel y Luna</h1>
-        </div>
-
-        <nav class="header__nav">
-          <ul class="header__menu">
-            <li><a href="index.html">Inicio</a></li>
-            <li><a href="Secciones/escolar/escolar.html">Escolar</a></li>
-            <li><a href="Secciones/oficina/oficina.html">Oficina</a></li>
-            <li><a href="Secciones/arte/arte.html">Arte</a></li>
-            <li><a href="Secciones/papeleria/papeleria.html">Papelería</a></li>
-          </ul>
-        </nav>
-
+    <!-- Contenido Principal -->
+    <main class="main-content">
+      <header class="top-bar">
         <div class="header__icons">
           <div class="buscador-header">
-            <input
-              type="text"
-              id="input-buscar-header"
-              class="input-buscar-header"
-              placeholder="Busca un producto..."
-            />
+            <input type="text" id="input-buscar-header" class="input-buscar-header" placeholder="Buscar..." />
             <button id="btn-buscar-header" class="btn-buscar-header">🔍</button>
           </div>
-
-          <a
-            class="icon-link carro"
-            href="carritopage/carrito.html"
-            title="Ver carrito"
-          >
+          <a class="icon-link carro" href="carritopage/carrito.html">
             <span class="icon-emoji">🛒</span>
-            <span class="icon-label">Carrito</span>
-            <span class="icon-badge" id="badge-carrito" style="display: none"
-              >0</span
-            >
-          </a>
-
-          <a
-            class="icon-link usuario"
-            href="carritopage/acceso-admin.html"
-            title="Acceso administrativo"
-          >
-            <span class="icon-emoji">👤</span>
-            <span class="icon-label">Cuenta</span>
+            <span class="icon-badge" id="badge-carrito" style="display: none">0</span>
           </a>
         </div>
+      </header>
+
+      <div class="main-view-container">
+        <section id="seccion-productos-inicio" class="productos-inicio">
+            <div class="productos__container"></div>
+        </section>
+        <section id="resultados-busqueda" class="resultados-busqueda-container"></section>
       </div>
-    </header>
-
-    <!-- ================= CATEGORÍAS ================= -->
-
-    <section class="categorias">
-      <h2 class="titulo">Categorías</h2>
-
-      <p class="subtitulo">Papelería Online en Chía y Cajicá - Papel y Luna</p>
-
-      <div class="cartas">
-        <a href="Secciones/escolar/escolar.html" class="carta">
-          <img src="img/maleta.png" alt="Escolar" />
-          <h3>ESCOLAR</h3>
-        </a>
-
-        <a href="Secciones/oficina/oficina.html" class="carta">
-          <img src="img/escritorio.png" alt="Oficina" />
-          <h3>OFICINA</h3>
-        </a>
-
-        <a href="Secciones/arte/arte.html" class="carta">
-          <img src="img/paleta.png" alt="Arte" />
-          <h3>ARTE</h3>
-        </a>
-
-        <a href="Secciones/papeleria/papeleria.html" class="carta">
-          <img src="img/papel.png" alt="Papelería" />
-          <h3>PAPELERÍA</h3>
-        </a>
-      </div>
-
-      <button id="btn-ver-productos" class="btn-ver" type="button">
-        Ver más productos
-      </button>
-    </section>
-
-    <section
-      id="seccion-productos-inicio"
-      class="productos-inicio"
-      style="display: none"
-    >
-      <div class="productos-inicio__container">
-        <h2 class="titulo">Todos los productos</h2>
-        <p class="subtitulo">Catalogo completo disponible actualmente</p>
-        <div class="productos__container"></div>
-      </div>
-    </section>
-
-    <section
-      id="resultados-busqueda"
-      class="resultados-busqueda-container"
-    ></section>
+    </main>
 
     <script src="js/backend.js"></script>
     <script src="js/data.js"></script>
-    <script src="js/ventas.js"></script>
     <script src="carritopage/carrito.js"></script>
     <script src="js/catalogo.js"></script>
-    <script src="js/edicion-flujo.js"></script>
     <script src="js/buscador.js"></script>
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         if (window.activarBuscadorHeader) window.activarBuscadorHeader();
-        const btnVerProductos = document.getElementById("btn-ver-productos");
-        const seccionProductos = document.getElementById(
-          "seccion-productos-inicio",
-        );
+        if (window.renderizarProductos) window.renderizarProductos();
 
-        if (btnVerProductos && seccionProductos) {
-          btnVerProductos.addEventListener("click", () => {
-            seccionProductos.style.display = "block";
-            btnVerProductos.style.display = "none";
-            seccionProductos.scrollIntoView({
-              behavior: "smooth",
-              block: "start",
-            });
+        // Manejo de filtrado por categorías desde la barra lateral sin recargar página
+        const navItems = document.querySelectorAll('.nav-item[data-categoria]');
+        const resultadosContainer = document.getElementById("resultados-busqueda");
+
+        navItems.forEach(item => {
+          item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const cat = item.dataset.categoria;
+
+            // Actualizar clase activa
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+
+            if (window.renderizarProductos && window.obtenerProductos) {
+              if (resultadosContainer) resultadosContainer.innerHTML = ""; // Limpiar búsquedas previas
+              const productos = window.obtenerProductos().filter(p => p.activo !== false);
+              const filtrados = cat === 'todos' ? productos : productos.filter(p => p.categoria.toLowerCase() === cat.toLowerCase());
+              window.renderizarProductos(filtrados);
+            }
           });
-        }
+        });
       });
     </script>
   </body>

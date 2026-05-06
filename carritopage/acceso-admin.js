@@ -4,65 +4,25 @@
   window.top.location.href = window.location.href;
 }
 
-const ADMIN_SESSION_KEY = "luna_admin_session";
-const ADMIN_USER = "admin";
-const ADMIN_PASS = "luna123";
-
-function obtenerSesionAdmin() {
-  try {
-    return JSON.parse(localStorage.getItem(ADMIN_SESSION_KEY) || "null");
-  } catch (error) {
-    return null;
-  }
-}
-
-function guardarSesionAdmin(usuario) {
-  const payload = {
-    autenticado: true,
-    usuario,
-    fecha: new Date().toISOString()
-  };
-  localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(payload));
-}
-
-function cerrarSesionAdmin() {
-  localStorage.removeItem(ADMIN_SESSION_KEY);
-}
-
-function sesionEsValida() {
-  const sesion = obtenerSesionAdmin();
-  return Boolean(sesion && sesion.autenticado === true);
-}
-
-window.sesionAdminActiva = sesionEsValida;
-window.cerrarSesionAdmin = cerrarSesionAdmin;
+// Acceso libre: La sesión siempre es válida
+window.sesionAdminActiva = () => true;
 
 document.addEventListener("DOMContentLoaded", () => {
-  const loginContainer = document.getElementById("login-container");
   const dashboardContainer = document.getElementById("dashboard-container");
-  const loginForm = document.getElementById("login-form");
-  const errorLabel = document.getElementById("login-error");
-  const btnCerrarSesion = document.getElementById("btn-cerrar-sesion");
   const adminFrame = document.getElementById("admin-frame");
   const navItems = document.querySelectorAll(".nav-item");
   const viewTitle = document.getElementById("view-title");
 
-  const mostrarVista = (autenticado) => {
-    if (!loginContainer || !dashboardContainer) return;
-
-    if (autenticado) {
-      loginContainer.classList.add("oculto");
+  // Función para inicializar el panel sin necesidad de login
+  const inicializarPanel = () => {
+    if (dashboardContainer) {
       dashboardContainer.classList.remove("oculto");
       document.body.classList.add("admin-mode");
 
-      // Cargamos el contenido del iframe SOLO cuando el usuario está autenticado
+      // Carga inicial del iframe
       if (adminFrame && !adminFrame.src) {
-        adminFrame.src = "admin.html";
+        adminFrame.src = "admin-dashboard.html";
       }
-    } else {
-      loginContainer.classList.remove("oculto");
-      dashboardContainer.classList.add("oculto");
-      document.body.classList.remove("admin-mode");
     }
   };
 
@@ -95,32 +55,5 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  mostrarVista(sesionEsValida());
-
-  if (loginForm) {
-    loginForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const usuario = loginForm.usuario.value.trim();
-      const contrasena = loginForm.contrasena.value;
-
-      if (usuario === ADMIN_USER && contrasena === ADMIN_PASS) {
-        guardarSesionAdmin(usuario);
-        loginForm.reset();
-        if (errorLabel) errorLabel.textContent = "";
-        mostrarVista(true);
-        return;
-      }
-
-      if (errorLabel) {
-        errorLabel.textContent = "Usuario o contrasena incorrectos.";
-      }
-    });
-  }
-
-  if (btnCerrarSesion) {
-    btnCerrarSesion.addEventListener("click", () => {
-      cerrarSesionAdmin();
-      mostrarVista(false);
-    });
-  }
+  inicializarPanel();
 });

@@ -268,6 +268,9 @@ function pausarVentaActual() {
   const carrito = obtenerCarrito();
   if (carrito.length === 0) return;
 
+  // Si estamos pausando una venta, asegurarnos de que no hay una en edición
+  sessionStorage.removeItem("ventaEnEdicionId");
+
   const ventasAbiertas = JSON.parse(localStorage.getItem("ventas_abiertas") || "[]");
   const nuevaVentaAbierta = {
     id: Date.now(),
@@ -279,6 +282,7 @@ function pausarVentaActual() {
   ventasAbiertas.push(nuevaVentaAbierta);
   localStorage.setItem("ventas_abiertas", JSON.stringify(ventasAbiertas));
   guardarCarrito([]);
+  renderCarrito(); // Re-render para actualizar la sección de ventas en pausa
   mostrarToast("success", "Venta guardada", "La venta se movió a estado abierto.");
 }
 
@@ -575,26 +579,21 @@ function asignarEventosBotones() {
         return;
       }
 
+      const ventaEnEdicionId = sessionStorage.getItem("ventaEnEdicionId");
       // Abrir modal de pago
-      mostrarModalPago(carritoActual);
+      mostrarModalPago(carritoActual, ventaEnEdicionId);
     };
   }
 }
 
 // Exponer en global para uso sin módulos
 window.agregarAlCarrito = agregarAlCarrito;
-window.activarEventosCarrito = activarEventosCarrito;
-window.renderCarrito = renderCarrito;
-window.asignarEventosBotones = asignarEventosBotones;
-window.updateCartBadge = updateCartBadge;
-window.renderAdminProductos = renderAdminProductos;
-window.activarEventosAdmin = activarEventosAdmin;
 
 document.addEventListener("DOMContentLoaded", () => {
   try { updateCartBadge(); } catch (e) { }
 });
 
-function mostrarModalPago(carrito) {
+function mostrarModalPago(carrito, ventaEnEdicionId = null) {
   // Calcular total
   const totalGeneral = carrito.reduce((sum, item) => {
     const producto = getProductoActual(item.id);
@@ -718,7 +717,7 @@ function mostrarModalPago(carrito) {
       btnConfirmar.textContent = "Procesando...";
 
       // Registrar venta (ahora esperamos el registro antes de vaciar)
-      const venta = await window.registrarVenta(carrito, totalGeneral, metodoPagoSeleccionado, valorRecibido);
+      const venta = await window.registrarVenta(carrito, totalGeneral, metodoPagoSeleccionado, null, valorRecibido); // Asumiendo clienteId es null por ahora
 
       // Actualizar stock
       const productosActuales = obtenerProductos();
@@ -735,9 +734,16 @@ function mostrarModalPago(carrito) {
 
       guardarProductos(nuevosProductos);
 
+      // Si se estaba editando una venta pausada, eliminarla de la lista de ventas abiertas
+      if (ventaEnEdicionId) {
+        window.eliminarVentaAbierta?.(ventaEnEdicionId); // Esta es la función de data.js
+        sessionStorage.removeItem("ventaEnEdicionId");
+      }
+
       // Limpiar carrito y cerrar modal
       overlay.remove();
       guardarCarrito([]);
+      // renderAdminProductos(); // Esto es para el panel admin, no para el carrito
       renderAdminProductos();
 
       mostrarToast("success", "Compra exitosa", "Redirigiendo a factura...", 2000);

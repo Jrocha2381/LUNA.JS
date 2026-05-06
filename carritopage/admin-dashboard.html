@@ -606,6 +606,65 @@
         </div>
     </div>
 
+    <!-- MODAL REGISTRO DE COMPRA -->
+    <div id="modal-compra" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3>Nueva Compra de Inventario</h3>
+                <button class="modal-close" onclick="cerrarModal('modal-compra')">&times;</button>
+            </div>
+            <form onsubmit="guardarCompra(event)">
+                <div class="form-group">
+                    <label for="input-compra-proveedor">Proveedor</label>
+                    <select id="input-compra-proveedor">
+                        <option value="">Seleccione un proveedor...</option>
+                    </select>
+                </div>
+                
+                <div style="background: #f9f9f9; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #eee;">
+                    <p style="font-weight: 700; margin-bottom: 10px; font-size: 0.9rem; color: #8a9b2f;">📦 Agregar Item a la Factura</p>
+                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; align-items: end;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="font-size: 0.8rem;">Producto</label>
+                            <select id="input-compra-producto">
+                                <option value="">Seleccione...</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="font-size: 0.8rem;">Cantidad</label>
+                            <input type="number" id="input-compra-cantidad" min="1" value="1">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="font-size: 0.8rem;">Costo Unit.</label>
+                            <input type="number" id="input-compra-costo" min="0" value="0">
+                        </div>
+                        <button type="button" class="btn-primary" onclick="agregarItemACompra()" style="padding: 10px 15px;">+</button>
+                    </div>
+                </div>
+
+                <div style="max-height: 200px; overflow-y: auto; margin-bottom: 20px; border: 1px solid #eee; border-radius: 8px;">
+                    <table style="font-size: 0.85rem; margin-top: 0;">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Cant.</th>
+                                <th>Costo</th>
+                                <th>Subtotal</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-items-compra"></tbody>
+                    </table>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-weight: 700; background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                    <div style="font-size: 1.1rem; color: #8a9b2f;">Total Factura: <span id="total-compra-modal">$0</span></div>
+                    <button type="submit" class="btn-primary" id="btn-guardar-compra" disabled>Finalizar y Registrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- SCRIPTS -->
     <script src="../js/backend.js"></script>
     <script src="../js/data.js"></script>
@@ -613,6 +672,8 @@
     <script src="../js/compras.js"></script>
     <script src="../js/entidades.js"></script>
     <script src="../js/admin-funciones.js"></script>
+    <script src="carrito.js"></script>
+    <script src="../js/edicion-flujo.js"></script>
     <script src="admin-dashboard.js"></script>
 </body>
 </html>
