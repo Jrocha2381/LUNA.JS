@@ -178,6 +178,9 @@
           resetForm();
           ocultarForm();
           render();
+
+          // Notificar al CRUD de productos para que refresque el select de proveedores
+          window.dispatchEvent(new Event("proveedoresActualizados"));
         };
 
         btnCancelar.onclick = () => {

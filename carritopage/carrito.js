@@ -590,6 +590,117 @@ window.updateCartBadge = updateCartBadge;
 window.renderAdminProductos = renderAdminProductos;
 window.activarEventosAdmin = activarEventosAdmin;
 
+// === Proveedores (para el select del CRUD de productos) ===
+function obtenerListaProveedores() {
+  // Preferir Entidades si existe
+  try {
+    if (window.Entidades && typeof window.Entidades.obtener === "function") {
+      return window.Entidades.obtener("proveedores") || [];
+    }
+  } catch (e) {}
+
+  // Fallback localStorage (por si no está Entidades)
+  try {
+    const raw = localStorage.getItem("luna_proveedores");
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {}
+
+  return [];
+}
+
+function populateProveedorSelect() {
+  const select = document.getElementById("producto-proveedor");
+  if (!select) return;
+
+  const proveedores = obtenerListaProveedores();
+  select.innerHTML = "";
+
+  const frag = document.createDocumentFragment();
+
+  const optDefault = document.createElement("option");
+  optDefault.value = "";
+  optDefault.textContent = "Seleccionar proveedor...";
+  frag.appendChild(optDefault);
+
+  proveedores.forEach((p) => {
+    const option = document.createElement("option");
+    option.value = String(p.id);
+    option.textContent = p.nombre || p.empresa || p.contacto || p.correo || "Proveedor";
+    frag.appendChild(option);
+  });
+
+  select.appendChild(frag);
+}
+
+// Escuchar cuando se agregue/edite/elimine un proveedor
+window.addEventListener("proveedoresActualizados", () => {
+  if (document.getElementById("producto-proveedor")) {
+    populateProveedorSelect();
+  }
+});
+
+// === CATEGORÍAS (select del CRUD de productos) ===
+function obtenerListaCategorias() {
+  try {
+    if (window.Entidades && typeof window.Entidades.obtener === "function") {
+      return window.Entidades.obtener("categorias") || [];
+    }
+  } catch (e) {}
+
+  try {
+    const raw = localStorage.getItem("luna_categorias");
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {}
+
+  return [];
+}
+
+function populateCategoriaSelect() {
+  const select = document.getElementById("producto-categoria");
+  if (!select) return;
+
+  const categorias = obtenerListaCategorias();
+
+  select.innerHTML = "";
+
+  const frag = document.createDocumentFragment();
+
+  const optDefault = document.createElement("option");
+  optDefault.value = "";
+  optDefault.textContent = "Seleccionar categoría...";
+  frag.appendChild(optDefault);
+
+  categorias.forEach((c) => {
+    const option = document.createElement("option");
+    // IMPORTANTE: tu producto guarda `categoria` como texto (ver leerPayloadFormulario)
+    // Por eso el select debe guardar el nombre, no el id.
+    option.value = String(c.nombre || "");
+    option.textContent = c.nombre || "Categoría";
+    frag.appendChild(option);
+  });
+
+  select.appendChild(frag);
+}
+
+window.addEventListener("categoriasActualizadas", () => {
+  if (document.getElementById("producto-categoria")) {
+    populateCategoriaSelect();
+  }
+});
+
+// Si estamos en admin.html, poblar al cargar
+document.addEventListener("DOMContentLoaded", () => {
+  if (document.getElementById("producto-proveedor")) {
+    populateProveedorSelect();
+  }
+  if (document.getElementById("producto-categoria")) {
+    populateCategoriaSelect();
+  }
+});
+
+
 document.addEventListener("DOMContentLoaded", () => {
   try { updateCartBadge(); } catch (e) { }
 });
@@ -825,6 +936,8 @@ async function leerPayloadFormulario(formulario) {
   return {
     nombre: formulario.nombre.value.trim(),
     categoria: formulario.categoria.value.trim(),
+    // Nuevo: proveedor del producto
+    proveedorId: formulario.proveedorId ? formulario.proveedorId.value : undefined,
     precioVenta: formulario.precioVenta.value,
     costo: formulario.costo.value,
     seguimientoInventario: formulario.seguimientoInventario.checked,
@@ -837,9 +950,18 @@ async function leerPayloadFormulario(formulario) {
 function limpiarFormularioAdmin() {
   const form = document.getElementById("producto-form");
   if (!form) return;
+
   form.reset();
-  form.seguimientoInventario.checked = true;
-  form.stock.disabled = false;
+
+  // Checkbox por defecto
+  if (form.seguimientoInventario) form.seguimientoInventario.checked = true;
+
+  // Stock habilitado por defecto
+  if (form.stock) {
+    form.stock.disabled = false;
+    form.stock.value = form.stock.value || "0";
+  }
+
   productoEnEdicionId = null;
 
   const titulo = document.getElementById("producto-form-title");
@@ -855,6 +977,12 @@ function cargarProductoEnFormulario(idProducto) {
 
   form.nombre.value = producto.nombre;
   form.categoria.value = producto.categoria;
+
+  // Si el producto tiene proveedor asignado, cargarlo. Si no, dejar seleccionado el primero.
+  if (form.proveedorId) {
+    form.proveedorId.value = String(producto.proveedorId ?? "");
+  }
+
   form.precioVenta.value = producto.precioVenta;
   form.costo.value = producto.costo;
   form.seguimientoInventario.checked = producto.seguimientoInventario;
@@ -876,20 +1004,28 @@ function renderAdminProductos() {
 
   const lista = obtenerProductos();
   if (!lista.length) {
-    tabla.innerHTML = `<tr><td colspan="9">No hay productos registrados.</td></tr>`;
+    tabla.innerHTML = `<tr><td colspan="10">No hay productos registrados.</td></tr>`;
     return;
   }
+
+  const proveedores = (window.obtenerProveedores ? window.obtenerProveedores() : []) || [];
+  const proveedorNombrePorId = new Map(
+    proveedores.map((p) => [String(p.id), p.nombre || p.empresa || p.contacto || "Proveedor"])
+  );
 
   tabla.innerHTML = lista
     .map((producto) => {
       const estado = producto.activo === false ? "Inactivo" : "Activo";
       const stock = producto.seguimientoInventario ? producto.stock : "N/A";
+      const proveedorNombre = producto.proveedorId ? (proveedorNombrePorId.get(String(producto.proveedorId)) || "-") : "-";
+
       return `
         <tr>
           <td>${producto.id}</td>
           <td>${producto.codigoInterno}</td>
           <td>${producto.nombre}</td>
           <td>${producto.categoria}</td>
+          <td>${proveedorNombre}</td>
           <td>${formatearMoneda(producto.precioVenta)}</td>
           <td>${formatearMoneda(producto.costo)}</td>
           <td>${stock}</td>

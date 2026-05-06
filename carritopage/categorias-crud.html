@@ -131,6 +131,7 @@
                 if(confirm('¿Estás seguro de eliminar esta categoría?')) {
                     await Entidades.eliminar('categorias', id);
                     render();
+                    window.dispatchEvent(new Event("categoriasActualizadas"));
                 }
             };
 
@@ -162,6 +163,9 @@
                 resetForm();
                 ocultarForm();
                 render();
+
+                // Notificar al CRUD de productos para refrescar el select de categorías
+                window.dispatchEvent(new Event("categoriasActualizadas"));
             };
 
             btnCancelar.onclick = () => {

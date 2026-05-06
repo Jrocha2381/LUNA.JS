@@ -30,13 +30,9 @@
 
             <label>
               Categoria *
-              <select name="categoria" required>
-                <option value="Escolar">Escolar</option>
-                <option value="Oficina">Oficina</option>
-                <option value="Arte">Arte</option>
-                <option value="Papeleria">Papeleria</option>
-              </select>
+              <select name="categoria" id="producto-categoria" required></select>
             </label>
+
 
             <label>
               Precio de venta *
@@ -48,10 +44,16 @@
               <input type="number" name="costo" min="0" step="0.01" required />
             </label>
 
+            <label>
+              Proveedor *
+              <select name="proveedorId" id="producto-proveedor" required></select>
+            </label>
+
             <label class="checkbox-label">
               <input type="checkbox" name="seguimientoInventario" checked />
               Seguimiento de inventario
             </label>
+
 
             <label>
               Stock
@@ -92,6 +94,7 @@
                 <th>Codigo interno</th>
                 <th>Nombre</th>
                 <th>Categoria</th>
+                <th>Proveedor</th>
                 <th>Venta</th>
                 <th>Costo</th>
                 <th>Stock</th>
@@ -101,6 +104,7 @@
             </thead>
             <tbody id="admin-productos-body"></tbody>
           </table>
+
         </div>
       </section>
     </main>
@@ -113,6 +117,15 @@
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         if (!window.validarSesionAdmin || !window.validarSesionAdmin()) return;
+
+        // (Re)llenar selects dinámicos (categorías/proveedores) antes de renderizar
+        try {
+          if (window.populateCategoriaSelect) window.populateCategoriaSelect();
+          if (window.populateProveedorSelect) window.populateProveedorSelect();
+        } catch (e) {
+          // noop
+        }
+
         if (window.renderAdminProductos) window.renderAdminProductos();
         if (window.activarEventosAdmin) window.activarEventosAdmin();
       });

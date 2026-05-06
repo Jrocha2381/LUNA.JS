@@ -3,7 +3,7 @@
 
 const STORAGE_PRODUCTOS_KEY = "productos";
 const STORAGE_CODIGO_CONTADOR_KEY = "productosCodigoContador";
-const CATEGORIAS_PERMITIDAS = ["Escolar", "Oficina", "Arte", "Papeleria"];
+const CATEGORIAS_PERMITIDAS = ["Escolar", "Oficina", "Arte", "Papeleria"]; // se amplía dinámicamente con CRUD de categorías (Entidades)
 
 // Datos fallback (solo para desarrollo local). En producción deberían venir de backend/base de datos.
 const productosIniciales = [];
@@ -86,10 +86,14 @@ function normalizarProducto(producto, listaExistente = []) {
   const stock = seguimientoInventario ? Math.max(0, toNumber(producto.stock)) : 0;
   const codigoInterno = limpiarTexto(producto.codigoInterno) || generarCodigoInterno(categoria, listaExistente);
 
+  const proveedorIdRaw = producto.proveedorId ?? producto.proveedor_id ?? producto.proveedorID;
+  const proveedorId = proveedorIdRaw != null && String(proveedorIdRaw).trim() !== "" ? String(proveedorIdRaw) : undefined;
+
   return {
     id: producto.id != null ? Number(producto.id) : obtenerSiguienteId(listaExistente),
     nombre: limpiarTexto(producto.nombre),
     categoria,
+    proveedorId,
     precioVenta: Math.max(0, precioVenta),
     precio: Math.max(0, precioVenta),
     costo: Math.max(0, toNumber(producto.costo)),
@@ -171,8 +175,13 @@ function validarProducto(input) {
   const seguimientoInventario = Boolean(input.seguimientoInventario);
   const stock = toNumber(input.stock);
 
+  // proveedorId es opcional
   if (!nombre) errores.push("El nombre es obligatorio.");
-  if (!categoria) errores.push("La categoria debe ser Escolar, Oficina, Arte o Papeleria.");
+  if (!categoria) errores.push("La categoria debe existir (o ser valida).");
+  // proveedorId es opcional
+  if (input.proveedorId != null && String(input.proveedorId).trim() !== "") {
+    // Si existe, no hacemos validación estricta aquí porque se obtiene por CRUD dinámico.
+  }
   if (!Number.isFinite(precioVenta) || precioVenta < 0) errores.push("El precio de venta debe ser un numero no negativo.");
   if (!Number.isFinite(costo) || costo < 0) errores.push("El costo debe ser un numero no negativo.");
   if (seguimientoInventario && (!Number.isFinite(stock) || stock < 0)) {

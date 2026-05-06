@@ -17,27 +17,7 @@
           <h1>Papel y Luna</h1>
         </div>
 
-        <nav class="header__nav">
-          <ul class="header__menu">
-            <li><a href="index.html">Inicio</a></li>
-            <li><a href="Secciones/escolar/escolar.html">Escolar</a></li>
-            <li><a href="Secciones/oficina/oficina.html">Oficina</a></li>
-            <li><a href="Secciones/arte/arte.html">Arte</a></li>
-            <li><a href="Secciones/papeleria/papeleria.html">Papelería</a></li>
-          </ul>
-        </nav>
-
         <div class="header__icons">
-          <div class="buscador-header">
-            <input
-              type="text"
-              id="input-buscar-header"
-              class="input-buscar-header"
-              placeholder="Busca un producto..."
-            />
-            <button id="btn-buscar-header" class="btn-buscar-header">🔍</button>
-          </div>
-
           <a
             class="icon-link carro"
             href="carritopage/carrito.html"
@@ -62,56 +42,14 @@
       </div>
     </header>
 
-    <!-- ================= CATEGORÍAS ================= -->
-
-    <section class="categorias">
-      <h2 class="titulo">Categorías</h2>
-
-      <p class="subtitulo">Papelería Online en Chía y Cajicá - Papel y Luna</p>
-
-      <div class="cartas">
-        <a href="Secciones/escolar/escolar.html" class="carta">
-          <img src="img/maleta.png" alt="Escolar" />
-          <h3>ESCOLAR</h3>
-        </a>
-
-        <a href="Secciones/oficina/oficina.html" class="carta">
-          <img src="img/escritorio.png" alt="Oficina" />
-          <h3>OFICINA</h3>
-        </a>
-
-        <a href="Secciones/arte/arte.html" class="carta">
-          <img src="img/paleta.png" alt="Arte" />
-          <h3>ARTE</h3>
-        </a>
-
-        <a href="Secciones/papeleria/papeleria.html" class="carta">
-          <img src="img/papel.png" alt="Papelería" />
-          <h3>PAPELERÍA</h3>
-        </a>
-      </div>
-
-      <button id="btn-ver-productos" class="btn-ver" type="button">
-        Ver más productos
-      </button>
-    </section>
-
-    <section
-      id="seccion-productos-inicio"
-      class="productos-inicio"
-      style="display: none"
-    >
-      <div class="productos-inicio__container">
-        <h2 class="titulo">Todos los productos</h2>
-        <p class="subtitulo">Catalogo completo disponible actualmente</p>
-        <div class="productos__container"></div>
-      </div>
-    </section>
-
-    <section
-      id="resultados-busqueda"
-      class="resultados-busqueda-container"
-    ></section>
+    <!-- ================= REDIRECCIÓN ================= -->
+    <script>
+      // Redireccionar a la página principal de administración
+      // El usuario solo verá Carrito y Cuenta en el header
+      document.addEventListener("DOMContentLoaded", () => {
+        // Puedes agregar lógica aquí si es necesaria
+      });
+    </script>
 
     <script src="js/backend.js"></script>
     <script src="js/data.js"></script>
@@ -123,21 +61,11 @@
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         if (window.activarBuscadorHeader) window.activarBuscadorHeader();
+        // (POS modo simple) Se oculta el acceso a catálogo/inicio para dejar solo Cuenta y Carrito.
         const btnVerProductos = document.getElementById("btn-ver-productos");
-        const seccionProductos = document.getElementById(
-          "seccion-productos-inicio",
-        );
-
-        if (btnVerProductos && seccionProductos) {
-          btnVerProductos.addEventListener("click", () => {
-            seccionProductos.style.display = "block";
-            btnVerProductos.style.display = "none";
-            seccionProductos.scrollIntoView({
-              behavior: "smooth",
-              block: "start",
-            });
-          });
-        }
+        const seccionProductos = document.getElementById("seccion-productos-inicio");
+        if (btnVerProductos) btnVerProductos.style.display = "none";
+        if (seccionProductos) seccionProductos.style.display = "none";
       });
     </script>
   </body>
