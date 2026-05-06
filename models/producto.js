@@ -8,6 +8,14 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'categoriaId',
         as: 'categoria'
       });
+      Producto.hasMany(models.DetalleVenta, {
+        foreignKey: 'productoId',
+        as: 'detallesVenta'
+      });
+      Producto.hasMany(models.DetalleCompra, {
+        foreignKey: 'productoId',
+        as: 'detallesCompra'
+      });
     }
   }
 
@@ -30,4 +38,3 @@ module.exports = (sequelize, DataTypes) => {
 
   return Producto;
 };
-
