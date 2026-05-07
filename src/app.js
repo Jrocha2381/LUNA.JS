@@ -28,6 +28,13 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..')));
 
+// Middlewares de la actividad
+const requestLogger = require('./middlewares/requestLogger');
+const sanitizeIds = require('./middlewares/sanitizeIds');
+app.use(requestLogger);
+app.use(sanitizeIds);
+
+
 app.get('/api/health', async (_req, res, next) => {
   try {
     await sequelize.authenticate();
