@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     const params = new URLSearchParams(window.location.search);
     const idVenta = params.get("id");
     const tabla = document.getElementById("lista-productos");
@@ -11,11 +11,23 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    const ventas = JSON.parse(localStorage.getItem("ventas")) || [];
+    let venta = null;
 
-    // Se usa '==' para comparar el string de la URL con el número del ID sin problemas de tipo.
-    // Se añade 'v &&' para evitar errores si hay entradas nulas en el array de ventas.
-    const venta = ventas.find(v => v && v.id == idVenta);
+    // Intentar obtener de la API primero
+    try {
+        if (window.Backend && window.Backend.isEnabled()) {
+            venta = await window.Backend.get(`ventas/${idVenta}`);
+            console.log("Venta obtenida de la API:", venta);
+        }
+    } catch (err) {
+        console.warn("No se pudo obtener la venta de la API, intentando localStorage:", err);
+    }
+
+    // Si no se obtiene de la API, intentar de localStorage (compatibilidad)
+    if (!venta) {
+        const ventas = JSON.parse(localStorage.getItem("ventas")) || [];
+        venta = ventas.find(v => v && v.id == idVenta);
+    }
 
     if (!venta) {
         console.error("Venta no encontrada:", idVenta);
@@ -25,18 +37,31 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
+    // Obtener detalles de venta de la API si existen
+    let detallesVenta = [];
+    try {
+        if (venta.id && window.Backend && window.Backend.isEnabled()) {
+            // Obtener todos los detalles y filtrar por ventaId
+            const todosDetalles = await window.Backend.get('detalle_ventas');
+            detallesVenta = Array.isArray(todosDetalles) ? todosDetalles.filter(d => d.ventaId == venta.id) : [];
+        }
+    } catch (err) {
+        console.warn("No se pudieron obtener los detalles de venta:", err);
+    }
+
     // ================================
     // CABECERA
     // ================================
     const infoVenta = document.getElementById("info-venta");
 
     if (infoVenta) {
+        const fecha = new Date(venta.fecha).toLocaleString('es-CO');
         infoVenta.innerHTML = `
             <div style="display:flex; justify-content:space-between;">
-                <span><strong>Fecha:</strong> ${venta.fecha}</span>
+                <span><strong>Fecha:</strong> ${fecha}</span>
                 <span><strong>Ticket:</strong> #${venta.id.toString().slice(-6)}</span>
             </div>
-            <div><strong>Método de pago:</strong> ${venta.metodoPago}</div>
+            <div><strong>Método de pago:</strong> ${venta.metodoPago || '-'}</div>
         `;
     }
 
@@ -46,7 +71,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (tabla) {
         tabla.innerHTML = "";
 
-        venta.items.forEach(prod => {
+        // Usar detalles de la API si existen, sino usar items del JSON
+        const productos = detallesVenta.length > 0 ? detallesVenta : (venta.items || []);
+
+        productos.forEach(prod => {
 
             const nombre =
                 prod.nombre ||
@@ -57,6 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const descripcion = prod.descripcion || "";
 
             const precio =
+                prod.precioUnitario ||
                 prod.precio ||
                 prod.precioVenta ||
                 prod.producto?.precioVenta ||
@@ -64,17 +93,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const cantidad = prod.cantidad || 1;
 
-            const subtotal = precio * cantidad;
+            const subtotal = prod.subtotal || (precio * cantidad);
 
             const fila = document.createElement("tr");
 
             fila.innerHTML = `
                 <td style="padding:5px 0;">
                     <strong>${nombre}</strong><br>
-                    <small style="color:#555;">${cantidad} x $${precio.toLocaleString()}</small>
+                    <small style="color:#555;">${cantidad} x $${precio.toLocaleString('es-CO')}</small>
                 </td>
                 <td style="text-align:right; vertical-align:top;">
-                    <strong>$${subtotal.toLocaleString()}</strong>
+                    <strong>$${subtotal.toLocaleString('es-CO')}</strong>
                 </td>
             `;
 
@@ -92,17 +121,17 @@ document.addEventListener("DOMContentLoaded", () => {
         totalesVenta.innerHTML = `
             <div style="display:flex; justify-content:space-between; margin-top:10px; border-top:1px dashed #000;">
                 <strong>TOTAL:</strong>
-                <strong>$${venta.total.toLocaleString()}</strong>
+                <strong>$${Number(venta.total).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
             </div>
 
-            ${venta.metodoPago === "Efectivo" ? `
+            ${venta.metodoPago === "Efectivo" && venta.valorRecibido ? `
                 <div style="display:flex; justify-content:space-between;">
                     <span>Recibido:</span>
-                    <span>$${venta.valorRecibido.toLocaleString()}</span>
+                    <span>$${Number(venta.valorRecibido).toLocaleString('es-CO')}</span>
                 </div>
                 <div style="display:flex; justify-content:space-between;">
                     <span>Cambio:</span>
-                    <span>$${venta.cambio.toLocaleString()}</span>
+                    <span>$${Number(venta.cambio || 0).toLocaleString('es-CO')}</span>
                 </div>
             ` : ""}
         `;
