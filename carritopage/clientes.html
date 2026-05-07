@@ -117,7 +117,7 @@
           const q = normalizarTexto(inputBuscar.value);
           const filtrados = q
             ? clientes.filter((c) => {
-                const email = c.email || c.correo || "";
+                const email = c.correo || "";
                 return (
                   normalizarTexto(c.nombre).includes(q) ||
                   normalizarTexto(c.telefono).includes(q) ||
@@ -133,9 +133,9 @@
                   <td><small>${c.id || "-"}</small></td>
                   <td><strong>${c.nombre || "-"}</strong></td>
                   <td>${c.telefono || "-"}</td>
-                  <td>${c.email || c.correo || "-"}</td>
+                  <td>${c.correo || "-"}</td>
                   <td>
-                    <button class="btn-admin" onclick="window.prepararEdicion('${c.id}', '${(c.nombre || "").replace(/'/g, "\\'")}', '${c.telefono || ""}', '${(c.email || c.correo || "").replace(/'/g, "\\'")}')">Editar</button>
+                    <button class="btn-admin" onclick="window.prepararEdicion('${c.id}', '${(c.nombre || "").replace(/'/g, "\\'")}', '${c.telefono || ""}', '${(c.correo || "").replace(/'/g, "\\'")}')">Editar</button>
                     <button class="btn-admin" style="background:#fee2e2; color:#b91c1c;" onclick="window.eliminarCliente('${c.id}')">Eliminar</button>
                   </td>
                 </tr>
@@ -168,7 +168,7 @@
           const data = {
             nombre: document.getElementById("cli-nombre").value.trim(),
             telefono: document.getElementById("cli-telefono").value.trim(),
-            email: document.getElementById("cli-email").value.trim()
+            correo: document.getElementById("cli-email").value.trim()
           };
 
           if (!data.nombre) {

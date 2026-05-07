@@ -1,18 +1,17 @@
 // js/entidades-global.js
-// Versión sin ES Modules para funcionar incluso abriendo con file://
-// Fuente principal: localStorage. Sincroniza con `window.Backend` si está habilitado.
+// CRUD ligero para clientes, proveedores y categorias alineado con SQLite.
 
 (function () {
   const ENTIDADES_CONFIG = {
     clientes: {
       key: "pos_clientes",
       route: "clientes",
-      campos: ["id", "nombre", "telefono", "email"]
+      campos: ["id", "nombre", "telefono", "correo"]
     },
     proveedores: {
       key: "pos_proveedores",
       route: "proveedores",
-      campos: ["id", "nombre", "contacto"]
+      campos: ["id", "nombre", "telefono", "correo"]
     },
     categorias: {
       key: "pos_categorias",
@@ -25,6 +24,38 @@
     return Boolean(window.Backend && window.Backend.isEnabled && window.Backend.isEnabled());
   }
 
+  function normalizarRegistro(tipo, data) {
+    const config = ENTIDADES_CONFIG[tipo];
+    if (!config) return data;
+
+    const registro = {};
+    config.campos.forEach((campo) => {
+      if (data[campo] !== undefined) {
+        registro[campo] = data[campo];
+      }
+    });
+
+    if (tipo !== "categorias") {
+      registro.telefono = String(registro.telefono || "").trim();
+      registro.correo = String(registro.correo || "").trim();
+    }
+
+    if (registro.id !== undefined && registro.id !== null && registro.id !== "") {
+      registro.id = Number(registro.id);
+    } else {
+      delete registro.id;
+    }
+
+    registro.nombre = String(registro.nombre || "").trim();
+    return registro;
+  }
+
+  function guardarLocal(tipo, lista) {
+    const config = ENTIDADES_CONFIG[tipo];
+    if (!config) return;
+    localStorage.setItem(config.key, JSON.stringify(Array.isArray(lista) ? lista : []));
+  }
+
   const Entidades = {
     obtener(tipo) {
       const config = ENTIDADES_CONFIG[tipo];
@@ -32,123 +63,88 @@
       try {
         const lista = JSON.parse(localStorage.getItem(config.key) || "[]");
         return Array.isArray(lista) ? lista : [];
-      } catch (e) {
+      } catch (_error) {
         return [];
       }
     },
 
     async sincronizar(tipo) {
       const config = ENTIDADES_CONFIG[tipo];
-      if (!config) return [];
-      if (!backendHabilitado()) return this.obtener(tipo);
-      try {
-        const datos = await window.Backend.get(config.route);
-        if (Array.isArray(datos)) {
-          localStorage.setItem(config.key, JSON.stringify(datos));
-          return datos;
-        }
-      } catch (e) {
-        console.error(`❌ Error sincronizando ${tipo}:`, e);
-      }
-      return this.obtener(tipo);
+      if (!config || !backendHabilitado()) return this.obtener(tipo);
+
+      const datos = await window.Backend.get(config.route);
+      const lista = Array.isArray(datos) ? datos.map((item) => normalizarRegistro(tipo, item)) : [];
+      guardarLocal(tipo, lista);
+      return lista;
     },
 
     async crear(tipo, data) {
       const config = ENTIDADES_CONFIG[tipo];
       if (!config) return null;
 
-      const lista = this.obtener(tipo);
-      const nuevoId = this._generarId(tipo);
-      const nuevo = { id: nuevoId, ...data };
-
-      lista.push(nuevo);
-      localStorage.setItem(config.key, JSON.stringify(lista));
+      const payload = normalizarRegistro(tipo, data);
+      delete payload.id;
 
       if (backendHabilitado()) {
-        try {
-          await window.Backend.post(config.route, { action: "create", data: nuevo });
-        } catch (e) {
-          console.error(`❌ Error al crear ${tipo} en backend:`, e);
-        }
+        const creado = await window.Backend.post(config.route, payload);
+        const lista = await this.sincronizar(tipo);
+        return lista.find((item) => String(item.id) === String(creado.id)) || normalizarRegistro(tipo, creado);
       }
 
+      const lista = this.obtener(tipo);
+      const nuevo = { ...payload, id: Date.now() };
+      lista.push(nuevo);
+      guardarLocal(tipo, lista);
       return nuevo;
     },
 
     async actualizar(tipo, id, cambios) {
       const config = ENTIDADES_CONFIG[tipo];
-      if (!config) return;
+      if (!config) return null;
+
+      const payload = normalizarRegistro(tipo, { ...cambios, id });
+
+      if (backendHabilitado()) {
+        const actualizado = await window.Backend.put(`${config.route}/${id}`, payload);
+        await this.sincronizar(tipo);
+        return normalizarRegistro(tipo, actualizado);
+      }
 
       const lista = this.obtener(tipo);
       const index = lista.findIndex((item) => String(item.id) === String(id));
-      if (index === -1) return;
-
-      lista[index] = { ...lista[index], ...cambios };
-      localStorage.setItem(config.key, JSON.stringify(lista));
-
-      if (backendHabilitado()) {
-        try {
-          await window.Backend.post(config.route, {
-            action: "update",
-            id: lista[index].id,
-            data: lista[index]
-          });
-        } catch (e) {
-          console.error(`❌ Error al actualizar ${tipo} en backend:`, e);
-        }
-      }
+      if (index === -1) return null;
+      lista[index] = { ...lista[index], ...payload };
+      guardarLocal(tipo, lista);
+      return lista[index];
     },
 
     async eliminar(tipo, id) {
       const config = ENTIDADES_CONFIG[tipo];
       if (!config) return;
 
-      const lista = this.obtener(tipo);
-      const itemAEliminar = lista.find((item) => String(item.id) === String(id));
-      const nueva = lista.filter((item) => String(item.id) !== String(id));
-      localStorage.setItem(config.key, JSON.stringify(nueva));
-
-      if (backendHabilitado() && itemAEliminar) {
-        try {
-          await window.Backend.post(config.route, { action: "delete", id: itemAEliminar.id });
-        } catch (e) {
-          console.error(`❌ Error al eliminar ${tipo} en backend:`, e);
-        }
+      if (backendHabilitado()) {
+        await window.Backend.delete(`${config.route}/${id}`);
+        await this.sincronizar(tipo);
+        return;
       }
+
+      const lista = this.obtener(tipo).filter((item) => String(item.id) !== String(id));
+      guardarLocal(tipo, lista);
     },
 
     buscar(tipo, termino) {
       const lista = this.obtener(tipo);
-      const t = String(termino || "").toLowerCase();
-      return lista.filter((item) => {
-        return (
-          (item.nombre && String(item.nombre).toLowerCase().includes(t)) ||
-          (item.contacto && String(item.contacto).toLowerCase().includes(t)) ||
-          (item.correo && String(item.correo).toLowerCase().includes(t)) ||
-          (item.email && String(item.email).toLowerCase().includes(t)) ||
-          (item.telefono && String(item.telefono).includes(t))
-        );
-      });
-    },
-
-    _generarId(tipo) {
-      const prefijo =
-        tipo === "clientes"
-          ? "CLI-"
-          : tipo === "proveedores"
-            ? "PROV-"
-            : tipo === "categorias"
-              ? "CAT-"
-              : "GEN-";
-      const timestamp = Date.now().toString().slice(-8);
-      const random = Math.random().toString(36).substring(2, 7).toUpperCase();
-      return `${prefijo}${timestamp}${random}`;
+      const t = String(termino || "").trim().toLowerCase();
+      return lista.filter((item) =>
+        [item.nombre, item.telefono, item.correo].some((valor) =>
+          String(valor || "").toLowerCase().includes(t)
+        )
+      );
     }
   };
 
   window.Entidades = Entidades;
 
-  // Sincronización automática solo si backend está habilitado
   (async () => {
     if (!backendHabilitado()) return;
     try {
@@ -157,8 +153,8 @@
         Entidades.sincronizar("proveedores"),
         Entidades.sincronizar("categorias")
       ]);
-    } catch (e) {
-      // noop
+    } catch (error) {
+      console.error("No se pudo sincronizar entidades:", error);
     }
   })();
 })();

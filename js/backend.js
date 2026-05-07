@@ -1,6 +1,5 @@
 // js/backend.js
-// Cliente de backend (placeholder) para futura base de datos/API.
-// Por defecto queda deshabilitado para que la app funcione 100% local (localStorage).
+// Cliente HTTP ligero para consumir la API Sequelize/SQLite.
 
 (function () {
   const state = {
@@ -10,15 +9,20 @@
   };
 
   function normalizarBaseUrl(baseUrl) {
-    const raw = String(baseUrl || "").trim();
-    return raw.replace(/\/+$/, "");
+    return String(baseUrl || "").trim().replace(/\/+$/, "");
   }
 
   function normalizarApiPrefix(apiPrefix) {
     const raw = String(apiPrefix || "/api").trim();
     if (!raw) return "/api";
-    if (!raw.startsWith("/")) return `/${raw}`;
-    return raw.replace(/\/+$/, "");
+    return raw.startsWith("/") ? raw.replace(/\/+$/, "") : `/${raw.replace(/\/+$/, "")}`;
+  }
+
+  function construirBaseUrlAutomatica() {
+    if (window.location.protocol === "file:") {
+      return "http://localhost:3000";
+    }
+    return window.location.origin;
   }
 
   function url(route) {
@@ -35,12 +39,14 @@
       method,
       headers: { "Content-Type": "application/json" }
     };
-    if (data !== undefined) options.body = JSON.stringify(data);
+
+    if (data !== undefined) {
+      options.body = JSON.stringify(data);
+    }
 
     const res = await fetch(url(route), options);
     const contentType = res.headers.get("content-type") || "";
-    const isJson = contentType.includes("application/json");
-    const payload = isJson ? await res.json() : await res.text();
+    const payload = contentType.includes("application/json") ? await res.json() : await res.text();
 
     if (!res.ok) {
       const error = new Error(`Backend error ${res.status} ${res.statusText}`);
@@ -71,19 +77,29 @@
     put(route, data) {
       return request("PUT", route, data);
     },
-    delete(route, data) {
-      return request("DELETE", route, data);
+    delete(route) {
+      return request("DELETE", route);
     }
   };
 
-  // Permite preconfigurar desde HTML: window.LunaConfig = { backend: { enabled:true, baseUrl:'', apiPrefix:'/api' } }
   try {
     const cfg = window.LunaConfig && window.LunaConfig.backend;
-    if (cfg) Backend.configure(cfg);
-  } catch (e) {
-    // noop
+    if (cfg) {
+      Backend.configure(cfg);
+    } else {
+      Backend.configure({
+        enabled: true,
+        baseUrl: construirBaseUrlAutomatica(),
+        apiPrefix: "/api"
+      });
+    }
+  } catch (_error) {
+    Backend.configure({
+      enabled: true,
+      baseUrl: construirBaseUrlAutomatica(),
+      apiPrefix: "/api"
+    });
   }
 
   window.Backend = Backend;
 })();
-

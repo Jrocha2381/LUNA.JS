@@ -1,102 +1,89 @@
 // js/compras.js
 
-/**
- * Registra una compra en el sistema, actualiza el inventario y envía los datos
- * a un backend (futuro).
- * 
- * Estructura: { id, fecha, proveedor, total, itemsJson }
- * 
- * @param {Array} items - Lista de objetos { id, cantidad, costo }
- * @param {string} proveedorId - ID del proveedor (opcional)
- * @returns {Object} La compra registrada
- */
-async function registrarCompra(items, proveedorId = "") {
-    if (!items || items.length === 0) {
-        throw new Error("La compra debe tener al menos un producto.");
-    }
-
-    const itemsLimpios = items.map((it) => ({
-        id: it.id,
-        cantidad: Number(it.cantidad),
-        costo: Number(it.costo)
-    }));
-
-    for (const it of itemsLimpios) {
-        if (it.id == null || String(it.id).trim() === "") {
-            throw new Error("Hay items sin producto seleccionado.");
-        }
-        if (!Number.isFinite(it.cantidad) || it.cantidad <= 0) {
-            throw new Error("La cantidad debe ser un número mayor o igual a 1.");
-        }
-        if (!Number.isFinite(it.costo) || it.costo < 0) {
-            throw new Error("El costo unitario debe ser un número válido (>= 0).");
-        }
-    }
-
-    const productosBase = window.obtenerProductos();
-    const itemsProcesados = itemsLimpios.map(item => {
-        const prodOriginal = productosBase.find(p => p.id === Number(item.id));
-        return {
-            id: Number(item.id),
-            nombre: prodOriginal ? prodOriginal.nombre : "Producto desconocido",
-            cantidad: Math.max(1, Math.floor(Number(item.cantidad))),
-            costo: Math.max(0, Number(item.costo)),
-            subtotal: Math.max(1, Math.floor(Number(item.cantidad))) * Math.max(0, Number(item.costo))
-        };
-    });
-
-    const totalCompra = itemsProcesados.reduce((sum, it) => sum + it.subtotal, 0);
-
-    const nuevaCompra = {
-        id: `COMPRA-${Date.now()}${Math.random().toString(36).substring(2, 5)}`,
-        fecha: new Date().toLocaleString('es-CO'),
-        proveedor: proveedorId || "",
-        total: totalCompra,
-        itemsJson: JSON.stringify(itemsProcesados)
-    };
-
-    // 1. Persistencia Local (Historial de Compras)
-    const comprasPrevias = JSON.parse(localStorage.getItem("compras") || "[]");
-    comprasPrevias.push(nuevaCompra);
-    localStorage.setItem("compras", JSON.stringify(comprasPrevias));
-
-    // 2. Actualización de Inventario (Stock y Costo)
-    const nuevosProductos = productosBase.map(p => {
-        const itemCompra = itemsProcesados.find(it => Number(it.id) === Number(p.id));
-        if (itemCompra) {
-            return {
-                ...p,
-                stock: (p.stock || 0) + itemCompra.cantidad,
-                costo: itemCompra.costo // Actualizamos al último costo de compra
-            };
-        }
-        return p;
-    });
-    window.guardarProductos(nuevosProductos);
-    console.log("✅ Stock actualizado para", itemsProcesados.length, "productos");
-
-    // 3. Envío a servicio externo (backend futuro)
-    let sync = null;
-    try {
-        sync = await enviarCompraAServicioExterno(nuevaCompra);
-    } catch (error) {
-        console.error("❌ Error al sincronizar compra con API:", error);
-        console.warn("⚠️ Compra guardada localmente pero no sincronizada");
-    }
-
-    return { ...nuevaCompra, sync };
+function backendDisponibleCompras() {
+  return Boolean(window.Backend && window.Backend.isEnabled && window.Backend.isEnabled());
 }
 
-/**
- * Envía una compra a backend (si está habilitado)
- */
-async function enviarCompraAServicioExterno(compra) {
-    if (window.Backend && window.Backend.isEnabled && window.Backend.isEnabled()) {
-        const resultado = await window.Backend.post('compras', compra);
-        console.log("✅ Compra enviada:", resultado);
-        return resultado;
+async function registrarCompra(items, proveedorId = null) {
+  if (!items || items.length === 0) {
+    throw new Error("La compra debe tener al menos un producto.");
+  }
+
+  const productosBase = window.obtenerProductos();
+  const itemsProcesados = items.map((it) => {
+    const producto = productosBase.find((p) => Number(p.id) === Number(it.id));
+    const cantidad = Math.max(1, Math.floor(Number(it.cantidad)));
+    const costo = Math.max(0, Number(it.costo));
+
+    if (!producto) {
+      throw new Error(`No se encontro el producto con id ${it.id}.`);
     }
-    return { success: false, message: "Backend no disponible" };
+
+    return {
+      id: Number(it.id),
+      nombre: producto.nombre,
+      cantidad,
+      costo,
+      subtotal: cantidad * costo
+    };
+  });
+
+  const totalCompra = itemsProcesados.reduce((sum, it) => sum + it.subtotal, 0);
+  const payload = {
+    fecha: new Date().toISOString(),
+    proveedorId: proveedorId ? Number(proveedorId) : null,
+    total: totalCompra,
+    items: itemsProcesados
+  };
+
+  let compraCreada = payload;
+
+  if (backendDisponibleCompras()) {
+    compraCreada = await window.Backend.post("compras", payload);
+  } else {
+    const comprasPrevias = JSON.parse(localStorage.getItem("compras") || "[]");
+    compraCreada.id = Date.now();
+    comprasPrevias.push(compraCreada);
+    localStorage.setItem("compras", JSON.stringify(comprasPrevias));
+  }
+
+  const actualizaciones = [];
+  for (const item of itemsProcesados) {
+    const producto = productosBase.find((p) => Number(p.id) === Number(item.id));
+    if (!producto) continue;
+
+    const actualizado = {
+      nombre: producto.nombre,
+      categoriaId: producto.categoriaId,
+      precio: producto.precio,
+      costo: item.costo,
+      stock: Number(producto.stock || 0) + item.cantidad,
+      seguimientoInventario: producto.seguimientoInventario
+    };
+
+    if (backendDisponibleCompras()) {
+      await window.Backend.put(`productos/${producto.id}`, actualizado);
+      actualizaciones.push({ ...producto, ...actualizado });
+    } else {
+      actualizaciones.push({
+        ...producto,
+        costo: item.costo,
+        stock: Number(producto.stock || 0) + item.cantidad
+      });
+    }
+  }
+
+  if (backendDisponibleCompras()) {
+    await window.sincronizarProductosBackend();
+  } else if (actualizaciones.length) {
+    const nuevosProductos = productosBase.map((producto) => {
+      const cambio = actualizaciones.find((item) => Number(item.id) === Number(producto.id));
+      return cambio || producto;
+    });
+    window.guardarProductos(nuevosProductos);
+  }
+
+  return compraCreada;
 }
 
 window.registrarCompra = registrarCompra;

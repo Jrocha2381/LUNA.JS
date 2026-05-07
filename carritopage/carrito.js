@@ -676,7 +676,7 @@ function populateCategoriaSelect() {
     const option = document.createElement("option");
     // IMPORTANTE: tu producto guarda `categoria` como texto (ver leerPayloadFormulario)
     // Por eso el select debe guardar el nombre, no el id.
-    option.value = String(c.nombre || "");
+    option.value = String(c.id || "");
     option.textContent = c.nombre || "Categoría";
     frag.appendChild(option);
   });
@@ -828,23 +828,8 @@ function mostrarModalPago(carrito) {
       btnConfirmar.disabled = true;
       btnConfirmar.textContent = "Procesando...";
 
-      // Registrar venta (ahora esperamos el registro antes de vaciar)
+      // Registrar venta y actualizar inventario en la base de datos
       const venta = await window.registrarVenta(carrito, totalGeneral, metodoPagoSeleccionado, valorRecibido);
-
-      // Actualizar stock
-      const productosActuales = obtenerProductos();
-      const nuevosProductos = productosActuales.map((producto) => {
-        const itemComprado = carrito.find((item) => Number(item.id) === Number(producto.id));
-        if (!itemComprado) return producto;
-        if (!producto.seguimientoInventario) return producto;
-
-        return {
-          ...producto,
-          stock: Math.max(0, Number(producto.stock) - Number(itemComprado.cantidad))
-        };
-      });
-
-      guardarProductos(nuevosProductos);
 
       // Limpiar carrito y cerrar modal
       overlay.remove();
@@ -923,27 +908,13 @@ function archivoADataUrl(archivo) {
 }
 
 async function leerPayloadFormulario(formulario) {
-  const imagenUrl = formulario.imagen.value.trim();
-  const archivo = formulario.imagenArchivo?.files?.[0] || null;
-  let imagenFinal = imagenUrl;
-
-  if (archivo) {
-    imagenFinal = await archivoADataUrl(archivo);
-  } else if (!imagenUrl) {
-    imagenFinal = undefined;
-  }
-
   return {
     nombre: formulario.nombre.value.trim(),
-    categoria: formulario.categoria.value.trim(),
-    // Nuevo: proveedor del producto
-    proveedorId: formulario.proveedorId ? formulario.proveedorId.value : undefined,
-    precioVenta: formulario.precioVenta.value,
+    categoriaId: formulario.categoriaId.value.trim(),
+    precio: formulario.precio.value,
     costo: formulario.costo.value,
     seguimientoInventario: formulario.seguimientoInventario.checked,
-    stock: formulario.stock.value,
-    imagen: imagenFinal,
-    descripcion: formulario.descripcion.value.trim()
+    stock: formulario.stock.value
   };
 }
 
@@ -976,20 +947,12 @@ function cargarProductoEnFormulario(idProducto) {
   if (!producto || !form) return;
 
   form.nombre.value = producto.nombre;
-  form.categoria.value = producto.categoria;
-
-  // Si el producto tiene proveedor asignado, cargarlo. Si no, dejar seleccionado el primero.
-  if (form.proveedorId) {
-    form.proveedorId.value = String(producto.proveedorId ?? "");
-  }
-
-  form.precioVenta.value = producto.precioVenta;
+  form.categoriaId.value = String(producto.categoriaId ?? "");
+  form.precio.value = producto.precio;
   form.costo.value = producto.costo;
   form.seguimientoInventario.checked = producto.seguimientoInventario;
   form.stock.value = producto.stock;
   form.stock.disabled = !producto.seguimientoInventario;
-  form.imagen.value = producto.imagen || "";
-  form.descripcion.value = producto.descripcion || "";
 
   productoEnEdicionId = Number(producto.id);
   const titulo = document.getElementById("producto-form-title");
@@ -1004,37 +967,31 @@ function renderAdminProductos() {
 
   const lista = obtenerProductos();
   if (!lista.length) {
-    tabla.innerHTML = `<tr><td colspan="10">No hay productos registrados.</td></tr>`;
+    tabla.innerHTML = `<tr><td colspan="8">No hay productos registrados.</td></tr>`;
     return;
   }
 
-  const proveedores = (window.obtenerProveedores ? window.obtenerProveedores() : []) || [];
-  const proveedorNombrePorId = new Map(
-    proveedores.map((p) => [String(p.id), p.nombre || p.empresa || p.contacto || "Proveedor"])
+  const categorias = (window.Entidades && window.Entidades.obtener) ? window.Entidades.obtener("categorias") : [];
+  const categoriaNombrePorId = new Map(
+    categorias.map((c) => [String(c.id), c.nombre || "CategorÃ­a"])
   );
 
   tabla.innerHTML = lista
     .map((producto) => {
-      const estado = producto.activo === false ? "Inactivo" : "Activo";
       const stock = producto.seguimientoInventario ? producto.stock : "N/A";
-      const proveedorNombre = producto.proveedorId ? (proveedorNombrePorId.get(String(producto.proveedorId)) || "-") : "-";
+      const categoriaNombre = categoriaNombrePorId.get(String(producto.categoriaId)) || producto.categoria || "-";
 
       return `
         <tr>
           <td>${producto.id}</td>
-          <td>${producto.codigoInterno}</td>
           <td>${producto.nombre}</td>
-          <td>${producto.categoria}</td>
-          <td>${proveedorNombre}</td>
-          <td>${formatearMoneda(producto.precioVenta)}</td>
+          <td>${categoriaNombre}</td>
+          <td>${formatearMoneda(producto.precio)}</td>
           <td>${formatearMoneda(producto.costo)}</td>
           <td>${stock}</td>
-          <td>${estado}</td>
+          <td>${producto.seguimientoInventario ? "Si" : "No"}</td>
           <td>
             <button class="btn-admin btn-editar" data-id="${producto.id}">Editar</button>
-            ${producto.activo === false
-          ? `<button class="btn-admin btn-reactivar-admin" data-id="${producto.id}">Reactivar</button>`
-          : ""}
             <button class="btn-admin btn-eliminar-admin" data-id="${producto.id}">Eliminar</button>
           </td>
         </tr>
@@ -1062,9 +1019,9 @@ function activarEventosAdmin() {
       return;
     }
 
-    const respuesta = productoEnEdicionId
+    const respuesta = await (productoEnEdicionId
       ? actualizarProducto(productoEnEdicionId, payload)
-      : crearProducto(payload);
+      : crearProducto(payload));
 
     if (!respuesta.ok) {
       mostrarToast("error", "Validacion", respuesta.errores.join(" "));
@@ -1074,9 +1031,7 @@ function activarEventosAdmin() {
     mostrarToast(
       "success",
       productoEnEdicionId ? "Producto actualizado" : "Producto creado",
-      productoEnEdicionId
-        ? "Los cambios se guardaron en localStorage."
-        : `Producto creado con codigo ${respuesta.producto.codigoInterno}.`
+      "Los cambios se guardaron en SQLite."
     );
 
     limpiarFormularioAdmin();
@@ -1101,39 +1056,16 @@ function activarEventosAdmin() {
       return;
     }
 
-    if (target.classList.contains("btn-reactivar-admin")) {
-      const resultado = reactivarProducto(id);
-      if (!resultado.ok) {
-        mostrarToast("error", "Error", resultado.errores.join(" "));
-        return;
-      }
-
-      mostrarToast("success", "Producto reactivado", "El producto vuelve a estar disponible para la venta.");
-      renderAdminProductos();
-      renderCarrito();
-      return;
-    }
-
     if (target.classList.contains("btn-eliminar-admin")) {
-      mostrarConfirmacion("Deseas eliminar este producto?", () => {
-        const productoActual = getProductoActual(id);
-        const tieneVentas = productoApareceEnVentas(id);
-        if (tieneVentas && productoActual?.activo === false) {
-          mostrarToast("info", "Producto inactivo", "Este producto tiene ventas pasadas y ya esta inactivo.");
-          return;
-        }
-
-        const resultado = tieneVentas ? inactivarProducto(id) : eliminarProducto(id);
+      mostrarConfirmacion("Deseas eliminar este producto?", async () => {
+        const resultado = await eliminarProducto(id);
 
         if (!resultado.ok) {
           mostrarToast("error", "Error", resultado.errores.join(" "));
           return;
         }
 
-        const mensaje = tieneVentas
-          ? "El producto tiene ventas pasadas y se marco como inactivo."
-          : "El producto fue eliminado.";
-        mostrarToast(tieneVentas ? "warning" : "success", tieneVentas ? "Producto desactivado" : "Producto eliminado", mensaje);
+        mostrarToast("success", "Producto eliminado", "El producto fue eliminado de la base de datos.");
 
         if (productoEnEdicionId === id) {
           limpiarFormularioAdmin();

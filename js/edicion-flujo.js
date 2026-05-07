@@ -55,14 +55,19 @@
 
     document.getElementById('ef-cancel').onclick = () => modal.style.display = 'none';
 
-    document.getElementById('ef-save').onclick = function () {
+    document.getElementById('ef-save').onclick = async function () {
+        const prodActual = window.obtenerProductos().find(p => p.id == fId.value);
+        if (!prodActual) return;
         const cambios = {
             nombre: fNombre.value,
-            precioVenta: parseFloat(fPrecio.value),
-            stock: parseInt(fStock.value)
+            categoriaId: prodActual.categoriaId,
+            precio: parseFloat(fPrecio.value),
+            costo: prodActual.costo,
+            stock: parseInt(fStock.value),
+            seguimientoInventario: prodActual.seguimientoInventario
         };
 
-        const result = window.actualizarProducto(fId.value, cambios);
+        const result = await window.actualizarProducto(fId.value, cambios);
         if (result.ok) {
             modal.style.display = 'none';
             if (window.mostrarToast) window.mostrarToast("success", "Éxito", "Producto actualizado correctamente.");
