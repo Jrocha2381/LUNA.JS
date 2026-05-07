@@ -1,11 +1,19 @@
 {
+  "name": "luna-pos",
+  "private": true,
   "dependencies": {
     "dotenv": "^17.4.2",
+    "express": "^4.22.1",
     "sequelize": "^6.37.8",
     "sqlite3": "^6.0.1"
   },
   "devDependencies": {
     "@faker-js/faker": "^10.4.0",
     "sequelize-cli": "^6.6.5"
+  },
+  "scripts": {
+    "db:migrate": "sequelize-cli db:migrate",
+    "db:seed": "sequelize-cli db:seed:all",
+    "start": "node src/server.js"
   }
 }
