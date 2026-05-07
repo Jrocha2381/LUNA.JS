@@ -5,6 +5,139 @@ let productosDisponibles = [];
 let clientesDisponibles = [];
 let productoModalActual = null;
 
+// === Sistema de Pausa y Reanudación de Ventas ===
+function obtenerVentasAbiertas() {
+  try {
+    const ventas = JSON.parse(localStorage.getItem("ventas_abiertas_venta") || "[]");
+    return Array.isArray(ventas) ? ventas : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function guardarVentasAbiertas(ventas) {
+  localStorage.setItem("ventas_abiertas_venta", JSON.stringify(Array.isArray(ventas) ? ventas : []));
+}
+
+function formatearMonedaVentas(valor) {
+  return `$${Number(valor).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function pausarVentaActual() {
+  if (carritoVentas.length === 0) {
+    if (window.mostrarToast) {
+      window.mostrarToast("warning", "Carrito vacío", "No hay items para pausar.");
+    } else {
+      alert("No hay items para pausar.");
+    }
+    return;
+  }
+
+  const ventasAbiertas = obtenerVentasAbiertas();
+  const clienteSelect = document.getElementById('selector-cliente');
+  const clienteId = clienteSelect.value === 'sin-cliente' ? null : parseInt(clienteSelect.value);
+  const clienteNombre = clienteId ? 
+    clientesDisponibles.find(c => c.id === clienteId)?.nombre || 'Cliente No Registrado' : 
+    'Cliente No Registrado';
+
+  const total = carritoVentas.reduce((s, i) => s + i.subtotal, 0);
+  
+  const nuevaVentaAbierta = {
+    id: Date.now(),
+    nombre: `Venta ${new Date().toLocaleTimeString()}`,
+    clienteId,
+    clienteNombre,
+    items: [...carritoVentas],
+    total,
+    metodoPago: document.getElementById('selector-metodo-pago').value || 'No especificado'
+  };
+
+  ventasAbiertas.push(nuevaVentaAbierta);
+  guardarVentasAbiertas(ventasAbiertas);
+  carritoVentas = [];
+  renderizarCarrito();
+  calcularTotales();
+  
+  if (window.mostrarToast) {
+    window.mostrarToast("success", "Venta pausada", "La venta se movió a estado de pausa.");
+  } else {
+    alert("Venta pausada exitosamente.");
+  }
+}
+
+function retomarVenta(id) {
+  const ventasAbiertas = obtenerVentasAbiertas();
+  const index = ventasAbiertas.findIndex(v => String(v.id) === String(id));
+  if (index === -1) return;
+
+  const venta = ventasAbiertas.splice(index, 1)[0];
+  guardarVentasAbiertas(ventasAbiertas);
+  carritoVentas = venta.items;
+  
+  const clienteSelect = document.getElementById('selector-cliente');
+  clienteSelect.value = venta.clienteId || 'sin-cliente';
+  
+  const metodoPagoSelect = document.getElementById('selector-metodo-pago');
+  if (venta.metodoPago && venta.metodoPago !== 'No especificado') {
+    metodoPagoSelect.value = venta.metodoPago;
+  }
+  
+  renderizarCarrito();
+  calcularTotales();
+  
+  if (window.mostrarToast) {
+    window.mostrarToast("success", "Venta retomada", "Puedes continuar con la edición.");
+  } else {
+    alert("Venta retomada exitosamente.");
+  }
+}
+
+function confirmarEliminarVentaAbierta(id) {
+  if (window.mostrarConfirmacion) {
+    window.mostrarConfirmacion("¿Deseas eliminar esta venta en pausa? Esta acción no se puede deshacer.", () => eliminarVentaAbierta(id));
+  } else if (confirm("¿Deseas eliminar esta venta en pausa? Esta acción no se puede deshacer.")) {
+    eliminarVentaAbierta(id);
+  }
+}
+
+function eliminarVentaAbierta(id) {
+  const ventasAbiertas = obtenerVentasAbiertas();
+  const nuevas = ventasAbiertas.filter(v => String(v.id) !== String(id));
+  guardarVentasAbiertas(nuevas);
+  renderizarCarrito();
+  
+  if (window.mostrarToast) {
+    window.mostrarToast("success", "Venta eliminada", "La venta en pausa fue eliminada.");
+  } else {
+    alert("Venta eliminada.");
+  }
+}
+
+function renderVentasAbiertasSection(ventasAbiertas) {
+  if (!ventasAbiertas || ventasAbiertas.length === 0) return "";
+
+  return `
+    <div class="ventas-abiertas-seccion" style="margin-top:30px; border-top:2px dashed #eee; padding-top:20px; background: #f8f9fa; border-radius: 10px;">
+      <h4 style="color:#8a9b2f; margin-bottom: 10px;">🔄 Ventas en pausa (${ventasAbiertas.length})</h4>
+      <div style="display:grid; gap:10px; margin-top:10px;">
+        ${ventasAbiertas.map(v => `
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; background:white; padding:10px; border-radius:8px; border:1px solid #eee; box-shadow:0 2px 8px #0001;">
+            <span style="flex:1;">
+              <b>${v.nombre || "Venta en pausa"}</b>
+              <span style='color:#888'>(${v.clienteNombre} - ${formatearMonedaVentas(Number(v.total) || 0)})</span>
+            </span>
+            <div style="display:flex; gap:8px; flex-shrink:0;">
+              <button onclick="window.retomarVenta(${v.id})" style="background:#8a9b2f; color:white; border:none; padding:5px 14px; border-radius:5px; cursor:pointer; font-weight:600;">Retomar</button>
+              <button onclick="window.confirmarEliminarVentaAbierta(${v.id})" style="background:#fee2e2; color:#b91c1c; border:none; padding:5px 14px; border-radius:5px; cursor:pointer; font-weight:700;">Eliminar</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <p style="font-size:13px; color:#666; margin-top:10px;">Puedes retomar cualquier venta en pausa o eliminarla si ya no la necesitas.</p>
+    </div>
+  `;
+}
+
 // Formatear moneda
 function formatearMoneda(valor) {
   return `$${Number(valor).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -158,10 +291,19 @@ function agregarAlCarrito(productoId, nombre, cantidad, precio, stock, seguimien
 function renderizarCarrito() {
   const tbody = document.getElementById('tabla-carrito-body');
   const sinItems = document.getElementById('sin-items');
+  const ventasAbiertas = obtenerVentasAbiertas();
 
   if (carritoVentas.length === 0) {
     tbody.innerHTML = '<tr id="sin-items" class="fila-sin-items"><td colspan="5" style="text-align: center; padding: 20px; color: #999;">El carrito está vacío</td></tr>';
     document.getElementById('btn-finalizar-venta').disabled = true;
+    
+    // Mostrar ventas pausadas incluso si el carrito está vacío
+    const panelCarrito = document.querySelector('.panel-carrito');
+    if (panelCarrito) {
+      const ventasSection = panelCarrito.querySelector('.ventas-abiertas-seccion');
+      if (ventasSection) ventasSection.remove();
+      panelCarrito.insertAdjacentHTML('beforeend', renderVentasAbiertasSection(ventasAbiertas));
+    }
     return;
   }
 
@@ -183,6 +325,16 @@ function renderizarCarrito() {
   });
 
   document.getElementById('btn-finalizar-venta').disabled = false;
+  
+  // Actualizar sección de ventas pausadas
+  const panelCarrito = document.querySelector('.panel-carrito');
+  if (panelCarrito) {
+    const ventasSection = panelCarrito.querySelector('.ventas-abiertas-seccion');
+    if (ventasSection) ventasSection.remove();
+    if (ventasAbiertas.length > 0) {
+      panelCarrito.insertAdjacentHTML('beforeend', renderVentasAbiertasSection(ventasAbiertas));
+    }
+  }
 }
 
 // Modificar cantidad en carrito
@@ -359,9 +511,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     await cargarProductos();
     await cargarClientes();
+    renderizarCarrito();
 
     // Asignar eventos
     document.getElementById('btn-vaciar-carrito').addEventListener('click', vaciarCarrito);
+    document.getElementById('btn-pausar-venta').addEventListener('click', pausarVentaActual);
     document.getElementById('btn-finalizar-venta').addEventListener('click', finalizarVenta);
     document.getElementById('buscar-producto').addEventListener('input', filtrarProductos);
 
@@ -382,3 +536,7 @@ window.cerrarModalConfirmacion = cerrarModalConfirmacion;
 window.confirmarFinalizarVenta = confirmarFinalizarVenta;
 window.modificarCantidad = modificarCantidad;
 window.eliminarDelCarrito = eliminarDelCarrito;
+window.pausarVentaActual = pausarVentaActual;
+window.retomarVenta = retomarVenta;
+window.confirmarEliminarVentaAbierta = confirmarEliminarVentaAbierta;
+window.eliminarVentaAbierta = eliminarVentaAbierta;

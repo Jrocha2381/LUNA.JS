@@ -12,6 +12,140 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   let itemsParaComprar = [];
 
+  // === Sistema de Pausa y Reanudación de Compras ===
+  function obtenerComprasAbiertas() {
+    try {
+      const compras = JSON.parse(localStorage.getItem("compras_abiertas_compra") || "[]");
+      return Array.isArray(compras) ? compras : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function guardarComprasAbiertas(compras) {
+    localStorage.setItem("compras_abiertas_compra", JSON.stringify(Array.isArray(compras) ? compras : []));
+  }
+
+  function formatearMonedaCompras(valor) {
+    return `$${Number(valor).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  function pausarCompraActual() {
+    if (itemsParaComprar.length === 0) {
+      if (window.mostrarToast) {
+        window.mostrarToast("warning", "Carrito vacío", "No hay items para pausar.");
+      } else {
+        alert("No hay items para pausar.");
+      }
+      return;
+    }
+
+    const comprasAbiertas = obtenerComprasAbiertas();
+    const proveedorId = selectProveedor.value;
+    const proveedorNombre = selectProveedor.selectedOptions[0]?.text || "Proveedor No Especificado";
+    const total = itemsParaComprar.reduce((s, i) => s + (Number(i.cantidad) * Number(i.costo)), 0);
+
+    const nuevaCompraAbierta = {
+      id: Date.now(),
+      nombre: `Compra ${new Date().toLocaleTimeString()}`,
+      proveedorId,
+      proveedorNombre,
+      items: [...itemsParaComprar],
+      total
+    };
+
+    comprasAbiertas.push(nuevaCompraAbierta);
+    guardarComprasAbiertas(comprasAbiertas);
+    itemsParaComprar = [];
+    selectProveedor.value = "";
+    renderTabla();
+    actualizarSeccionComprasAbiertas();
+
+    if (window.mostrarToast) {
+      window.mostrarToast("success", "Compra pausada", "La compra se movió a estado de pausa.");
+    } else {
+      alert("Compra pausada exitosamente.");
+    }
+  }
+
+  function retomarCompra(id) {
+    const comprasAbiertas = obtenerComprasAbiertas();
+    const index = comprasAbiertas.findIndex(c => String(c.id) === String(id));
+    if (index === -1) return;
+
+    const compra = comprasAbiertas.splice(index, 1)[0];
+    guardarComprasAbiertas(comprasAbiertas);
+    itemsParaComprar = compra.items;
+    selectProveedor.value = compra.proveedorId || "";
+    renderTabla();
+    actualizarSeccionComprasAbiertas();
+
+    if (window.mostrarToast) {
+      window.mostrarToast("success", "Compra retomada", "Puedes continuar con la edición.");
+    } else {
+      alert("Compra retomada exitosamente.");
+    }
+  }
+
+  function confirmarEliminarCompraAbierta(id) {
+    if (window.mostrarConfirmacion) {
+      window.mostrarConfirmacion("¿Deseas eliminar esta compra en pausa? Esta acción no se puede deshacer.", () => eliminarCompraAbierta(id));
+    } else if (confirm("¿Deseas eliminar esta compra en pausa? Esta acción no se puede deshacer.")) {
+      eliminarCompraAbierta(id);
+    }
+  }
+
+  function eliminarCompraAbierta(id) {
+    const comprasAbiertas = obtenerComprasAbiertas();
+    const nuevas = comprasAbiertas.filter(c => String(c.id) !== String(id));
+    guardarComprasAbiertas(nuevas);
+    actualizarSeccionComprasAbiertas();
+
+    if (window.mostrarToast) {
+      window.mostrarToast("success", "Compra eliminada", "La compra en pausa fue eliminada.");
+    } else {
+      alert("Compra eliminada.");
+    }
+  }
+
+  function renderSeccionComprasAbiertas() {
+    const comprasAbiertas = obtenerComprasAbiertas();
+    if (!comprasAbiertas || comprasAbiertas.length === 0) return "";
+
+    return `
+      <div class="compras-abiertas-seccion" style="margin-top:30px; border-top:2px dashed #eee; padding-top:20px; background: #f8f9fa; border-radius: 10px;">
+        <h4 style="color:#8a9b2f; margin-bottom: 10px;">🔄 Compras en pausa (${comprasAbiertas.length})</h4>
+        <div style="display:grid; gap:10px; margin-top:10px;">
+          ${comprasAbiertas.map(c => `
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; background:white; padding:10px; border-radius:8px; border:1px solid #eee; box-shadow:0 2px 8px #0001;">
+              <span style="flex:1;">
+                <b>${c.nombre || "Compra en pausa"}</b>
+                <span style='color:#888'>(${c.proveedorNombre} - ${formatearMonedaCompras(Number(c.total) || 0)})</span>
+              </span>
+              <div style="display:flex; gap:8px; flex-shrink:0;">
+                <button onclick="window.retomarCompra(${c.id})" style="background:#8a9b2f; color:white; border:none; padding:5px 14px; border-radius:5px; cursor:pointer; font-weight:600;">Retomar</button>
+                <button onclick="window.confirmarEliminarCompraAbierta(${c.id})" style="background:#fee2e2; color:#b91c1c; border:none; padding:5px 14px; border-radius:5px; cursor:pointer; font-weight:700;">Eliminar</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <p style="font-size:13px; color:#666; margin-top:10px;">Puedes retomar cualquier compra en pausa o eliminarla si ya no la necesitas.</p>
+      </div>
+    `;
+  }
+
+  function actualizarSeccionComprasAbiertas() {
+    const footerCompra = document.querySelector('.footer-compra');
+    if (footerCompra) {
+      const seccionExistente = footerCompra.parentElement.querySelector('.compras-abiertas-seccion');
+      if (seccionExistente) seccionExistente.remove();
+      const nuevaSeccion = renderSeccionComprasAbiertas();
+      if (nuevaSeccion) {
+        footerCompra.parentElement.insertAdjacentHTML('beforeend', nuevaSeccion);
+      }
+    }
+  }
+
   const notifyError = (mensaje) => {
     if (window.mostrarToast) window.mostrarToast("error", "Validacion", mensaje);
     else alert(mensaje);
@@ -82,6 +216,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     textoTotal.textContent = `$${totalCompra().toLocaleString()}`;
     btnFinalizar.disabled = itemsParaComprar.length === 0;
+
+    // Actualizar sección de compras pausadas
+    actualizarSeccionComprasAbiertas();
   }
 
   tablaCuerpo.addEventListener("click", (e) => {
@@ -147,6 +284,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
+  // Botón para pausar compra
+  const btnPausarCompra = document.createElement('button');
+  btnPausarCompra.textContent = 'Guardar compra';
+  btnPausarCompra.style.cssText = 'background:#6c757d; color:white; border:none; padding:1rem 2.5rem; border-radius:8px; cursor:pointer; font-size:1.1rem; font-weight:700; transition:0.3s; margin-right:10px;';
+  btnPausarCompra.onclick = pausarCompraActual;
+
+  const footerCompra = document.querySelector('.footer-compra');
+  if (footerCompra) {
+    footerCompra.insertBefore(btnPausarCompra, btnFinalizar);
+  }
+
   btnFinalizar.addEventListener("click", async () => {
     const proveedorId = selectProveedor.value;
     if (!proveedorId) return notifyError("Selecciona un proveedor.");
@@ -174,4 +322,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   await cargarDatos();
   renderTabla();
+  actualizarSeccionComprasAbiertas();
+
+  // Exponer funciones globales
+  window.pausarCompraActual = pausarCompraActual;
+  window.retomarCompra = retomarCompra;
+  window.confirmarEliminarCompraAbierta = confirmarEliminarCompraAbierta;
+  window.eliminarCompraAbierta = eliminarCompraAbierta;
 });
