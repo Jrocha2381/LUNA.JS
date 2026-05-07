@@ -1,6 +1,7 @@
 // carritopage/compras.js
 
 document.addEventListener("DOMContentLoaded", async () => {
+  const COMPRAS_SYNC_INTERVAL_MS = 8000;
   const selectProveedor = document.getElementById("select-proveedor");
   const selectProducto = document.getElementById("select-producto");
   const inputCantidad = document.getElementById("compra-cantidad");
@@ -169,6 +170,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
 
   async function cargarDatos() {
+    const proveedorActual = selectProveedor.value;
+    const productoActual = selectProducto.value;
+
     if (window.Entidades && window.Entidades.sincronizar) {
       await window.Entidades.sincronizar("proveedores");
     }
@@ -179,10 +183,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     const proveedores = window.Entidades ? window.Entidades.obtener("proveedores") : [];
     selectProveedor.innerHTML = '<option value="">Seleccione...</option>' +
       proveedores.map((p) => `<option value="${p.id}">${p.nombre}</option>`).join("");
+    selectProveedor.value = proveedores.some((p) => String(p.id) === String(proveedorActual)) ? proveedorActual : "";
 
     const productos = window.obtenerProductos();
     selectProducto.innerHTML = '<option value="">Seleccione...</option>' +
       productos.map((p) => `<option value="${p.id}" data-costo="${p.costo}">${p.nombre}</option>`).join("");
+    selectProducto.value = productos.some((p) => String(p.id) === String(productoActual)) ? productoActual : "";
   }
 
   selectProducto.addEventListener("change", () => {
@@ -323,6 +329,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   await cargarDatos();
   renderTabla();
   actualizarSeccionComprasAbiertas();
+
+  window.addEventListener("proveedoresActualizados", () => {
+    cargarDatos().catch(() => {});
+  });
+
+  window.addEventListener("productosActualizados", () => {
+    cargarDatos().catch(() => {});
+  });
+
+  setInterval(() => {
+    cargarDatos().catch(() => {});
+  }, COMPRAS_SYNC_INTERVAL_MS);
 
   // Exponer funciones globales
   window.pausarCompraActual = pausarCompraActual;

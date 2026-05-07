@@ -206,8 +206,10 @@
         };
 
         inputBuscar.addEventListener("input", render);
+        window.addEventListener("proveedoresActualizados", render);
 
         ocultarForm();
+        await Entidades.sincronizar("proveedores").catch(() => {});
         render();
       });
     </script>

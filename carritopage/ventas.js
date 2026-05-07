@@ -4,6 +4,7 @@ let carritoVentas = []; // Array de {productoId, nombre, cantidad, precioUnitari
 let productosDisponibles = [];
 let clientesDisponibles = [];
 let productoModalActual = null;
+const VENTAS_SYNC_INTERVAL_MS = 8000;
 
 // === Sistema de Pausa y Reanudación de Ventas ===
 function obtenerVentasAbiertas() {
@@ -153,7 +154,12 @@ async function cargarProductos() {
   try {
     const productos = await window.Backend.get('productos');
     productosDisponibles = Array.isArray(productos) ? productos : [];
-    renderizarProductos(productosDisponibles);
+    const buscador = document.getElementById('buscar-producto');
+    if (buscador && buscador.value.trim()) {
+      filtrarProductos();
+    } else {
+      renderizarProductos(productosDisponibles);
+    }
   } catch (error) {
     console.error('Error al cargar productos:', error);
     alert('Error al cargar los productos');
@@ -174,7 +180,8 @@ async function cargarClientes() {
 // Poblar selector de clientes
 function poblarSelectorClientes() {
   const selector = document.getElementById('selector-cliente');
-  const opciones = selector.innerHTML;
+  const valorActual = selector.value || 'sin-cliente';
+  selector.innerHTML = '<option value="sin-cliente">Cliente No Registrado</option>';
 
   clientesDisponibles.forEach(cliente => {
     const option = document.createElement('option');
@@ -182,6 +189,10 @@ function poblarSelectorClientes() {
     option.textContent = cliente.nombre;
     selector.appendChild(option);
   });
+
+  selector.value = clientesDisponibles.some((cliente) => String(cliente.id) === String(valorActual))
+    ? valorActual
+    : 'sin-cliente';
 }
 
 // Renderizar productos
@@ -518,6 +529,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-pausar-venta').addEventListener('click', pausarVentaActual);
     document.getElementById('btn-finalizar-venta').addEventListener('click', finalizarVenta);
     document.getElementById('buscar-producto').addEventListener('input', filtrarProductos);
+
+    setInterval(() => {
+      Promise.all([cargarProductos(), cargarClientes()]).catch((error) => {
+        console.error('Error sincronizando ventas automaticamente:', error);
+      });
+    }, VENTAS_SYNC_INTERVAL_MS);
 
     // Permitir Enter en modal
     document.getElementById('modal-cantidad-input').addEventListener('keypress', (e) => {

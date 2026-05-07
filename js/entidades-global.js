@@ -20,6 +20,8 @@
     }
   };
 
+  const SYNC_INTERVAL_MS = 8000;
+
   function backendHabilitado() {
     return Boolean(window.Backend && window.Backend.isEnabled && window.Backend.isEnabled());
   }
@@ -54,6 +56,8 @@
     const config = ENTIDADES_CONFIG[tipo];
     if (!config) return;
     localStorage.setItem(config.key, JSON.stringify(Array.isArray(lista) ? lista : []));
+    window.dispatchEvent(new CustomEvent("entidadesActualizadas", { detail: { tipo, lista } }));
+    window.dispatchEvent(new CustomEvent(`${tipo}Actualizados`, { detail: lista }));
   }
 
   const Entidades = {
@@ -143,18 +147,39 @@
     }
   };
 
+  Entidades.sincronizarTodo = async function sincronizarTodo() {
+    if (!backendHabilitado()) {
+      return {
+        clientes: this.obtener("clientes"),
+        proveedores: this.obtener("proveedores"),
+        categorias: this.obtener("categorias")
+      };
+    }
+
+    const [clientes, proveedores, categorias] = await Promise.all([
+      this.sincronizar("clientes"),
+      this.sincronizar("proveedores"),
+      this.sincronizar("categorias")
+    ]);
+
+    return { clientes, proveedores, categorias };
+  };
+
   window.Entidades = Entidades;
 
   (async () => {
     if (!backendHabilitado()) return;
     try {
-      await Promise.all([
-        Entidades.sincronizar("clientes"),
-        Entidades.sincronizar("proveedores"),
-        Entidades.sincronizar("categorias")
-      ]);
+      await Entidades.sincronizarTodo();
     } catch (error) {
       console.error("No se pudo sincronizar entidades:", error);
     }
   })();
+
+  setInterval(() => {
+    if (!backendHabilitado()) return;
+    Entidades.sincronizarTodo().catch((error) => {
+      console.error("No se pudo sincronizar entidades automaticamente:", error);
+    });
+  }, SYNC_INTERVAL_MS);
 })();

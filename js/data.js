@@ -2,6 +2,7 @@
 // Fuente principal de productos conectada a SQLite mediante window.Backend.
 
 const STORAGE_PRODUCTOS_KEY = "productos";
+const PRODUCTOS_SYNC_INTERVAL_MS = 8000;
 
 function limpiarTexto(valor) {
   return String(valor || "").trim();
@@ -180,6 +181,10 @@ if (document.readyState === "complete" || document.readyState === "interactive")
     sincronizarProductosBackend().catch(() => {});
   });
 }
+
+setInterval(() => {
+  sincronizarProductosBackend().catch(() => {});
+}, PRODUCTOS_SYNC_INTERVAL_MS);
 
 window.obtenerProductos = obtenerProductos;
 window.guardarProductos = guardarProductos;

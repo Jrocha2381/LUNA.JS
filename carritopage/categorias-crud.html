@@ -61,7 +61,7 @@
     <script src="../js/backend.js"></script>
     <script src="../js/entidades-global.js"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
+        document.addEventListener("DOMContentLoaded", async () => {
             // Verificar sesión
             if (window.validarSesionAdmin && !window.validarSesionAdmin()) return;
 
@@ -188,9 +188,11 @@
             };
 
             inputBuscar.addEventListener("input", render);
+            window.addEventListener("categoriasActualizadas", render);
 
             // Carga inicial
             ocultarForm();
+            await Entidades.sincronizar('categorias').catch(() => {});
             render();
         });
     </script>

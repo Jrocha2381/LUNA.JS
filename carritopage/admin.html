@@ -106,6 +106,15 @@
 
         if (window.renderAdminProductos) window.renderAdminProductos();
         if (window.activarEventosAdmin) window.activarEventosAdmin();
+
+        window.addEventListener("productosActualizados", () => {
+          if (window.renderAdminProductos) window.renderAdminProductos();
+        });
+
+        window.addEventListener("categoriasActualizadas", () => {
+          if (window.populateCategoriaSelect) window.populateCategoriaSelect();
+          if (window.renderAdminProductos) window.renderAdminProductos();
+        });
       });
     </script>
   </body>

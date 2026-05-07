@@ -3,6 +3,8 @@ require('dotenv').config();
 const path = require('path');
 const express = require('express');
 const { sequelize } = require('../models');
+const requestLogger = require('./middlewares/requestLogger');
+const sanitizeIds = require('./middlewares/sanitizeIds');
 
 const usuariosRouter = require('./routes/usuarios');
 const categoriasRouter = require('./routes/categorias');
@@ -11,6 +13,7 @@ const clientesRouter = require('./routes/clientes');
 const proveedoresRouter = require('./routes/proveedores');
 const ventasRouter = require('./routes/ventas');
 const detallevRouter = require('./routes/detalleventas');
+const detallecRouter = require('./routes/detallecompras');
 const comprasRouter = require('./routes/compras');
 
 const app = express();
@@ -26,6 +29,8 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
+app.use(requestLogger);
+app.use(sanitizeIds);
 app.use(express.static(path.join(__dirname, '..')));
 
 app.get('/api/health', async (_req, res, next) => {
@@ -44,6 +49,7 @@ app.use('/api/clientes', clientesRouter);
 app.use('/api/proveedores', proveedoresRouter);
 app.use('/api/ventas', ventasRouter);
 app.use('/api/detalle_ventas', detallevRouter);
+app.use('/api/detalle_compras', detallecRouter);
 app.use('/api/compras', comprasRouter);
 
 app.use((_req, res) => {
