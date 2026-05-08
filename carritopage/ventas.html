@@ -1,151 +1,186 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ventas - Papel y Luna</title>
-    <link rel="stylesheet" href="ventas.css">
-</head>
-<body>
+    <link rel="stylesheet" href="ventas.css" />
+  </head>
+  <body>
     <header>
-        <div class="header-content">
-            <h1>🛒 Portal de Ventas</h1>
-            <a href="../index.html" class="btn-volver">Volver a la tienda</a>
-        </div>
+      <div class="header-content">
+        <h1>🛒 Portal de Ventas</h1>
+        <a href="../index.html" class="btn-volver">Volver a la tienda</a>
+      </div>
     </header>
 
     <main>
-        <div class="ventas-container">
-            <!-- Panel Izquierdo: Productos -->
-            <section class="panel-productos">
-                <div class="productos-header">
-                    <h2>Productos Disponibles</h2>
-                    <input
-                        type="text"
-                        id="buscar-producto"
-                        class="input-buscar"
-                        placeholder="Buscar producto..."
-                    >
-                </div>
-                <div id="lista-productos" class="lista-productos">
-                    <!-- Se cargará con JS -->
-                </div>
-            </section>
+      <div class="ventas-container">
+        <!-- Panel Izquierdo: Productos -->
+        <section class="panel-productos">
+          <div class="productos-header">
+            <h2>Productos Disponibles</h2>
+            <input
+              type="text"
+              id="buscar-producto"
+              class="input-buscar"
+              placeholder="Buscar producto..."
+            />
+          </div>
+          <div id="lista-productos" class="lista-productos">
+            <!-- Se cargará con JS -->
+          </div>
+        </section>
 
-            <!-- Panel Derecho: Carrito de Venta -->
-            <section class="panel-carrito">
-                <div class="carrito-header">
-                    <h2>Detalles de Venta</h2>
-                </div>
+        <!-- Panel Derecho: Carrito de Venta -->
+        <section class="panel-carrito">
+          <div class="carrito-header">
+            <h2>Detalles de Venta</h2>
+          </div>
 
-                <!-- Selector de Cliente -->
-                <div class="seccion-cliente">
-                    <label for="selector-cliente">Cliente:</label>
-                    <select id="selector-cliente" class="input-select">
-                        <option value="sin-cliente">Cliente No Registrado</option>
-                        <!-- Se cargarán clientes con JS -->
-                    </select>
-                </div>
+          <!-- Selector de Cliente -->
+          <div class="seccion-cliente">
+            <label for="selector-cliente">Cliente:</label>
+            <select id="selector-cliente" class="input-select">
+              <option value="sin-cliente">Cliente No Registrado</option>
+              <!-- Se cargarán clientes con JS -->
+            </select>
+          </div>
 
-                <!-- Tabla de Carrito -->
-                <div class="tabla-wrapper">
-                    <table class="tabla-carrito">
-                        <thead>
-                            <tr>
-                                <th>Producto</th>
-                                <th>Cantidad</th>
-                                <th>Precio</th>
-                                <th>Subtotal</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla-carrito-body">
-                            <tr id="sin-items" class="fila-sin-items">
-                                <td colspan="5" style="text-align: center; padding: 20px; color: #999;">
-                                    El carrito está vacío
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+          <!-- Tabla de Carrito -->
+          <div class="tabla-wrapper">
+            <table class="tabla-carrito">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Cantidad</th>
+                  <th>Precio</th>
+                  <th>Subtotal</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-carrito-body">
+                <tr id="sin-items" class="fila-sin-items">
+                  <td
+                    colspan="5"
+                    style="text-align: center; padding: 20px; color: #999"
+                  >
+                    El carrito está vacío
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-                <!-- Método de Pago -->
-                <div class="seccion-metodo-pago">
-                    <label for="selector-metodo-pago">Método de Pago:</label>
-                    <select id="selector-metodo-pago" class="input-select" required>
-                        <option value="">Seleccionar método...</option>
-                        <option value="Efectivo">Efectivo</option>
-                        <option value="Tarjeta Credito">Tarjeta Crédito</option>
-                        <option value="Tarjeta Debito">Tarjeta Débito</option>
-                        <option value="Transferencia">Transferencia</option>
-                    </select>
-                </div>
+          <!-- Método de Pago -->
+          <div class="seccion-metodo-pago">
+            <label for="selector-metodo-pago">Método de Pago:</label>
+            <select id="selector-metodo-pago" class="input-select" required>
+              <option value="">Seleccionar método...</option>
+              <option value="Efectivo">Efectivo</option>
+              <option value="Tarjeta Credito">Tarjeta Crédito</option>
+              <option value="Tarjeta Debito">Tarjeta Débito</option>
+              <option value="Transferencia">Transferencia</option>
+            </select>
+          </div>
 
-                <!-- Resumen de Venta -->
-                <div class="resumen-venta">
-                    <div class="linea-resumen">
-                        <span>Subtotal:</span>
-                        <span id="subtotal-valor">$0</span>
-                    </div>
-                    <div class="linea-resumen linea-total">
-                        <span>Total:</span>
-                        <span id="total-valor">$0</span>
-                    </div>
-                </div>
+          <!-- Resumen de Venta -->
+          <div class="resumen-venta">
+            <div class="linea-resumen">
+              <span>Subtotal:</span>
+              <span id="subtotal-valor">$0</span>
+            </div>
+            <div class="linea-resumen linea-total">
+              <span>Total:</span>
+              <span id="total-valor">$0</span>
+            </div>
+          </div>
 
-                <!-- Botones de Acción -->
-                <div class="botones-carrito">
-                    <button id="btn-vaciar-carrito" class="btn-secundario">Vaciar Carrito</button>
-                    <button id="btn-pausar-venta" class="btn-secundario" style="background:#6c757d; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer; margin: 0 5px;">Guardar venta</button>
-                    <button id="btn-finalizar-venta" class="btn-primario" disabled>Finalizar Venta</button>
-                </div>
-            </section>
-        </div>
+          <!-- Botones de Acción -->
+          <div class="botones-carrito">
+            <button id="btn-vaciar-carrito" class="btn-secundario">
+              Vaciar Carrito
+            </button>
+            <button
+              id="btn-pausar-venta"
+              class="btn-secundario"
+              style="
+                background: #6c757d;
+                color: white;
+                border: none;
+                padding: 10px;
+                border-radius: 5px;
+                cursor: pointer;
+                margin: 0 5px;
+              "
+            >
+              Guardar venta
+            </button>
+            <button id="btn-finalizar-venta" class="btn-primario" disabled>
+              Finalizar Venta
+            </button>
+          </div>
+        </section>
+      </div>
     </main>
 
     <!-- Modal para agregar cantidad -->
-    <div id="modal-cantidad" class="modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Agregar al Carrito</h3>
-                <button class="btn-cerrar-modal" onclick="cerrarModalCantidad()">✕</button>
-            </div>
-            <div class="modal-body">
-                <p id="modal-producto-nombre"></p>
-                <label for="modal-cantidad-input">Cantidad:</label>
-                <input
-                    type="number"
-                    id="modal-cantidad-input"
-                    class="input-cantidad"
-                    min="1"
-                    value="1"
-                >
-                <p id="modal-stock-info" style="font-size: 0.9rem; color: #666; margin-top: 10px;"></p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secundario" onclick="cerrarModalCantidad()">Cancelar</button>
-                <button class="btn-primario" onclick="agregarDelModal()">Agregar</button>
-            </div>
+    <div id="modal-cantidad" class="modal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Agregar al Carrito</h3>
+          <button class="btn-cerrar-modal" onclick="cerrarModalCantidad()">
+            ✕
+          </button>
         </div>
+        <div class="modal-body">
+          <p id="modal-producto-nombre"></p>
+          <label for="modal-cantidad-input">Cantidad:</label>
+          <input
+            type="number"
+            id="modal-cantidad-input"
+            class="input-cantidad"
+            min="1"
+            value="1"
+          />
+          <p
+            id="modal-stock-info"
+            style="font-size: 0.9rem; color: #666; margin-top: 10px"
+          ></p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secundario" onclick="cerrarModalCantidad()">
+            Cancelar
+          </button>
+          <button class="btn-primario" onclick="agregarDelModal()">
+            Agregar
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Modal de Confirmación -->
-    <div id="modal-confirmacion" class="modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Confirmar Venta</h3>
-            </div>
-            <div class="modal-body">
-                <p id="confirmacion-mensaje"></p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secundario" onclick="cerrarModalConfirmacion()">Cancelar</button>
-                <button class="btn-primario" onclick="confirmarFinalizarVenta()">Confirmar</button>
-            </div>
+    <div id="modal-confirmacion" class="modal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Confirmar Venta</h3>
         </div>
+        <div class="modal-body">
+          <p id="confirmacion-mensaje"></p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secundario" onclick="cerrarModalConfirmacion()">
+            Cancelar
+          </button>
+          <button class="btn-primario" onclick="confirmarFinalizarVenta()">
+            Confirmar
+          </button>
+        </div>
+      </div>
     </div>
 
     <script src="../js/backend.js"></script>
+    <script src="carrito.js"></script>
     <script src="ventas.js"></script>
-</body>
+  </body>
 </html>

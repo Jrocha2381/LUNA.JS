@@ -26,11 +26,7 @@ function formatearMonedaVentas(valor) {
 
 function pausarVentaActual() {
   if (carritoVentas.length === 0) {
-    if (window.mostrarToast) {
-      window.mostrarToast("warning", "Carrito vacío", "No hay items para pausar.");
-    } else {
-      alert("No hay items para pausar.");
-    }
+    window.mostrarToast("warning", "Carrito vacío", "No hay items para pausar.");
     return;
   }
 
@@ -59,11 +55,7 @@ function pausarVentaActual() {
   renderizarCarrito();
   calcularTotales();
   
-  if (window.mostrarToast) {
-    window.mostrarToast("success", "Venta pausada", "La venta se movió a estado de pausa.");
-  } else {
-    alert("Venta pausada exitosamente.");
-  }
+  window.mostrarToast("success", "Venta pausada", "La venta se movió a estado de pausa.");
 }
 
 function retomarVenta(id) {
@@ -86,11 +78,7 @@ function retomarVenta(id) {
   renderizarCarrito();
   calcularTotales();
   
-  if (window.mostrarToast) {
-    window.mostrarToast("success", "Venta retomada", "Puedes continuar con la edición.");
-  } else {
-    alert("Venta retomada exitosamente.");
-  }
+  window.mostrarToast("success", "Venta retomada", "Puedes continuar con la edición.");
 }
 
 function confirmarEliminarVentaAbierta(id) {
@@ -107,11 +95,7 @@ function eliminarVentaAbierta(id) {
   guardarVentasAbiertas(nuevas);
   renderizarCarrito();
   
-  if (window.mostrarToast) {
-    window.mostrarToast("success", "Venta eliminada", "La venta en pausa fue eliminada.");
-  } else {
-    alert("Venta eliminada.");
-  }
+  window.mostrarToast("success", "Venta eliminada", "La venta en pausa fue eliminada.");
 }
 
 function renderVentasAbiertasSection(ventasAbiertas) {
@@ -162,7 +146,7 @@ async function cargarProductos() {
     }
   } catch (error) {
     console.error('Error al cargar productos:', error);
-    alert('Error al cargar los productos');
+    window.mostrarToast('error', 'Error', 'Error al cargar los productos');
   }
 }
 
@@ -257,12 +241,12 @@ function agregarDelModal() {
   const cantidad = parseInt(document.getElementById('modal-cantidad-input').value);
 
   if (isNaN(cantidad) || cantidad < 1) {
-    alert('Ingresa una cantidad válida');
+    window.mostrarToast('warning', 'Cantidad inválida', 'Ingresa una cantidad válida');
     return;
   }
 
   if (productoModalActual.seguimiento && cantidad > productoModalActual.stock) {
-    alert(`Stock insuficiente. Disponible: ${productoModalActual.stock}`);
+    window.mostrarToast('warning', 'Stock insuficiente', `Stock insuficiente. Disponible: ${productoModalActual.stock}`);
     return;
   }
 
@@ -277,7 +261,7 @@ function agregarAlCarrito(productoId, nombre, cantidad, precio, stock, seguimien
   if (itemExistente) {
     const nuevaCantidad = itemExistente.cantidad + cantidad;
     if (seguimiento && nuevaCantidad > stock) {
-      alert(`Stock insuficiente. Disponible: ${stock}`);
+      window.mostrarToast('warning', 'Stock insuficiente', `Stock insuficiente. Disponible: ${stock}`);
       return;
     }
     itemExistente.cantidad = nuevaCantidad;
@@ -353,14 +337,14 @@ function modificarCantidad(idx, nuevaCantidad) {
   const cantidad = parseInt(nuevaCantidad);
 
   if (isNaN(cantidad) || cantidad < 1) {
-    alert('Ingresa una cantidad válida');
+    window.mostrarToast('warning', 'Cantidad inválida', 'Ingresa una cantidad válida');
     renderizarCarrito();
     return;
   }
 
   const item = carritoVentas[idx];
   if (item.seguimiento && cantidad > item.stock) {
-    alert(`Stock insuficiente para ${item.nombre}. Disponible: ${item.stock}`);
+    window.mostrarToast('warning', 'Stock insuficiente', `Stock insuficiente para ${item.nombre}. Disponible: ${item.stock}`);
     renderizarCarrito();
     return;
   }
@@ -388,7 +372,7 @@ function calcularTotales() {
 // Vaciar carrito
 function vaciarCarrito() {
   if (carritoVentas.length === 0) {
-    alert('El carrito ya está vacío');
+    window.mostrarToast('info', 'Carrito vacío', 'El carrito ya está vacío');
     return;
   }
 
@@ -402,7 +386,7 @@ function vaciarCarrito() {
 // Finalizar venta
 async function finalizarVenta() {
   if (carritoVentas.length === 0) {
-    alert('El carrito está vacío');
+    window.mostrarToast('warning', 'Carrito vacío', 'El carrito está vacío');
     return;
   }
 
@@ -413,7 +397,7 @@ async function finalizarVenta() {
   const metodoPago = metodoPagoSelect.value;
 
   if (!metodoPago) {
-    alert('Selecciona un método de pago');
+    window.mostrarToast('warning', 'Método de pago', 'Selecciona un método de pago');
     return;
   }
 
@@ -484,14 +468,16 @@ async function confirmarFinalizarVenta() {
       }
     }
 
-    alert('¡Venta registrada exitosamente!');
+    window.mostrarToast('success', 'Venta completada', '¡Venta registrada exitosamente!');
 
     // Redirigir a factura
-    window.location.href = `factura.html?id=${ventaId}`;
+    setTimeout(() => {
+      window.location.href = `factura.html?id=${ventaId}`;
+    }, 1500);
 
   } catch (error) {
     console.error('Error al finalizar venta:', error);
-    alert('Error al registrar la venta: ' + (error.payload?.error || error.message));
+    window.mostrarToast('error', 'Error', 'Error al registrar la venta: ' + (error.payload?.error || error.message));
   }
 }
 

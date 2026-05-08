@@ -32,11 +32,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function pausarCompraActual() {
     if (itemsParaComprar.length === 0) {
-      if (window.mostrarToast) {
-        window.mostrarToast("warning", "Carrito vacío", "No hay items para pausar.");
-      } else {
-        alert("No hay items para pausar.");
-      }
+      window.mostrarToast("warning", "Carrito vacío", "No hay items para pausar.");
       return;
     }
 
@@ -61,11 +57,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderTabla();
     actualizarSeccionComprasAbiertas();
 
-    if (window.mostrarToast) {
-      window.mostrarToast("success", "Compra pausada", "La compra se movió a estado de pausa.");
-    } else {
-      alert("Compra pausada exitosamente.");
-    }
+    window.mostrarToast("success", "Compra pausada", "La compra se movió a estado de pausa.");
   }
 
   function retomarCompra(id) {
@@ -80,11 +72,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderTabla();
     actualizarSeccionComprasAbiertas();
 
-    if (window.mostrarToast) {
-      window.mostrarToast("success", "Compra retomada", "Puedes continuar con la edición.");
-    } else {
-      alert("Compra retomada exitosamente.");
-    }
+    window.mostrarToast("success", "Compra retomada", "Puedes continuar con la edición.");
   }
 
   function confirmarEliminarCompraAbierta(id) {
@@ -101,11 +89,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     guardarComprasAbiertas(nuevas);
     actualizarSeccionComprasAbiertas();
 
-    if (window.mostrarToast) {
-      window.mostrarToast("success", "Compra eliminada", "La compra en pausa fue eliminada.");
-    } else {
-      alert("Compra eliminada.");
-    }
+    window.mostrarToast("success", "Compra eliminada", "La compra en pausa fue eliminada.");
   }
 
   function renderSeccionComprasAbiertas() {
@@ -147,13 +131,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   const notifyError = (mensaje) => {
-    if (window.mostrarToast) window.mostrarToast("error", "Validacion", mensaje);
-    else alert(mensaje);
+    window.mostrarToast("error", "Validación", mensaje);
   };
 
   const notifySuccess = (titulo, mensaje) => {
-    if (window.mostrarToast) window.mostrarToast("success", titulo, mensaje);
-    else alert(mensaje);
+    window.mostrarToast("success", titulo, mensaje);
   };
 
   const parseCantidad = (valor) => {
