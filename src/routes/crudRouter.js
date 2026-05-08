@@ -27,4 +27,5 @@ function crudRouter(model, validators = {}) {
 }
 
 module.exports = crudRouter;
+module.exports.idValidator = idValidator;
 

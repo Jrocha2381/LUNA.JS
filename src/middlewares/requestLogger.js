@@ -1,12 +1,17 @@
 'use strict';
 
-function requestLogger(req, res, next) {
-  const start = Date.now();
+const { RequestLog } = require('../../models');
 
-  res.on('finish', () => {
-    const duration = Date.now() - start;
-    console.log(`${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`);
-  });
+async function requestLogger(req, _res, next) {
+  try {
+    await RequestLog.create({
+      method: req.method,
+      path: req.originalUrl,
+      ip: req.ip
+    });
+  } catch (err) {
+    console.error('Error guardando log:', err.message);
+  }
 
   next();
 }
