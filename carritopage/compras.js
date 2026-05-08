@@ -1,7 +1,6 @@
 // carritopage/compras.js
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const COMPRAS_SYNC_INTERVAL_MS = 8000;
   const selectProveedor = document.getElementById("select-proveedor");
   const selectProducto = document.getElementById("select-producto");
   const inputCantidad = document.getElementById("compra-cantidad");
@@ -329,18 +328,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   await cargarDatos();
   renderTabla();
   actualizarSeccionComprasAbiertas();
-
-  window.addEventListener("proveedoresActualizados", () => {
-    cargarDatos().catch(() => {});
-  });
-
-  window.addEventListener("productosActualizados", () => {
-    cargarDatos().catch(() => {});
-  });
-
-  setInterval(() => {
-    cargarDatos().catch(() => {});
-  }, COMPRAS_SYNC_INTERVAL_MS);
 
   // Exponer funciones globales
   window.pausarCompraActual = pausarCompraActual;

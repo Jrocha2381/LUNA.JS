@@ -3,7 +3,7 @@
 const SENSITIVE_KEYS = new Set(['password', 'clave', 'token', 'accessToken', 'refreshToken']);
 
 function isInternalIdKey(key) {
-  return key.endsWith('_id') || key.endsWith('Id');
+  return key.endsWith('_id');
 }
 
 function sanitizeValue(value) {
@@ -16,6 +16,10 @@ function sanitizeValue(value) {
   }
 
   const plainValue = typeof value.toJSON === 'function' ? value.toJSON() : value;
+
+  if (!plainValue || typeof plainValue !== 'object') {
+    return plainValue;
+  }
 
   return Object.entries(plainValue).reduce((sanitized, [key, entry]) => {
     if (SENSITIVE_KEYS.has(key) || isInternalIdKey(key)) {
