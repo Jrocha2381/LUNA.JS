@@ -1,6 +1,8 @@
 'use strict';
 
-const SENSITIVE_KEYS = new Set(['password', 'clave', 'token', 'accessToken', 'refreshToken']);
+// Nota: el endpoint de login debe devolver un JWT en la clave `token`.
+// Por eso NO se elimina `token` aquí; solo credenciales y otros tokens opcionales.
+const SENSITIVE_KEYS = new Set(['password', 'clave', 'accessToken', 'refreshToken']);
 
 function isInternalIdKey(key) {
   return key === 'id' ;

@@ -1,0 +1,297 @@
+﻿DESARROLLO WEB
+AutenticaciÃ³n y AutorizaciÃ³n en APIs REST
+GuÃ­a y actividad prÃ¡ctica con JWT (jsonwebtoken + bcrypt)
+Express (Node.js) Â· JavaScript
+Desarrollo Web
+Objetivo de Aprendizaje
+El propÃ³sito de este taller es que comprendas y apliques de manera prÃ¡ctica los conceptos de autenticaciÃ³n y autorizaciÃ³n en aplicaciones backend desarrolladas con Express (Node.js), usando JWT con la librerÃ­a jsonwebtoken como mecanismo estÃ¡ndar para identificar usuarios autenticados sin mantener sesiones en el servidor.
+Al finalizar serÃ¡s capaz de:
+Distinguir claramente autenticaciÃ³n (verificar quiÃ©n eres) de autorizaciÃ³n (decidir quÃ© puedes hacer).
+Identificar los principales mÃ©todos de autenticaciÃ³n en APIs REST (Basic, Token-based, API Key, OAuth) y elegir el adecuado.
+Implementar un sistema de login con usuario/contraseÃ±a que devuelve un token de acceso.
+Proteger rutas mediante un middleware/filtro que valida el token en cada solicitud.
+Implementar autorizaciÃ³n basada en roles (USER / ADMIN) para restringir el acceso segÃºn el perfil del usuario.
+Conectar un frontend en JavaScript puro con la API protegida usando fetch + sessionStorage + Authorization Bearer.
+Contexto:
+Hasta este punto tu API en Express funciona bien, pero estÃ¡ completamente abierta: cualquier persona con la URL puede listar usuarios, crear personajes o eliminarlos. Es decir, no hay forma de saber QUIÃ‰N estÃ¡ haciendo cada solicitud, ni de impedir que alguien sin permiso modifique recursos sensibles.
+Express, fiel a su filosofÃ­a minimalista, no incluye nada relacionado con autenticaciÃ³n. Te da los bloques (rutas, middlewares) y te deja decidir quÃ© librerÃ­as y patrones adoptar. En esta actividad implementaremos un sistema de autenticaciÃ³n con JWT (JSON Web Tokens) usando jsonwebtoken para firmar/validar tokens y bcrypt para hashear contraseÃ±as. El alumno va a:
+Instalar jsonwebtoken y bcrypt sobre el proyecto Express existente.
+Hashear contraseÃ±as antes de guardarlas en la base de datos (nunca texto plano).
+Crear un controlador de autenticaciÃ³n con un endpoint /api/login que valide credenciales y emita un JWT.
+Implementar un middleware authJwt que intercepta cada request, valida el token y deja al usuario disponible en req.user.
+Implementar un middleware requireRole(role) parametrizable que restringe rutas por rol (USER vs ADMIN).
+Conectar un frontend en JavaScript puro que haga login y consuma rutas protegidas con el token.
+Consejo:
+Como Express te obliga a tomar todas las decisiones tÃº mismo, este es un buen momento para entender exactamente cÃ³mo funciona JWT por dentro: firma, claims, expiraciÃ³n, header Bearer. Lo que en otros frameworks queda â€œautomÃ¡ticoâ€, aquÃ­ lo escribes a mano. Eso es ventaja: vas a comprender quÃ© hace cada parte.
+Lectura Previa Obligatoria
+Antes de programar, debes leer el documento anexo a esta actividad: 
+â€œAnexo - Tipos de autenticaciÃ³n.pdfâ€
+Este anexo cubre el marco teÃ³rico que esta guÃ­a no repite: la diferencia entre autenticaciÃ³n y autorizaciÃ³n, los 4 mÃ©todos principales (Basic, Token-based, API Key, OAuth 2.0), sus ventajas, desventajas y cuÃ¡ndo usar cada uno. Es la base conceptual de toda la actividad.
+Importante:
+El anexo usa el tÃ©rmino â€œautentificaciÃ³nâ€ que NO es correcto. El tÃ©rmino acadÃ©micamente vÃ¡lido es â€œautenticaciÃ³nâ€ (igual que en inglÃ©s: authentication). Te lo aclaro porque la nota podrÃ­a inducir a error.
+DespuÃ©s de leerlo, responde brevemente las siguientes preguntas en tu documento de entrega:
+Â¿CuÃ¡l es la diferencia entre autenticaciÃ³n y autorizaciÃ³n?
+Â¿CuÃ¡les son los 4 mÃ©todos principales de autenticaciÃ³n API REST y en quÃ© consiste cada uno?
+De los 4 mÃ©todos, Â¿cuÃ¡l se usa en este taller y por quÃ© es el mÃ¡s apropiado para una API moderna?
+Â¿QuÃ© papel cumple un token de acceso en la comunicaciÃ³n cliente-servidor?
+Â¿Por quÃ© es preferible usar tokens en lugar de sesiones tradicionales en APIs RESTful?
+Â¿QuÃ© vulnerabilidades puede tener una mala gestiÃ³n de tokens?
+El flujo de autenticaciÃ³n basada en tokens
+Antes de implementar nada, asegÃºrate de tener claro el flujo conceptual. Es exactamente el mismo en cualquier framework y con cualquier librerÃ­a; lo que cambia es el formato del token y la sintaxis del cÃ³digo:
+El usuario envÃ­a sus credenciales (username + password) al endpoint /api/login.
+El backend valida las credenciales contra la base de datos. Si son correctas, genera un token de acceso y lo devuelve en la respuesta.
+El frontend guarda el token (en sessionStorage o localStorage) y lo envÃ­a en cada solicitud posterior dentro del header Authorization: Bearer <token>.
+Un middleware/filtro en el backend intercepta cada solicitud, valida el token, identifica al usuario asociado y permite (o rechaza) el acceso al recurso.
+Para autorizaciÃ³n por roles, el middleware ademÃ¡s verifica que el usuario tenga el rol requerido para ese recurso.
+Nota:
+Hay dos grandes familias de tokens en uso: (a) tokens estructurados como JWT (JSON Web Token), que son objetos JSON codificados en base64 y firmados con una clave secreta â€” el servidor verifica la firma sin tener que consultar la base de datos. (b) tokens opacos aleatorios, que son cadenas sin estructura interna, almacenadas en una tabla del servidor â€” el servidor consulta la tabla en cada validaciÃ³n. Ambos siguen el mismo flujo de 5 pasos descrito arriba; la diferencia estÃ¡ en cÃ³mo el servidor verifica el token. En esta guÃ­a usaremos JWT (JSON Web Token) firmados con la librerÃ­a jsonwebtoken, una de las mÃ¡s usadas en el ecosistema Node. Cada token JWT estÃ¡ firmado con una clave secreta y contiene informaciÃ³n del usuario (claims), de modo que el middleware puede validarlo sin consultar la base de datos en cada solicitud.
+Parte 1 â€” PreparaciÃ³n del entorno
+Sobre tu proyecto Express con Sequelize, instala las librerÃ­as necesarias:
+npm install jsonwebtoken bcrypt
+AsegÃºrate de que tu modelo Usuario tenga los campos 
+username
+, 
+password
+ (cifrado), y 
+role
+ (USER/ADMIN). Si te falta el campo role, agrÃ©galo con una migraciÃ³n:
+npx sequelize-cli migration:generate --name add-role-to-usuarios
+// dentro de la migraciÃ³n:
+await queryInterface.addColumn('Usuarios', 'role', {
+
+type: Sequelize.STRING(20),
+  defaultValue: 'USER',
+});
+npx sequelize-cli db:migrate
+Agrega la clave secreta del JWT a tu 
+.env
+:
+JWT_SECRET=ESTACLAVEDEBESERMUYLARGAYALEATORIAENPRODUCCION
+JWT_EXPIRES_IN=1h
+Parte 2 â€” ImplementaciÃ³n de AutenticaciÃ³n con JWT
+2.1 Hashear contraseÃ±as con bcrypt
+Antes de guardar usuarios, sus contraseÃ±as deben estar hasheadas. Crea un seeder o un endpoint de registro que use bcrypt:
+const bcrypt = require('bcrypt');
+const SALT_ROUNDS = 10;
+
+// Al crear usuario:
+const hashedPassword = await bcrypt.hash(plainPassword, SALT_ROUNDS);
+await Usuario.create({ username, password: hashedPassword, role: 'USER' });
+Importante:
+NUNCA guardes contraseÃ±as en texto plano. bcrypt es la librerÃ­a estÃ¡ndar para hash unidireccional con salt automÃ¡tico: incluso si tu BD se filtra, las contraseÃ±as no son recuperables. Para verificar usa bcrypt.compare(plain, hashed), no comparaciÃ³n con ===.
+2.2 Controlador de autenticaciÃ³n
+Crea 
+src/controllers/auth.controller.js
+:
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const { Usuario } = require('../../models');
+
+exports.login = async (req, res, next) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: 'username y password son requeridos' });
+    }
+
+    const user = await Usuario.findOne({ where: { username } });
+    if (!user) {
+      return res.status(401).json({ error: 'Credenciales invÃ¡lidas' });
+    }
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      return res.status(401).json({ error: 'Credenciales invÃ¡lidas' });
+    }
+
+    const token = jwt.sign(
+      { sub: user.id, username: user.username, role: user.role },
+
+process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
+    );
+
+    res.json({
+      token,
+      token_type: 'bearer',
+      user: { id: user.id, username: user.username, role: user.role },
+    });
+  } catch (err) { next(err); }
+};
+
+exports.me = async (req, res) => {
+
+// req.user fue inyectado por el middleware authJwt
+  res.json(req.user);
+};
+2.3 Middleware authJwt â€” validar el token en cada request
+Crea 
+src/middlewares/authJwt.js
+:
+const jwt = require('jsonwebtoken');
+
+module.exports = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+
+return res.status(401).json({ error: 'Token no proporcionado' });
+  }
+
+  const token = authHeader.substring(7);
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+
+req.user = payload;   // { sub, username, role, iat, exp }
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Token invÃ¡lido o expirado' });
+
+}
+};
+2.4 Rutas de autenticaciÃ³n
+Crea 
+src/routes/auth.js
+:
+const express = require('express');
+const ctrl = require('../controllers/auth.controller');
+const authJwt = require('../middlewares/authJwt');
+
+const router = express.Router();
+router.post('/login', ctrl.login);
+router.get('/me', authJwt, ctrl.me);
+
+module.exports = router;
+Y monta el router + protege las rutas existentes en 
+src/app.js
+:
+const authRouter = require('./routes/auth');
+const authJwt = require('./middlewares/authJwt');
+
+app.use('/api', authRouter);                            // /api/login y /api/me
+app.use('/api/personajes', authJwt, personajesRouter);  // protegida
+app.use('/api/habilidades', authJwt, habilidadesRouter);// protegida
+2.5 VerificaciÃ³n con Postman
+POST /api/login con credenciales vÃ¡lidas â†’ 200 con JWT.
+POST /api/login con credenciales incorrectas â†’ 401.
+GET /api/me con header Authorization: Bearer <token> â†’ 200 con datos del usuario.
+GET /api/personajes sin header Authorization â†’ 401.
+Preguntas analÃ­ticas â€” Parte 2
+Â¿QuÃ© sucede si el token es incorrecto o estÃ¡ expirado?
+Â¿QuÃ© diferencias encuentras entre esta autenticaciÃ³n con JWT y un esquema basado en sesiones (cookies + estado en el servidor)?
+Â¿Por quÃ© usamos bcrypt en lugar de comparar la contraseÃ±a directamente con ===?
+Parte 3 â€” Implementar AutorizaciÃ³n por Roles
+3.1 Middleware de roles
+Crea 
+src/middlewares/requireRole.js
+:
+module.exports = (requiredRole) => (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'No autenticado' });
+  }
+  if (req.user.role !== requiredRole) {
+    return res.status(403).json({
+      error: `Acceso prohibido. Se requiere rol ${requiredRole}.`
+    });
+  }
+  next();
+};
+3.2 Aplicarlo en rutas que requieren ADMIN
+const requireRole = require('./middlewares/requireRole');
+
+// Solo ADMIN puede listar/borrar usuarios
+app.use('/api/users', authJwt, requireRole('ADMIN'), usuariosRouter);
+3.3 Probar la autorizaciÃ³n
+GET /api/users con token de un usuario USER â†’ 403 Forbidden.
+GET /api/users con token de un usuario ADMIN â†’ 200 con la lista.
+Preguntas analÃ­ticas â€” Parte 3
+Â¿QuÃ© diferencia tÃ©cnica hay entre 401 Unauthorized y 403 Forbidden?
+Â¿CÃ³mo aplicarÃ­as esta misma protecciÃ³n a otros recursos del proyecto final?
+Â¿CÃ³mo extenderÃ­as el middleware requireRole para aceptar varios roles permitidos (por ejemplo, requireRole(['ADMIN','MODERATOR']))?
+Parte 5 â€” ConexiÃ³n del Frontend con el Backend
+En esta parte conectaremos un frontend en JavaScript puro con la API protegida por tokens. VerÃ¡s cÃ³mo realizar el login, guardar el token en el navegador y usarlo en solicitudes posteriores para acceder a rutas protegidas.
+Paso 1 â€” Login desde el frontend
+Crea un archivo 
+login.js
+ con una funciÃ³n que envÃ­e las credenciales al endpoint de login y guarde el token recibido:
+async function login() {
+  const username = document.getElementById('username').value;
+  const password = document.getElementById('password').value;
+
+  try {
+    const response = await fetch('http://localhost:3000/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+
+body: JSON.stringify({ username, password })
+
+});
+
+    if (!response.ok) {
+      throw new Error('Credenciales invÃ¡lidas o error en el servidor');
+
+}
+
+    const data = await response.json();
+    sessionStorage.setItem('token', data.token);
+
+alert('Inicio de sesiÃ³n exitoso');
+  } catch (err) {
+    console.error('Error al iniciar sesiÃ³n:', err);
+    alert('No fue posible iniciar sesiÃ³n');
+  }
+}
+Nota:
+sessionStorage guarda el token mientras la pestaÃ±a estÃ© abierta. Si prefieres mantener la sesiÃ³n entre cierres, usa localStorage â€” pero NO lo uses en sitios compartidos o pÃºblicos por seguridad. Para producciÃ³n, lo mÃ¡s seguro suele ser una httpOnly cookie.
+Paso 2 â€” Acceder a rutas protegidas
+Una vez guardado el token, Ãºsalo para acceder a recursos protegidos:
+async function loadUsers() {
+  const token = sessionStorage.getItem('token');
+
+  try {
+    const response = await fetch('http://localhost:3000/api/users', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (response.status === 401) {
+      throw new Error('Usuario no autorizado. 
+Verifica tu token.');
+    }
+
+    const users = await response.json();
+    const list = document.getElementById('userList');
+    list.innerHTML = users.map(u => `<li>${u.username}</li>`).join('');
+
+} catch (err) {
+    console.error('Error al cargar usuarios:', err);
+  }
+}
+Paso 3 â€” Probar la conexiÃ³n completa
+Crea un index.html sencillo con dos inputs (username, password) y dos botones (Login, Cargar Usuarios). En la consola del navegador (F12 â†’ Console) verifica que tras el login el token se guarda y que las solicitudes posteriores reciben los datos protegidos.
+Preguntas analÃ­ticas â€” Frontend
+Â¿QuÃ© sucede si omites el header Authorization en la solicitud fetch?
+Â¿QuÃ© diferencia hay entre guardar el token en sessionStorage vs localStorage? Â¿CuÃ¡ndo elegirÃ­as cada uno?
+Â¿CÃ³mo podrÃ­as mejorar la seguridad del flujo si tu aplicaciÃ³n fuera pÃºblica? Investiga quÃ© son las httpOnly cookies y SameSite.
+Â¿CÃ³mo aplicarÃ­as esta lÃ³gica en tu proyecto final (por ejemplo, login del jugador o del administrador)?
+Parte 6 â€” ReflexiÃ³n final
+Responde en tu documento:
+Â¿QuÃ© desafÃ­os encontraste al implementar autenticaciÃ³n y autorizaciÃ³n?
+Â¿QuÃ© importancia tiene proteger correctamente los datos de usuario?
+Â¿QuÃ© diferencia hay entre autenticaciÃ³n y autorizaciÃ³n a nivel tÃ©cnico, no conceptual?
+Â¿CÃ³mo protegerÃ­as rutas especÃ­ficas del proyecto final (por ejemplo, â€œcrear personajeâ€, â€œeditar usuarioâ€)?
+Formato de Entrega
+La entrega tiene dos componentes:
+1. DemostraciÃ³n en vivo:
+ durante la sesiÃ³n de clase, el equipo debe demostrar al profesor el flujo completo en Postman: login vÃ¡lido devolviendo el token (200), acceso a ruta protegida con token (200), acceso sin token (401), acceso con rol incorrecto (403).
+2. Documento PDF breve:
+ subido a Teams en la actividad correspondiente, con:
+Portada con nombres y cÃ³digo de los integrantes.
+Respuestas a las preguntas analÃ­ticas de cada parte.
+Capturas opcionales de Postman como evidencia visual: login exitoso (200 con token), 401 sin token, 200 con token vÃ¡lido. No son obligatorias, pero ayudan a respaldar la demostraciÃ³n en vivo.
+Nombre del archivo: 
+Apellido_Nombre_TallerAutenticacion.pdf
+Importante:
+Esta implementaciÃ³n serÃ¡ usada como base del sistema de autenticaciÃ³n de tu proyecto final. AsegÃºrate de que el flujo funcione correctamente y de que entiendas cada parte: vas a tener que extenderlo, no copiarlo.
+Â¡A asegurar tu API! ðŸ”’ðŸš€

@@ -1,8 +1,17 @@
 'use strict';
 
-const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { Usuario } = require('../../models');
+
+function getJwtSecret() {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    const err = new Error('JWT_SECRET no esta configurado');
+    err.status = 500;
+    throw err;
+  }
+  return secret;
+}
 
 function validateLoginBody(body) {
   const username = typeof body.username === 'string' ? body.username.trim() : '';
@@ -10,7 +19,7 @@ function validateLoginBody(body) {
 
   if (!username || !password) {
     return {
-      error: 'Username y password son obligatorios'
+      error: 'username y password son requeridos'
     };
   }
 
@@ -19,17 +28,13 @@ function validateLoginBody(body) {
 
 async function login(req, res, next) {
   try {
-    const { username, password, error } = validateLoginBody(req.body);
+    const { username, password, error } = validateLoginBody(req.body || {});
 
     if (error) {
       return res.status(400).json({ error });
     }
 
-    if (!process.env.JWT_SECRET) {
-      return res.status(500).json({ error: 'JWT_SECRET no esta configurado' });
-    }
-
-    const usuario = await Usuario.unscoped().findOne({
+    const usuario = await Usuario.findOne({
       where: { username }
     });
 
@@ -37,7 +42,7 @@ async function login(req, res, next) {
       return res.status(401).json({ error: 'Credenciales invalidas' });
     }
 
-    const passwordValida = await bcrypt.compare(password, usuario.password);
+    const passwordValida = await usuario.verifyPassword(password);
 
     if (!passwordValida) {
       return res.status(401).json({ error: 'Credenciales invalidas' });
@@ -46,10 +51,11 @@ async function login(req, res, next) {
     const token = jwt.sign(
       {
         id: usuario.id,
+        sub: usuario.id,
         username: usuario.username,
         role: usuario.role
       },
-      process.env.JWT_SECRET,
+      getJwtSecret(),
       {
         expiresIn: process.env.JWT_EXPIRES_IN || '1h'
       }
@@ -57,6 +63,7 @@ async function login(req, res, next) {
 
     return res.json({
       token,
+      token_type: 'bearer',
       user: {
         id: usuario.id,
         username: usuario.username,
