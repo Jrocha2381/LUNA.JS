@@ -6,6 +6,8 @@ const { sequelize } = require('../models');
 const requestLogger = require('./middlewares/requestLogger');
 const sanitizeIds = require('./middlewares/sanitizeIds');
 
+const authRouter = require('./routes/auth');
+
 const usuariosRouter = require('./routes/usuarios');
 const categoriasRouter = require('./routes/categorias');
 const productosRouter = require('./routes/productos');
@@ -21,7 +23,7 @@ const app = express();
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
   }
@@ -42,6 +44,7 @@ app.get('/api/health', async (_req, res, next) => {
   }
 });
 
+app.use('/api', authRouter); // /api/login y /api/me
 app.use('/api/usuarios', usuariosRouter);
 app.use('/api/categorias', categoriasRouter);
 app.use('/api/productos', productosRouter);
