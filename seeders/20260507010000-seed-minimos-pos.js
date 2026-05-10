@@ -23,21 +23,8 @@ module.exports = {
     faker.seed(20260507);
     const now = new Date();
 
-    // 1) Usuarios (mínimo 2, por correo único)
-    const [usuariosExist] = await queryInterface.sequelize.query(
-      "SELECT correo FROM usuarios WHERE correo IN ('admin@pos.local','cajero1@pos.local');"
-    );
-    const existentes = new Set(usuariosExist.map(u => u.correo));
-    const usuarios = [];
-    if (!existentes.has('admin@pos.local')) {
-      usuarios.push({ nombre: 'Admin', correo: 'admin@pos.local', rol: 'admin', createdAt: now, updatedAt: now });
-    }
-    if (!existentes.has('cajero1@pos.local')) {
-      usuarios.push({ nombre: 'Cajero 1', correo: 'cajero1@pos.local', rol: 'cajero', createdAt: now, updatedAt: now });
-    }
-    if (usuarios.length) await queryInterface.bulkInsert('usuarios', usuarios);
 
-    // 2) Categorías (mínimo 6, por nombre único)
+    // 1) Categorías (mínimo 6, por nombre único)
     const categoriasObjetivo = [
       'Cuadernos',
       'Lápices y Marcadores',

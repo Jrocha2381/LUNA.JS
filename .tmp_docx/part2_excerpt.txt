@@ -1,0 +1,121 @@
+﻿Parte 2 â€” ImplementaciÃ³n de AutenticaciÃ³n con JWT
+2.1 Hashear contraseÃ±as con bcrypt
+Antes de guardar usuarios, sus contraseÃ±as deben estar hasheadas. Crea un seeder o un endpoint de registro que use bcrypt:
+const bcrypt = require('bcrypt');
+const SALT_ROUNDS = 10;
+
+// Al crear usuario:
+const hashedPassword = await bcrypt.hash(plainPassword, SALT_ROUNDS);
+await Usuario.create({ username, password: hashedPassword, role: 'USER' });
+Importante:
+NUNCA guardes contraseÃ±as en texto plano. bcrypt es la librerÃ­a estÃ¡ndar para hash unidireccional con salt automÃ¡tico: incluso si tu BD se filtra, las contraseÃ±as no son recuperables. Para verificar usa bcrypt.compare(plain, hashed), no comparaciÃ³n con ===.
+2.2 Controlador de autenticaciÃ³n
+Crea 
+src/controllers/auth.controller.js
+:
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const { Usuario } = require('../../models');
+
+exports.login = async (req, res, next) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: 'username y password son requeridos' });
+    }
+
+    const user = await Usuario.findOne({ where: { username } });
+    if (!user) {
+      return res.status(401).json({ error: 'Credenciales invÃ¡lidas' });
+    }
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      return res.status(401).json({ error: 'Credenciales invÃ¡lidas' });
+    }
+
+    const token = jwt.sign(
+      { sub: user.id, username: user.username, role: user.role },
+
+process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
+    );
+
+    res.json({
+      token,
+      token_type: 'bearer',
+      user: { id: user.id, username: user.username, role: user.role },
+    });
+  } catch (err) { next(err); }
+};
+
+exports.me = async (req, res) => {
+
+// req.user fue inyectado por el middleware authJwt
+  res.json(req.user);
+};
+2.3 Middleware authJwt â€” validar el token en cada request
+Crea 
+src/middlewares/authJwt.js
+:
+const jwt = require('jsonwebtoken');
+
+module.exports = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+
+return res.status(401).json({ error: 'Token no proporcionado' });
+  }
+
+  const token = authHeader.substring(7);
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+
+req.user = payload;   // { sub, username, role, iat, exp }
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Token invÃ¡lido o expirado' });
+
+}
+};
+2.4 Rutas de autenticaciÃ³n
+Crea 
+src/routes/auth.js
+:
+const express = require('express');
+const ctrl = require('../controllers/auth.controller');
+const authJwt = require('../middlewares/authJwt');
+
+const router = express.Router();
+router.post('/login', ctrl.login);
+router.get('/me', authJwt, ctrl.me);
+
+module.exports = router;
+Y monta el router + protege las rutas existentes en 
+src/app.js
+:
+const authRouter = require('./routes/auth');
+const authJwt = require('./middlewares/authJwt');
+
+app.use('/api', authRouter);                            // /api/login y /api/me
+app.use('/api/personajes', authJwt, personajesRouter);  // protegida
+app.use('/api/habilidades', authJwt, habilidadesRouter);// protegida
+2.5 VerificaciÃ³n con Postman
+POST /api/login con credenciales vÃ¡lidas â†’ 200 con JWT.
+POST /api/login con credenciales incorrectas â†’ 401.
+GET /api/me con header Authorization: Bearer <token> â†’ 200 con datos del usuario.
+GET /api/personajes sin header Authorization â†’ 401.
+Preguntas analÃ­ticas â€” Parte 2
+Â¿QuÃ© sucede si el token es incorrecto o estÃ¡ expirado?
+Â¿QuÃ© diferencias encuentras entre esta autenticaciÃ³n con JWT y un esquema basado en sesiones (cookies + estado en el servidor)?
+Â¿Por quÃ© usamos bcrypt en lugar de comparar la contraseÃ±a directamente con ===?
+Parte 3 â€” Implementar AutorizaciÃ³n por Roles
+3.1 Middleware de roles
+Crea 
+src/middlewares/requireRole.js
+:
+module.exports = (requiredRole) => (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'No autenticado' });
+  }
+  if (req.user.role !== requiredRole) {
