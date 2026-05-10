@@ -9,7 +9,7 @@ function nombreRule() {
     .notEmpty()
     .withMessage('El nombre es obligatorio')
     .isLength({ max: 160 })
-    .withMessage('El nombre no puede superar 160 caracteres');
+    .withMessage('El nombre no puede superar 160 characteres');
 }
 
 function categoriaRule() {

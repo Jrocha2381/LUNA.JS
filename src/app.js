@@ -6,7 +6,6 @@ const requestLogger = require('./middlewares/requestLogger');
 const sanitizeIds = require('./middlewares/sanitizeIds');
 
 const authRouter = require('./routes/auth');
-
 const usuariosRouter = require('./routes/usuarios');
 const categoriasRouter = require('./routes/categorias');
 const productosRouter = require('./routes/productos');
@@ -31,6 +30,7 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 app.use(requestLogger);
+app.use('/api', authRouter);
 app.use(sanitizeIds);
 app.use(express.static(path.join(__dirname, '..')));
 
@@ -43,7 +43,6 @@ app.get('/api/health', async (_req, res, next) => {
   }
 });
 
-app.use('/api', authRouter); // /api/login y /api/me
 app.use('/api/usuarios', usuariosRouter);
 app.use('/api/categorias', categoriasRouter);
 app.use('/api/productos', productosRouter);

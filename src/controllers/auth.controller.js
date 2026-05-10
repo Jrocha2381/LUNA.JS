@@ -6,48 +6,82 @@ const { Usuario } = require('../../models');
 function getJwtSecret() {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
-    const err = new Error('JWT_SECRET no está configurado');
+    const err = new Error('JWT_SECRET no esta configurado');
     err.status = 500;
     throw err;
   }
   return secret;
 }
 
-exports.login = async (req, res, next) => {
+function validateLoginBody(body) {
+  const username = typeof body.username === 'string' ? body.username.trim() : '';
+  const password = typeof body.password === 'string' ? body.password : '';
+
+  if (!username || !password) {
+    return {
+      error: 'username y password son requeridos'
+    };
+  }
+
+  return { username, password };
+}
+
+async function login(req, res, next) {
   try {
-    const { username, password } = req.body || {};
-    if (!username || !password) {
-      return res.status(400).json({ error: 'username y password son requeridos' });
+    const { username, password, error } = validateLoginBody(req.body || {});
+
+    if (error) {
+      return res.status(400).json({ error });
     }
 
-    const user = await Usuario.findOne({ where: { username } });
-    if (!user) {
-      return res.status(401).json({ error: 'Credenciales inválidas' });
+    const usuario = await Usuario.findOne({
+      where: { username }
+    });
+
+    if (!usuario) {
+      return res.status(401).json({ error: 'Credenciales invalidas' });
     }
 
-    const valid = await user.verifyPassword(password);
-    if (!valid) {
-      return res.status(401).json({ error: 'Credenciales inválidas' });
+    const passwordValida = await usuario.verifyPassword(password);
+
+    if (!passwordValida) {
+      return res.status(401).json({ error: 'Credenciales invalidas' });
     }
 
     const token = jwt.sign(
-      { sub: user.id, username: user.username, role: user.role },
+      {
+        id: usuario.id,
+        sub: usuario.id,
+        username: usuario.username,
+        role: usuario.role
+      },
       getJwtSecret(),
-      { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
+      {
+        expiresIn: process.env.JWT_EXPIRES_IN || '1h'
+      }
     );
 
     return res.json({
       token,
       token_type: 'bearer',
-      user: { id: user.id, username: user.username, role: user.role }
+      user: {
+        id: usuario.id,
+        username: usuario.username,
+        role: usuario.role
+      }
     });
   } catch (err) {
     next(err);
   }
-};
+}
 
-exports.me = async (req, res) => {
-  // req.user fue inyectado por el middleware authJwt
-  res.json(req.user);
-};
+function me(req, res) {
+  return res.json({
+    user: req.user
+  });
+}
 
+module.exports = {
+  login,
+  me
+};

@@ -7,6 +7,39 @@ module.exports = {
   async up(queryInterface) {
     const now = new Date();
 
+    const adminPassword = await bcrypt.hash('admin123', 10);
+    const cajeroPassword = await bcrypt.hash('cajero123', 10);
+
+    await queryInterface.sequelize.query(
+      `UPDATE usuarios
+       SET password = :password,
+           role = 'ADMIN',
+           rol = 'admin',
+           updatedAt = :updatedAt
+       WHERE username = 'admin@pos.local' OR correo = 'admin@pos.local';`,
+      {
+        replacements: {
+          password: adminPassword,
+          updatedAt: now
+        }
+      }
+    );
+
+    await queryInterface.sequelize.query(
+      `UPDATE usuarios
+       SET password = :password,
+           role = 'USER',
+           rol = 'cajero',
+           updatedAt = :updatedAt
+       WHERE username = 'cajero1@pos.local' OR correo = 'cajero1@pos.local';`,
+      {
+        replacements: {
+          password: cajeroPassword,
+          updatedAt: now
+        }
+      }
+    );
+
     const [rows] = await queryInterface.sequelize.query(
       "SELECT correo, username FROM usuarios WHERE correo IN ('admin@pos.local','cajero1@pos.local') OR username IN ('admin@pos.local','cajero1@pos.local');"
     );
@@ -21,7 +54,7 @@ module.exports = {
         correo: 'admin@pos.local',
         rol: 'admin',
         username: 'admin@pos.local',
-        password: await bcrypt.hash('admin123', 10),
+        password: adminPassword,
         role: 'ADMIN',
         createdAt: now,
         updatedAt: now
@@ -34,7 +67,7 @@ module.exports = {
         correo: 'cajero1@pos.local',
         rol: 'cajero',
         username: 'cajero1@pos.local',
-        password: await bcrypt.hash('cajero123', 10),
+        password: cajeroPassword,
         role: 'USER',
         createdAt: now,
         updatedAt: now
