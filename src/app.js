@@ -46,6 +46,13 @@ app.get('/api/health', async (_req, res, next) => {
   }
 });
 
+app.get('/authors', (_req, res) => {
+  res.json([
+    { nombre: 'Jeronimo Rubio', codigo: '0000001' },
+    { nombre: 'Compañero', codigo: '0000002' }
+  ]);
+});
+
 app.use('/api/users', authJwt, requireRole('ADMIN'), usuariosRouter);
 app.use('/api/usuarios', usuariosRouter);
 app.use('/api/categorias', categoriasRouter);
