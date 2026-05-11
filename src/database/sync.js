@@ -3,6 +3,10 @@
 const { sequelize } = require('../../models');
 
 async function syncDatabase() {
+  if (process.env.NODE_ENV === 'production' && process.env.DB_AUTO_SYNC == null) {
+    return;
+  }
+
   if (process.env.DB_AUTO_SYNC === 'false') {
     return;
   }
