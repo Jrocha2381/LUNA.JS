@@ -5,6 +5,8 @@ const express = require('express');
 const { sequelize } = require('../models');
 const requestLogger = require('./middlewares/requestLogger');
 const sanitizeIds = require('./middlewares/sanitizeIds');
+const authJwt = require('./middlewares/authJwt');
+const requireRole = require('./middlewares/requireRole');
 
 const authRouter = require('./routes/auth');
 const usuariosRouter = require('./routes/usuarios');
@@ -44,6 +46,7 @@ app.get('/api/health', async (_req, res, next) => {
   }
 });
 
+app.use('/api/users', authJwt, requireRole('ADMIN'), usuariosRouter);
 app.use('/api/usuarios', usuariosRouter);
 app.use('/api/categorias', categoriasRouter);
 app.use('/api/productos', productosRouter);
