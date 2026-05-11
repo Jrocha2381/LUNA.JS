@@ -69,12 +69,20 @@
       }
 
       const url = `${config.baseUrl}${config.apiPrefix}${endpoint}`;
+      const token =
+        (typeof sessionStorage !== "undefined" && sessionStorage.getItem("token")) ||
+        (typeof localStorage !== "undefined" && localStorage.getItem("token")) ||
+        null;
       const options = {
         method,
         headers: {
           "Content-Type": "application/json"
         }
       };
+
+      if (token) {
+        options.headers.Authorization = `Bearer ${token}`;
+      }
 
       if (data) {
         options.body = JSON.stringify(data);

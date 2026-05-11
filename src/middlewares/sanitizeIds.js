@@ -19,8 +19,9 @@ function sanitizeValue(value) {
 
   const plainValue = typeof value.toJSON === 'function' ? value.toJSON() : value;
 
+  // Ej: Date#toJSON() devuelve string ISO. En ese caso, no debemos perder el valor.
   if (!plainValue || typeof plainValue !== 'object') {
-    return false;
+    return plainValue;
   }
 
   return Object.entries(plainValue).reduce((sanitized, [key, entry]) => {

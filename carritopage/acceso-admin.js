@@ -4,65 +4,79 @@
   window.top.location.href = window.location.href;
 }
 
-const ADMIN_SESSION_KEY = "luna_admin_session";
-const ADMIN_USER = "admin";
-const ADMIN_PASS = "luna123";
+const AUTH_TOKEN_KEY = "token";
 
-function obtenerSesionAdmin() {
+function getToken() {
   try {
-    return JSON.parse(localStorage.getItem(ADMIN_SESSION_KEY) || "null");
-  } catch (error) {
+    return (
+      (typeof sessionStorage !== "undefined" && sessionStorage.getItem(AUTH_TOKEN_KEY)) ||
+      (typeof localStorage !== "undefined" && localStorage.getItem(AUTH_TOKEN_KEY)) ||
+      null
+    );
+  } catch (_error) {
     return null;
   }
 }
 
-function guardarSesionAdmin(usuario) {
-  const payload = {
-    autenticado: true,
-    usuario,
-    fecha: new Date().toISOString()
-  };
-  localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(payload));
+function setToken(token) {
+  try {
+    if (typeof sessionStorage !== "undefined") sessionStorage.setItem(AUTH_TOKEN_KEY, token);
+    if (typeof localStorage !== "undefined") localStorage.setItem(AUTH_TOKEN_KEY, token);
+  } catch (_error) {
+    // ignore
+  }
 }
 
-function cerrarSesionAdmin() {
-  localStorage.removeItem(ADMIN_SESSION_KEY);
+function clearToken() {
+  try {
+    if (typeof sessionStorage !== "undefined") sessionStorage.removeItem(AUTH_TOKEN_KEY);
+    if (typeof localStorage !== "undefined") localStorage.removeItem(AUTH_TOKEN_KEY);
+  } catch (_error) {
+    // ignore
+  }
 }
 
 function sesionEsValida() {
-  const sesion = obtenerSesionAdmin();
-  return Boolean(sesion && sesion.autenticado === true);
+  return Boolean(getToken());
 }
 
 window.sesionAdminActiva = sesionEsValida;
-window.cerrarSesionAdmin = cerrarSesionAdmin;
+window.cerrarSesionAdmin = clearToken;
 
 document.addEventListener("DOMContentLoaded", () => {
-  const loginContainer = document.getElementById("login-container");
   const dashboardContainer = document.getElementById("dashboard-container");
-  const loginForm = document.getElementById("login-form");
-  const errorLabel = document.getElementById("login-error");
   const btnCerrarSesion = document.getElementById("btn-cerrar-sesion");
   const adminFrame = document.getElementById("admin-frame");
   const navItems = document.querySelectorAll(".nav-item");
   const viewTitle = document.getElementById("view-title");
+  const displayUser = document.getElementById("display-user");
+  const userAvatar = document.querySelector(".user-avatar");
 
-  const mostrarVista = (autenticado) => {
-    if (!loginContainer || !dashboardContainer) return;
+  if (!sesionEsValida()) {
+    window.top.location.href = "../index.html";
+    return;
+  }
 
-    if (autenticado) {
-      loginContainer.classList.add("oculto");
-      dashboardContainer.classList.remove("oculto");
-      document.body.classList.add("admin-mode");
+  if (dashboardContainer) dashboardContainer.classList.remove("oculto");
+  document.body.classList.add("admin-mode");
 
-      // Cargamos el contenido del iframe SOLO cuando el usuario está autenticado
-      if (adminFrame && !adminFrame.src) {
-        adminFrame.src = "admin.html";
-      }
-    } else {
-      loginContainer.classList.remove("oculto");
-      dashboardContainer.classList.add("oculto");
-      document.body.classList.remove("admin-mode");
+  // Cargamos el contenido del iframe SOLO cuando el usuario está autenticado
+  if (adminFrame && !adminFrame.src) {
+    adminFrame.src = "admin.html";
+  }
+
+  const actualizarUsuario = async () => {
+    if (!sesionEsValida() || !window.Backend || typeof window.Backend.get !== "function") return;
+    try {
+      const me = await window.Backend.get("me");
+      const user = me && me.user ? me.user : null;
+      const name = (user && (user.username || user.correo)) || "Usuario";
+      if (displayUser) displayUser.textContent = name;
+      if (userAvatar) userAvatar.textContent = String(name).trim().charAt(0).toUpperCase() || "U";
+    } catch (_err) {
+      // si el token expiró o es inválido, forzamos re-login
+      clearToken();
+      window.top.location.href = "../index.html";
     }
   };
 
@@ -95,32 +109,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  mostrarVista(sesionEsValida());
-
-  if (loginForm) {
-    loginForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const usuario = loginForm.usuario.value.trim();
-      const contrasena = loginForm.contrasena.value;
-
-      if (usuario === ADMIN_USER && contrasena === ADMIN_PASS) {
-        guardarSesionAdmin(usuario);
-        loginForm.reset();
-        if (errorLabel) errorLabel.textContent = "";
-        mostrarVista(true);
-        return;
-      }
-
-      if (errorLabel) {
-        errorLabel.textContent = "Usuario o contrasena incorrectos.";
-      }
-    });
-  }
+  actualizarUsuario();
 
   if (btnCerrarSesion) {
     btnCerrarSesion.addEventListener("click", () => {
-      cerrarSesionAdmin();
-      mostrarVista(false);
+      clearToken();
+      window.top.location.href = "../index.html";
     });
   }
 });

@@ -30,6 +30,18 @@
     return `${state.baseUrl}${state.apiPrefix}/${r}`;
   }
 
+  function getStoredToken() {
+    try {
+      return (
+        (typeof window.sessionStorage !== "undefined" && window.sessionStorage.getItem("token")) ||
+        (typeof window.localStorage !== "undefined" && window.localStorage.getItem("token")) ||
+        null
+      );
+    } catch (_err) {
+      return null;
+    }
+  }
+
   async function request(method, route, data) {
     if (!state.enabled) {
       throw new Error("Backend deshabilitado. Configura window.Backend.configure({ enabled:true }).");
@@ -39,6 +51,11 @@
       method,
       headers: { "Content-Type": "application/json" }
     };
+
+    const token = getStoredToken();
+    if (token) {
+      options.headers.Authorization = `Bearer ${token}`;
+    }
 
     if (data !== undefined) {
       options.body = JSON.stringify(data);

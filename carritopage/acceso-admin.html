@@ -42,34 +42,6 @@
     </style>
   </head>
   <body>
-    <!-- Contenedor de Login (Centrado) -->
-    <main class="acceso-wrapper" id="login-container">
-      <section class="acceso-card" id="login-card" style="margin: 100px auto;">
-        <p class="eyebrow">Papel y Luna</p>
-        <h1>Acceso de cuenta</h1>
-        <p class="descripcion">Ingresa con usuario y contrasena para abrir el menu administrativo.</p>
-
-        <form id="login-form" class="login-form" autocomplete="off">
-          <label>
-            Usuario
-            <input id="usuario" name="usuario" type="text" required />
-          </label>
-          <label>
-            Contrasena
-            <input id="contrasena" name="contrasena" type="password" required />
-          </label>
-          <button type="submit" class="btn-primario">Entrar</button>
-          <p id="login-error" class="mensaje-error"></p>
-        </form>
-
-        <p class="credenciales">Demo: usuario <strong>admin</strong> y contrasena <strong>luna123</strong>.</p>
-
-        <div style="margin-top: 25px; text-align: center; border-top: 1px solid #f0f0f0; padding-top: 20px;">
-          <a href="../index.html" style="color: #8a9b2f; text-decoration: none; font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;">← Volver a la tienda principal</a>
-        </div>
-      </section>
-    </main>
-
     <!-- Nuevo Dashboard (Sidebar + Content) -->
     <div id="dashboard-container" class="oculto" style="width: 100%; display: flex; height: 100vh;">
       <aside class="sidebar">
@@ -124,6 +96,7 @@
       </main>
     </div>
 
+    <script src="../js/backend.js"></script>
     <script src="acceso-admin.js"></script>
   </body>
 </html>

@@ -16,57 +16,123 @@
         <div class="header__logo">
           <h1>Papel y Luna</h1>
         </div>
-
-        <div class="header__icons">
-          <a
-            class="icon-link carro"
-            href="carritopage/carrito.html"
-            title="Ver carrito"
-          >
-            <span class="icon-emoji">🛒</span>
-            <span class="icon-label">Carrito</span>
-            <span class="icon-badge" id="badge-carrito" style="display: none"
-              >0</span
-            >
-          </a>
-
-          <a
-            class="icon-link usuario"
-            href="carritopage/acceso-admin.html"
-            title="Acceso administrativo"
-          >
-            <span class="icon-emoji">👤</span>
-            <span class="icon-label">Cuenta</span>
-          </a>
-        </div>
       </div>
     </header>
 
-    <!-- ================= REDIRECCIÓN ================= -->
-    <script>
-      // Redireccionar a la página principal de administración
-      // El usuario solo verá Carrito y Cuenta en el header
-      document.addEventListener("DOMContentLoaded", () => {
-        // Puedes agregar lógica aquí si es necesaria
-      });
-    </script>
+    <main style="max-width: 520px; margin: 80px auto; padding: 0 16px">
+      <section
+        style="
+          background: #fff;
+          border: 1px solid #e5e7eb;
+          border-radius: 12px;
+          padding: 24px;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+        "
+      >
+        <h2 style="margin: 0 0 8px">Iniciar sesión</h2>
+        <p style="margin: 0 0 16px; color: #6b7280">
+          Ingresa para abrir la sección de cuenta (panel administrativo).
+        </p>
 
-    <script src="js/backend.js"></script>
-    <script src="js/data.js"></script>
-    <script src="js/ventas.js"></script>
-    <script src="carritopage/carrito.js"></script>
-    <script src="js/catalogo.js"></script>
-    <script src="js/edicion-flujo.js"></script>
-    <script src="js/buscador.js"></script>
+        <form id="login-form">
+          <label style="display: block; margin-top: 10px">
+            Usuario
+            <input
+              id="username"
+              type="text"
+              autocomplete="username"
+              placeholder="admin@pos.local"
+              required
+              style="
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #d1d5db;
+                border-radius: 8px;
+                margin-top: 6px;
+              "
+            />
+          </label>
+          <label style="display: block; margin-top: 10px">
+            Contraseña
+            <input
+              id="password"
+              type="password"
+              autocomplete="current-password"
+              placeholder="admin123"
+              required
+              style="
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #d1d5db;
+                border-radius: 8px;
+                margin-top: 6px;
+              "
+            />
+          </label>
+
+          <button
+            type="submit"
+            style="
+              margin-top: 14px;
+              width: 100%;
+              padding: 10px;
+              border: none;
+              border-radius: 8px;
+              background: #8a9b2f;
+              color: #fff;
+              font-weight: 700;
+              cursor: pointer;
+            "
+          >
+            Entrar
+          </button>
+          <p id="login-error" style="margin: 10px 0 0; color: #b91c1c"></p>
+        </form>
+      </section>
+    </main>
+
     <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        if (window.activarBuscadorHeader) window.activarBuscadorHeader();
-        // (POS modo simple) Se oculta el acceso a catálogo/inicio para dejar solo Cuenta y Carrito.
-        const btnVerProductos = document.getElementById("btn-ver-productos");
-        const seccionProductos = document.getElementById("seccion-productos-inicio");
-        if (btnVerProductos) btnVerProductos.style.display = "none";
-        if (seccionProductos) seccionProductos.style.display = "none";
-      });
+      const TOKEN_KEY = "token";
+      function baseUrl() {
+        return window.location.protocol === "file:"
+          ? "http://localhost:3000"
+          : window.location.origin;
+      }
+
+      document
+        .getElementById("login-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const error = document.getElementById("login-error");
+          error.textContent = "";
+
+          const username = document.getElementById("username").value.trim();
+          const password = document.getElementById("password").value;
+
+          try {
+            const res = await fetch(`${baseUrl()}/api/login`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ username, password }),
+            });
+
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+              throw new Error(data.error || "Credenciales inválidas");
+            }
+
+            if (!data.token) {
+              throw new Error("Login inválido: no se recibió token");
+            }
+
+            sessionStorage.setItem(TOKEN_KEY, data.token);
+            localStorage.setItem(TOKEN_KEY, data.token);
+            window.location.href = "carritopage/acceso-admin.html";
+          } catch (err) {
+            error.textContent = err.message || "No fue posible iniciar sesión";
+          }
+        });
     </script>
   </body>
 </html>

@@ -46,8 +46,10 @@ app.get('/api/health', async (_req, res, next) => {
   }
 });
 
-app.use('/api/users', authJwt, requireRole('ADMIN'), usuariosRouter);
-app.use('/api/usuarios', usuariosRouter);
+// Protege todas las rutas /api (excepto authRouter y health definidos arriba)
+app.use('/api', authJwt);
+
+app.use(['/api/users', '/api/usuarios'], requireRole('ADMIN'), usuariosRouter);
 app.use('/api/categorias', categoriasRouter);
 app.use('/api/productos', productosRouter);
 app.use('/api/clientes', clientesRouter);
