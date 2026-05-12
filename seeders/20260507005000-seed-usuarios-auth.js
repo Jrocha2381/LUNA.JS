@@ -12,11 +12,11 @@ module.exports = {
 
     await queryInterface.sequelize.query(
       `UPDATE usuarios
-       SET "password" = :password,
-           "role" = 'ADMIN',
-           "rol" = 'admin',
-           "updatedAt" = :updatedAt
-       WHERE "username" = 'admin@pos.local' OR "correo" = 'admin@pos.local';`,
+       SET password = :password,
+           role = 'ADMIN',
+           rol = 'admin',
+           updatedAt = :updatedAt
+       WHERE username = 'admin@pos.local' OR correo = 'admin@pos.local';`,
       {
         replacements: {
           password: adminPassword,
@@ -27,11 +27,11 @@ module.exports = {
 
     await queryInterface.sequelize.query(
       `UPDATE usuarios
-       SET "password" = :password,
-           "role" = 'USER',
-           "rol" = 'cajero',
-           "updatedAt" = :updatedAt
-       WHERE "username" = 'cajero1@pos.local' OR "correo" = 'cajero1@pos.local';`,
+       SET password = :password,
+           role = 'USER',
+           rol = 'cajero',
+           updatedAt = :updatedAt
+       WHERE username = 'cajero1@pos.local' OR correo = 'cajero1@pos.local';`,
       {
         replacements: {
           password: cajeroPassword,
@@ -41,10 +41,7 @@ module.exports = {
     );
 
     const [rows] = await queryInterface.sequelize.query(
-      `SELECT "correo", "username"
-       FROM usuarios
-       WHERE "correo" IN ('admin@pos.local','cajero1@pos.local')
-          OR "username" IN ('admin@pos.local','cajero1@pos.local');`
+      "SELECT correo, username FROM usuarios WHERE correo IN ('admin@pos.local','cajero1@pos.local') OR username IN ('admin@pos.local','cajero1@pos.local');"
     );
     const existentesCorreo = new Set(rows.map(r => r.correo).filter(Boolean));
     const existentesUsername = new Set(rows.map(r => r.username).filter(Boolean));
