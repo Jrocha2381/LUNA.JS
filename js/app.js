@@ -15,7 +15,7 @@ const app = {
    */
   async init() {
     console.log("🚀 Inicializando POS...");
-    
+
     // Configurar API Service
     APIService.configure({
       enabled: false, // Usar mock data en desarrollo
@@ -171,7 +171,7 @@ const app = {
   updateCartDisplay() {
     const sale = SalesManager.getCurrentSale();
     const container = document.getElementById("cart-container");
-    
+
     if (!container) return;
 
     if (sale.items.length === 0) {
@@ -307,7 +307,7 @@ const app = {
         </thead>
         <tbody>
           ${openSales
-            .map(sale => `
+        .map(sale => `
               <tr>
                 <td>${new Date(sale.createdAt).toLocaleString()}</td>
                 <td>${sale.items.length}</td>
@@ -322,7 +322,7 @@ const app = {
                 </td>
               </tr>
             `)
-            .join("")}
+        .join("")}
         </tbody>
       </table>
     `;
@@ -442,7 +442,7 @@ const app = {
         </thead>
         <tbody>
           ${categories
-            .map(cat => `
+        .map(cat => `
               <tr>
                 <td>${cat.name || ""}</td>
                 <td>${cat.description || ""}</td>
@@ -453,7 +453,7 @@ const app = {
                 </td>
               </tr>
             `)
-            .join("")}
+        .join("")}
         </tbody>
       </table>
     `;
@@ -476,8 +476,7 @@ const app = {
     try {
       await APIService.createCategory({ name, description });
       document.getElementById("category-form").reset();
-      this.loadCategories();
-      this.populateCategorySelect(); // ✨ Actualizar selector de categorías
+      await this.loadCategories();
       this.showAlert("Categoría creada exitosamente", "success");
     } catch (error) {
       this.showAlert("Error creando categoría: " + error.message, "error");
@@ -573,8 +572,7 @@ const app = {
     try {
       await APIService.createSupplier({ name, contact, phone, email });
       document.getElementById("supplier-form").reset();
-      this.loadSuppliers();
-      this.populateSupplierSelect(); // ✨ Actualizar selector de proveedores
+      await this.loadSuppliers();
       this.showAlert("Proveedor creado exitosamente", "success");
     } catch (error) {
       this.showAlert("Error creando proveedor: " + error.message, "error");

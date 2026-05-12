@@ -1011,32 +1011,42 @@ function activarEventosAdmin() {
 
   formulario.addEventListener("submit", async (event) => {
     event.preventDefault();
+    const btnGuardar = document.getElementById("producto-submit");
     let payload;
     try {
+      if (btnGuardar) {
+        btnGuardar.disabled = true;
+        btnGuardar.textContent = productoEnEdicionId ? "Guardando..." : "Creando...";
+      }
       payload = await leerPayloadFormulario(formulario);
+
+      const respuesta = await (productoEnEdicionId
+        ? actualizarProducto(productoEnEdicionId, payload)
+        : crearProducto(payload));
+
+      if (!respuesta.ok) {
+        mostrarToast("error", "No se pudo guardar", respuesta.errores.join(" "));
+        return;
+      }
+
+      mostrarToast(
+        "success",
+        productoEnEdicionId ? "Producto actualizado" : "Producto creado",
+        "Los cambios se guardaron en SQLite."
+      );
+
+      limpiarFormularioAdmin();
+      renderAdminProductos();
+      renderCarrito();
     } catch (error) {
-      mostrarToast("error", "Imagen invalida", "No se pudo procesar la imagen seleccionada.");
-      return;
+      console.error("Error guardando producto:", error);
+      mostrarToast("error", "No se pudo guardar", error.message || "Revisa que el backend este encendido.");
+    } finally {
+      if (btnGuardar) {
+        btnGuardar.disabled = false;
+        btnGuardar.textContent = productoEnEdicionId ? "Guardar cambios" : "Guardar producto";
+      }
     }
-
-    const respuesta = await (productoEnEdicionId
-      ? actualizarProducto(productoEnEdicionId, payload)
-      : crearProducto(payload));
-
-    if (!respuesta.ok) {
-      mostrarToast("error", "Validacion", respuesta.errores.join(" "));
-      return;
-    }
-
-    mostrarToast(
-      "success",
-      productoEnEdicionId ? "Producto actualizado" : "Producto creado",
-      "Los cambios se guardaron en SQLite."
-    );
-
-    limpiarFormularioAdmin();
-    renderAdminProductos();
-    renderCarrito();
   });
 
   formulario.seguimientoInventario.addEventListener("change", (event) => {

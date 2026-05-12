@@ -127,40 +127,66 @@ function validarProducto(input) {
 }
 
 async function crearProducto(input) {
-  const errores = validarProducto(input);
-  if (errores.length) return { ok: false, errores };
-  if (!backendDisponibleProductos()) {
-    return { ok: false, errores: ["El backend no esta disponible para crear productos."] };
-  }
+  try {
+    const errores = validarProducto(input);
+    if (errores.length) return { ok: false, errores };
+    if (!backendDisponibleProductos()) {
+      return { ok: false, errores: ["El backend no esta disponible para crear productos."] };
+    }
 
-  const creado = await window.Backend.post("productos", serializarProductoParaDb(input));
-  const lista = await window.Backend.get("productos");
-  guardarProductos(lista);
-  return { ok: true, producto: normalizarProducto(creado), productos };
+    const creado = await window.Backend.post("productos", serializarProductoParaDb(input));
+    const lista = await window.Backend.get("productos");
+    guardarProductos(lista);
+    return { ok: true, producto: normalizarProducto(creado), productos };
+  } catch (error) {
+    console.error("Error creando producto:", error);
+    return { ok: false, errores: [mensajeErrorBackend(error, "No se pudo crear el producto.")] };
+  }
 }
 
 async function actualizarProducto(id, cambios) {
-  const errores = validarProducto(cambios);
-  if (errores.length) return { ok: false, errores };
-  if (!backendDisponibleProductos()) {
-    return { ok: false, errores: ["El backend no esta disponible para actualizar productos."] };
-  }
+  try {
+    const errores = validarProducto(cambios);
+    if (errores.length) return { ok: false, errores };
+    if (!backendDisponibleProductos()) {
+      return { ok: false, errores: ["El backend no esta disponible para actualizar productos."] };
+    }
 
-  const actualizado = await window.Backend.put(`productos/${id}`, serializarProductoParaDb(cambios));
-  const lista = await window.Backend.get("productos");
-  guardarProductos(lista);
-  return { ok: true, producto: normalizarProducto(actualizado), productos };
+    const actualizado = await window.Backend.put(`productos/${id}`, serializarProductoParaDb(cambios));
+    const lista = await window.Backend.get("productos");
+    guardarProductos(lista);
+    return { ok: true, producto: normalizarProducto(actualizado), productos };
+  } catch (error) {
+    console.error("Error actualizando producto:", error);
+    return { ok: false, errores: [mensajeErrorBackend(error, "No se pudo actualizar el producto.")] };
+  }
 }
 
 async function eliminarProducto(id) {
-  if (!backendDisponibleProductos()) {
-    return { ok: false, errores: ["El backend no esta disponible para eliminar productos."] };
-  }
+  try {
+    if (!backendDisponibleProductos()) {
+      return { ok: false, errores: ["El backend no esta disponible para eliminar productos."] };
+    }
 
-  await window.Backend.delete(`productos/${id}`);
-  const lista = await window.Backend.get("productos");
-  guardarProductos(lista);
-  return { ok: true, productos };
+    await window.Backend.delete(`productos/${id}`);
+    const lista = await window.Backend.get("productos");
+    guardarProductos(lista);
+    return { ok: true, productos };
+  } catch (error) {
+    console.error("Error eliminando producto:", error);
+    return { ok: false, errores: [mensajeErrorBackend(error, "No se pudo eliminar el producto.")] };
+  }
+}
+
+function mensajeErrorBackend(error, fallback) {
+  const payload = error && error.payload;
+  if (payload && Array.isArray(payload.errors) && payload.errors.length) {
+    return payload.errors.map((item) => item.msg || item.message || String(item)).join(" ");
+  }
+  if (payload && payload.error) return String(payload.error);
+  if (payload && payload.message) return String(payload.message);
+  if (error && error.message) return String(error.message);
+  return fallback;
 }
 
 async function inactivarProducto(id) {

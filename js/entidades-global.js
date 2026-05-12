@@ -60,6 +60,17 @@
     window.dispatchEvent(new CustomEvent(`${tipo}Actualizados`, { detail: lista }));
   }
 
+  function mensajeErrorBackend(error, fallback) {
+    const payload = error && error.payload;
+    if (payload && Array.isArray(payload.errors) && payload.errors.length) {
+      return payload.errors.map((item) => item.msg || item.message || String(item)).join(" ");
+    }
+    if (payload && payload.error) return String(payload.error);
+    if (payload && payload.message) return String(payload.message);
+    if (error && error.message) return String(error.message);
+    return fallback;
+  }
+
   const Entidades = {
     obtener(tipo) {
       const config = ENTIDADES_CONFIG[tipo];
@@ -86,40 +97,50 @@
       const config = ENTIDADES_CONFIG[tipo];
       if (!config) return null;
 
-      const payload = normalizarRegistro(tipo, data);
-      delete payload.id;
+      try {
+        const payload = normalizarRegistro(tipo, data);
+        delete payload.id;
 
-      if (backendHabilitado()) {
-        const creado = await window.Backend.post(config.route, payload);
-        const lista = await this.sincronizar(tipo);
-        return lista.find((item) => String(item.id) === String(creado.id)) || normalizarRegistro(tipo, creado);
+        if (backendHabilitado()) {
+          const creado = await window.Backend.post(config.route, payload);
+          const lista = await this.sincronizar(tipo);
+          return lista.find((item) => String(item.id) === String(creado.id)) || normalizarRegistro(tipo, creado);
+        }
+
+        const lista = this.obtener(tipo);
+        const nuevo = { ...payload, id: Date.now() };
+        lista.push(nuevo);
+        guardarLocal(tipo, lista);
+        return nuevo;
+      } catch (error) {
+        console.error(`Error creando ${tipo}:`, error);
+        throw new Error(mensajeErrorBackend(error, `No se pudo crear ${tipo}.`));
       }
-
-      const lista = this.obtener(tipo);
-      const nuevo = { ...payload, id: Date.now() };
-      lista.push(nuevo);
-      guardarLocal(tipo, lista);
-      return nuevo;
     },
 
     async actualizar(tipo, id, cambios) {
       const config = ENTIDADES_CONFIG[tipo];
       if (!config) return null;
 
-      const payload = normalizarRegistro(tipo, { ...cambios, id });
+      try {
+        const payload = normalizarRegistro(tipo, { ...cambios, id });
 
-      if (backendHabilitado()) {
-        const actualizado = await window.Backend.put(`${config.route}/${id}`, payload);
-        await this.sincronizar(tipo);
-        return normalizarRegistro(tipo, actualizado);
+        if (backendHabilitado()) {
+          const actualizado = await window.Backend.put(`${config.route}/${id}`, payload);
+          await this.sincronizar(tipo);
+          return normalizarRegistro(tipo, actualizado);
+        }
+
+        const lista = this.obtener(tipo);
+        const index = lista.findIndex((item) => String(item.id) === String(id));
+        if (index === -1) return null;
+        lista[index] = { ...lista[index], ...payload };
+        guardarLocal(tipo, lista);
+        return lista[index];
+      } catch (error) {
+        console.error(`Error actualizando ${tipo}:`, error);
+        throw new Error(mensajeErrorBackend(error, `No se pudo actualizar ${tipo}.`));
       }
-
-      const lista = this.obtener(tipo);
-      const index = lista.findIndex((item) => String(item.id) === String(id));
-      if (index === -1) return null;
-      lista[index] = { ...lista[index], ...payload };
-      guardarLocal(tipo, lista);
-      return lista[index];
     },
 
     async eliminar(tipo, id) {
