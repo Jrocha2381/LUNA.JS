@@ -111,7 +111,7 @@
 
           try {
             const res = await fetch(
-              `${baseUrl()}/JuanSebastianRocha Rodriguez_JeronimoRubio_Ibrahim Safadi/login`,
+              `${baseUrl()}/Jeronimo Rubio_Sebastian Rocha_Ibrahim Safadi/login`,
               {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -131,7 +131,7 @@
 
             sessionStorage.setItem(TOKEN_KEY, data.token);
             localStorage.setItem(TOKEN_KEY, data.token);
-            window.location.href = "carritopage/acceso-admin.html";
+            window.location.href = "/Jeronimo Rubio_Sebastian Rocha_Ibrahim Safadi";
           } catch (err) {
             error.textContent = err.message || "No fue posible iniciar sesión";
           }

@@ -295,7 +295,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           btnFinalizar.disabled = true;
           await window.registrarCompra(itemsParaComprar, proveedorId);
           notifySuccess("Compra registrada", "La compra fue guardada en SQLite y el stock fue actualizado.");
-          setTimeout(() => window.location.href = "acceso-admin.html", 1500);
+          setTimeout(() => window.location.href = "/Jeronimo Rubio_Sebastian Rocha_Ibrahim Safadi", 1500);
         } catch (error) {
           notifyError(error.message || "No se pudo registrar la compra.");
           btnFinalizar.disabled = false;
@@ -303,7 +303,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     } else if (confirm(mensaje)) {
       await window.registrarCompra(itemsParaComprar, proveedorId);
-      window.location.href = "acceso-admin.html";
+      window.location.href = "/Jeronimo Rubio_Sebastian Rocha_Ibrahim Safadi";
     }
   });
 

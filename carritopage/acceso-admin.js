@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const userAvatar = document.querySelector(".user-avatar");
 
   if (!sesionEsValida()) {
-    window.top.location.href = "../index.html";
+    window.top.location.href = "/index.html";
     return;
   }
 
@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Cargamos el contenido del iframe SOLO cuando el usuario está autenticado
   if (adminFrame && !adminFrame.src) {
-    adminFrame.src = "admin.html";
+    adminFrame.src = "/carritopage/admin.html";
   }
 
   const actualizarUsuario = async () => {
@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (_err) {
       // si el token expiró o es inválido, forzamos re-login
       clearToken();
-      window.top.location.href = "../index.html";
+      window.top.location.href = "/index.html";
     }
   };
 
@@ -114,7 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (btnCerrarSesion) {
     btnCerrarSesion.addEventListener("click", () => {
       clearToken();
-      window.top.location.href = "../index.html";
+      window.top.location.href = "/index.html";
     });
   }
 });

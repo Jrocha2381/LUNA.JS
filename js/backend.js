@@ -2,10 +2,12 @@
 // Cliente HTTP ligero para consumir la API Sequelize/SQLite.
 
 (function () {
+  const DEFAULT_API_PREFIX = "/Jeronimo Rubio_Sebastian Rocha_Ibrahim Safadi";
+
   const state = {
     enabled: false,
     baseUrl: "",
-    apiPrefix: "/JuanSebastianRocha Rodriguez_JeronimoRubio_Ibrahim Safadi"
+    apiPrefix: DEFAULT_API_PREFIX
   };
 
   function normalizarBaseUrl(baseUrl) {
@@ -13,8 +15,8 @@
   }
 
   function normalizarApiPrefix(apiPrefix) {
-    const raw = String(apiPrefix || "/JuanSebastianRocha Rodriguez_JeronimoRubio_Ibrahim Safadi").trim();
-    if (!raw) return "/JuanSebastianRocha Rodriguez_JeronimoRubio_Ibrahim Safadi";
+    const raw = String(apiPrefix || DEFAULT_API_PREFIX).trim();
+    if (!raw) return DEFAULT_API_PREFIX;
     return raw.startsWith("/") ? raw.replace(/\/+$/, "") : `/${raw.replace(/\/+$/, "")}`;
   }
 
@@ -107,14 +109,14 @@
       Backend.configure({
         enabled: true,
         baseUrl: construirBaseUrlAutomatica(),
-        apiPrefix: "/api"
+        apiPrefix: DEFAULT_API_PREFIX
       });
     }
   } catch (_error) {
     Backend.configure({
       enabled: true,
       baseUrl: construirBaseUrlAutomatica(),
-      apiPrefix: "/api"
+      apiPrefix: DEFAULT_API_PREFIX
     });
   }
 
