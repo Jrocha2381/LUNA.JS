@@ -8,12 +8,89 @@ let ventaAEliminar = null;
 let modo = 'historial'; // 'historial' o 'papelera'
 
 // ============================================
+// NORMALIZACIÓN / COMPATIBILIDAD
+// ============================================
+function toNumber(value, fallback = 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function leerArrayLocalStorage(clave) {
+    try {
+        const raw = localStorage.getItem(clave);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (_error) {
+        return [];
+    }
+}
+
+function normalizarArticulosDesdeItems(items) {
+    if (typeof items === 'string') {
+        try {
+            items = JSON.parse(items || '[]');
+        } catch (_error) {
+            items = [];
+        }
+    }
+    if (!Array.isArray(items)) return [];
+    return items.map((item) => ({
+        nombre: item?.nombre || item?.titulo || item?.producto?.nombre || 'Producto',
+        cantidad: toNumber(item?.cantidad, 1),
+        precio: toNumber(item?.precioUnitario ?? item?.precio ?? item?.precioVenta ?? item?.producto?.precioVenta, 0)
+    }));
+}
+
+function normalizarVentaHistorial(venta) {
+    if (!venta || (venta.id === undefined || venta.id === null)) return null;
+
+    const fecha = venta.fecha || venta.createdAt || new Date().toISOString();
+
+    const articulos = Array.isArray(venta.articulos)
+        ? venta.articulos.map((art) => ({
+            nombre: art?.nombre || 'Producto',
+            cantidad: toNumber(art?.cantidad, 1),
+            precio: toNumber(art?.precio, 0)
+        }))
+        : normalizarArticulosDesdeItems(venta.items || venta.itemsJson);
+
+    const totalCalculado = articulos.reduce((sum, art) => sum + (toNumber(art.precio) * toNumber(art.cantidad)), 0);
+
+    return {
+        ...venta,
+        id: venta.id,
+        fecha,
+        metodoPago: venta.metodoPago || venta.metodo || venta.paymentMethod || '',
+        articulos,
+        total: Number.isFinite(Number(venta.total)) ? Number(venta.total) : totalCalculado
+    };
+}
+
+function deduplicarVentasPorId(ventas) {
+    const map = new Map();
+    for (const venta of ventas) {
+        if (!venta) continue;
+        map.set(String(venta.id), venta);
+    }
+    return Array.from(map.values());
+}
+
+// ============================================
 // CARGAR DATOS
 // ============================================
 function cargarVentas() {
     try {
-        const datosGuardados = localStorage.getItem('ventasCompletadas');
-        ventasActuales = datosGuardados ? JSON.parse(datosGuardados) : [];
+        // Fuente principal: `ventas` (usada por factura.js / registrarVenta)
+        // Compatibilidad: `ventasCompletadas` e `historialVentas` (versiones previas)
+        const ventas = leerArrayLocalStorage('ventas');
+        const ventasCompletadas = leerArrayLocalStorage('ventasCompletadas');
+        const historialVentas = leerArrayLocalStorage('historialVentas');
+
+        const combinadas = [...ventas, ...ventasCompletadas, ...historialVentas]
+            .map(normalizarVentaHistorial)
+            .filter(Boolean);
+
+        ventasActuales = deduplicarVentasPorId(combinadas);
         console.log('Ventas cargadas:', ventasActuales.length);
     } catch (error) {
         console.error('Error al cargar ventas:', error);
@@ -33,6 +110,9 @@ function cargarPapelera() {
 }
 
 function guardarDatos() {
+    // Mantener `ventas` como fuente principal para historial + factura.
+    localStorage.setItem('ventas', JSON.stringify(ventasActuales));
+    // Compatibilidad con versiones que leían `ventasCompletadas`.
     localStorage.setItem('ventasCompletadas', JSON.stringify(ventasActuales));
     localStorage.setItem('ventasEliminadas', JSON.stringify(ventasEliminadas));
     console.log('Datos guardados');
@@ -42,7 +122,7 @@ function guardarDatos() {
 // CREAR TARJETAS
 // ============================================
 function crearTarjetaVenta(venta, esVentaEliminada = false) {
-    const fechaFormato = new Date(venta.fecha).toLocaleDateString('es-ES', {
+    const fechaFormato = new Date(normalizada.fecha).toLocaleDateString('es-ES', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
@@ -50,8 +130,11 @@ function crearTarjetaVenta(venta, esVentaEliminada = false) {
         minute: '2-digit'
     });
 
-    const total = venta.articulos.reduce((sum, art) => sum + (art.precio * art.cantidad), 0);
-    const cantidadItems = venta.articulos.reduce((sum, art) => sum + art.cantidad, 0);
+    const articulos = Array.isArray(venta.articulos) ? venta.articulos : [];
+    const total = Number.isFinite(Number(venta.total))
+        ? Number(venta.total)
+        : articulos.reduce((sum, art) => sum + (toNumber(art.precio) * toNumber(art.cantidad)), 0);
+    const cantidadItems = articulos.reduce((sum, art) => sum + toNumber(art.cantidad), 0);
 
     const tarjeta = document.createElement('div');
     tarjeta.className = 'tarjeta-venta';
@@ -129,13 +212,17 @@ function filtrarVentas(termino) {
 
     const datosFiltrados = datos.filter(venta => {
         const id = venta.id.toString();
-        const total = venta.articulos.reduce((sum, art) => sum + (art.precio * art.cantidad), 0).toString();
+        const articulos = Array.isArray(venta.articulos) ? venta.articulos : [];
+        const total = (Number.isFinite(Number(venta.total))
+            ? Number(venta.total)
+            : articulos.reduce((sum, art) => sum + (toNumber(art.precio) * toNumber(art.cantidad)), 0)
+        ).toString();
         const metodoPago = (venta.metodoPago || '').toLowerCase();
-        
-        return id.includes(terminoLower) || 
-               total.includes(terminoLower) || 
+
+        return id.includes(terminoLower) ||
+               total.includes(terminoLower) ||
                metodoPago.includes(terminoLower) ||
-               venta.articulos.some(art => art.nombre.toLowerCase().includes(terminoLower));
+               articulos.some(art => String(art?.nombre || '').toLowerCase().includes(terminoLower));
     });
 
     contenedor.innerHTML = '';
@@ -198,6 +285,16 @@ function mostrarDetalles(ventaId) {
         return;
     }
 
+    // Asegurar compatibilidad si entra una venta en formato `{ items: [...] }`
+    const normalizada = normalizarVentaHistorial(venta) || venta;
+    if (normalizada !== venta) {
+        const index = datos.findIndex(v => v && v.id == ventaId);
+        if (index !== -1) datos[index] = normalizada;
+        guardarDatos();
+    }
+
+    const articulos = Array.isArray(normalizada.articulos) ? normalizada.articulos : [];
+
     const fechaFormato = new Date(venta.fecha).toLocaleDateString('es-ES', {
         year: 'numeric',
         month: 'long',
@@ -210,7 +307,7 @@ function mostrarDetalles(ventaId) {
         <h2>Detalles de Venta #${venta.id}</h2>
         <div class="detalles-info">
             <p><strong>Fecha:</strong> ${fechaFormato}</p>
-            <p><strong>Método de pago:</strong> ${venta.metodoPago || 'No especificado'}</p>
+            <p><strong>Método de pago:</strong> ${normalizada.metodoPago || 'No especificado'}</p>
             <p><strong>Estado:</strong> ${modo === 'papelera' ? 'En papelera' : 'Completada'}</p>
         </div>
         <div class="detalles-articulos">
@@ -228,14 +325,14 @@ function mostrarDetalles(ventaId) {
     `;
 
     let totalGeneral = 0;
-    venta.articulos.forEach(articulo => {
-        const subtotal = articulo.precio * articulo.cantidad;
+    articulos.forEach(articulo => {
+        const subtotal = toNumber(articulo.precio) * toNumber(articulo.cantidad);
         totalGeneral += subtotal;
         detallesHTML += `
             <tr>
                 <td>${articulo.nombre}</td>
-                <td>${articulo.cantidad}</td>
-                <td>$${articulo.precio.toFixed(2)}</td>
+                <td>${toNumber(articulo.cantidad, 1)}</td>
+                <td>$${toNumber(articulo.precio, 0).toFixed(2)}</td>
                 <td>$${subtotal.toFixed(2)}</td>
             </tr>
         `;
