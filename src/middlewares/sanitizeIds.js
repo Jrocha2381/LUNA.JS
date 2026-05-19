@@ -5,7 +5,7 @@
 const SENSITIVE_KEYS = new Set(['password', 'clave', 'accessToken', 'refreshToken']);
 
 function isInternalIdKey(key) {
-  return key === 'id' ;
+  return key === '_id';
 }
 
 function sanitizeValue(value) {

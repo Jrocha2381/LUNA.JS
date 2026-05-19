@@ -161,6 +161,7 @@
 
         form.onsubmit = async (e) => {
           e.preventDefault();
+          const btnGuardar = document.getElementById("btn-guardar");
           const data = {
             nombre: document.getElementById("prov-nombre").value.trim(),
             telefono: document.getElementById("prov-telefono").value.trim(),
@@ -172,18 +173,29 @@
             return;
           }
 
-          if (editId) {
-            await Entidades.actualizar("proveedores", editId, data);
-            notify("success", "Proveedor actualizado.");
-          } else {
-            await Entidades.crear("proveedores", data);
-            notify("success", "Proveedor creado.");
-          }
+          try {
+            btnGuardar.disabled = true;
+            btnGuardar.textContent = editId ? "Actualizando..." : "Guardando...";
 
-          resetForm();
-          ocultarForm();
-          render();
-          window.dispatchEvent(new Event("proveedoresActualizados"));
+            if (editId) {
+              await Entidades.actualizar("proveedores", editId, data);
+              notify("success", "Proveedor actualizado.");
+            } else {
+              await Entidades.crear("proveedores", data);
+              notify("success", "Proveedor creado.");
+            }
+
+            resetForm();
+            ocultarForm();
+            render();
+            window.dispatchEvent(new Event("proveedoresActualizados"));
+          } catch (error) {
+            console.error("Error guardando proveedor:", error);
+            notify("error", error.message || "No se pudo guardar el proveedor.");
+          } finally {
+            btnGuardar.disabled = false;
+            btnGuardar.textContent = editId ? "Actualizar Cambios" : "Guardar Proveedor";
+          }
         };
 
         btnCancelar.onclick = () => {
@@ -192,12 +204,18 @@
         };
 
         btnSync.onclick = async () => {
-          btnSync.textContent = "Sincronizando...";
-          btnSync.disabled = true;
-          await Entidades.sincronizar("proveedores");
-          render();
-          btnSync.textContent = "Sincronizar";
-          btnSync.disabled = false;
+          try {
+            btnSync.textContent = "Sincronizando...";
+            btnSync.disabled = true;
+            await Entidades.sincronizar("proveedores");
+            render();
+          } catch (error) {
+            console.error("Error sincronizando proveedores:", error);
+            notify("error", error.message || "No se pudieron sincronizar los proveedores.");
+          } finally {
+            btnSync.textContent = "Sincronizar";
+            btnSync.disabled = false;
+          }
         };
 
         btnNueva.onclick = () => {
