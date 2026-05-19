@@ -14,6 +14,7 @@ function obtenerNombreProducto(item) {
     return item.nombre || item.titulo || item.producto?.nombre || "Producto";
 }
 
+<<<<<<< HEAD
 function crearTarjetaVenta(venta) {
     const ticket = venta.id.toString().slice(-6);
     const totalItems = venta.items.reduce((sum, item) => sum + (item.cantidad || 1), 0);
@@ -25,6 +26,164 @@ function crearTarjetaVenta(venta) {
         .join(", ");
     
     const productosExtra = venta.items.length > 3 ? `... +${venta.items.length - 3} más` : "";
+=======
+function normalizarArticulosDesdeItems(items) {
+    if (typeof items === 'string') {
+        try {
+            items = JSON.parse(items || '[]');
+        } catch (_error) {
+            items = [];
+        }
+    }
+    if (!Array.isArray(items)) return [];
+    return items.map((item) => ({
+        nombre: item?.nombre || item?.titulo || item?.producto?.nombre || 'Producto',
+        cantidad: toNumber(item?.cantidad, 1),
+        precio: toNumber(item?.precioUnitario ?? item?.precio ?? item?.precioVenta ?? item?.producto?.precioVenta, 0)
+    }));
+}
+
+function normalizarVentaHistorial(venta) {
+    if (!venta || (venta.id === undefined || venta.id === null)) return null;
+
+    const fecha = venta.fecha || venta.createdAt || new Date().toISOString();
+
+    const articulos = Array.isArray(venta.articulos)
+        ? venta.articulos.map((art) => ({
+            nombre: art?.nombre || 'Producto',
+            cantidad: toNumber(art?.cantidad, 1),
+            precio: toNumber(art?.precio, 0)
+        }))
+        : normalizarArticulosDesdeItems(venta.items || venta.itemsJson);
+
+    const totalCalculado = articulos.reduce((sum, art) => sum + (toNumber(art.precio) * toNumber(art.cantidad)), 0);
+
+    return {
+        ...venta,
+        id: venta.id,
+        fecha,
+        metodoPago: venta.metodoPago || venta.metodo || venta.paymentMethod || '',
+        articulos,
+        total: Number.isFinite(Number(venta.total)) ? Number(venta.total) : totalCalculado
+    };
+}
+
+function deduplicarVentasPorId(ventas) {
+    const map = new Map();
+    for (const venta of ventas) {
+        if (!venta) continue;
+        map.set(String(venta.id), venta);
+    }
+    return Array.from(map.values());
+}
+
+// ============================================
+// CARGAR DATOS
+// ============================================
+async function cargarVentas() {
+    try {
+        if (!window.Backend || !window.Backend.isEnabled || !window.Backend.isEnabled()) {
+            console.warn('Backend no disponible; no se pueden cargar ventas desde API.');
+            ventasActuales = [];
+            return;
+        }
+
+        const ventas = await window.Backend.get('ventas');
+        const detalles = await window.Backend.get('detalle_ventas');
+
+        const detallesPorVenta = new Map();
+        if (Array.isArray(detalles)) {
+            detalles.forEach(d => {
+                const ventaId = d.ventaId;
+                if (ventaId === undefined || ventaId === null) return;
+                const key = String(ventaId);
+                if (!detallesPorVenta.has(key)) detallesPorVenta.set(key, []);
+                detallesPorVenta.get(key).push(d);
+            });
+        }
+
+        const normalizadas = (Array.isArray(ventas) ? ventas : [])
+            .map((v) => {
+                const articulosDetalles = (detallesPorVenta.get(String(v.id)) || []).map((d) => ({
+                    nombre:
+                        d.nombre ||
+                        d.productoNombre ||
+                        d.producto?.nombre ||
+                        d.nombreProducto ||
+                        'Producto',
+                    cantidad: toNumber(d.cantidad, 1),
+                    precio: toNumber(d.precioUnitario ?? d.precio ?? d.precioVenta, 0)
+                }));
+
+                const totalCalculado = articulosDetalles.reduce((sum, art) => sum + (toNumber(art.precio) * toNumber(art.cantidad)), 0);
+
+                return {
+                    ...v,
+                    id: v.id,
+                    fecha: v.fecha || v.createdAt || new Date().toISOString(),
+                    metodoPago: v.metodoPago || v.metodo || v.paymentMethod || '',
+                    articulos: articulosDetalles,
+                    total: Number.isFinite(Number(v.total)) ? Number(v.total) : totalCalculado,
+                    estado: v.estado || 'activa'
+                };
+            })
+            .filter(Boolean);
+
+        ventasActuales = deduplicarVentasPorId(normalizadas);
+        console.log('Ventas cargadas desde API:', ventasActuales.length);
+    } catch (error) {
+        console.error('Error al cargar ventas desde API:', error);
+        ventasActuales = [];
+    }
+}
+
+
+function cargarPapelera() {
+    try {
+        const datosGuardados = localStorage.getItem('ventasEliminadas');
+        ventasEliminadas = datosGuardados ? JSON.parse(datosGuardados) : [];
+        console.log('Papelera cargada:', ventasEliminadas.length);
+    } catch (error) {
+        console.error('Error al cargar papelera:', error);
+        ventasEliminadas = [];
+    }
+}
+
+function guardarDatos() {
+    // Mantener `ventas` como fuente principal para historial + factura.
+    localStorage.setItem('ventas', JSON.stringify(ventasActuales));
+    // Compatibilidad con versiones que leían `ventasCompletadas`.
+    localStorage.setItem('ventasCompletadas', JSON.stringify(ventasActuales));
+    localStorage.setItem('ventasEliminadas', JSON.stringify(ventasEliminadas));
+    console.log('Datos guardados');
+}
+
+// ============================================
+// CREAR TARJETAS
+// ============================================
+function crearTarjetaVenta(venta, esVentaEliminada = false) {
+    const fechaFormato = new Date(normalizada.fecha).toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
+    const articulos = Array.isArray(venta.articulos) ? venta.articulos : [];
+    const total = Number.isFinite(Number(venta.total))
+        ? Number(venta.total)
+        : articulos.reduce((sum, art) => sum + (toNumber(art.precio) * toNumber(art.cantidad)), 0);
+    const cantidadItems = articulos.reduce((sum, art) => sum + toNumber(art.cantidad), 0);
+
+    const tarjeta = document.createElement('div');
+    tarjeta.className = 'tarjeta-venta';
+    tarjeta.dataset.ventaId = venta.id;
+    tarjeta.dataset.esEliminada = esVentaEliminada;
+
+    const metodoPago = venta.metodoPago || 'No especificado';
+    const estado = esVentaEliminada ? 'En papelera' : 'Completada';
+>>>>>>> sooosou
 
     const tarjeta = document.createElement("div");
     tarjeta.className = "tarjeta-venta";
@@ -287,6 +446,7 @@ function obtenerFiltros() {
     };
 }
 
+<<<<<<< HEAD
 function aplicarFiltrosAvanzados(ventas, filtros) {
     return ventas.filter(venta => {
         // Filtro por rango de fechas
@@ -343,6 +503,56 @@ function mostrarFiltrosActivos(filtros) {
 
 function inicializarHistorial() {
     ventasActuales = obtenerVentas();
+=======
+// ============================================
+// GESTIÓN DE PAPELERA
+// ============================================
+async function enviarAPapelera(ventaId) {
+    try {
+        await window.Backend.put(`ventas/${ventaId}`, { estado: 'papelera' });
+        await cargarVentas();
+        // refrescar modos
+        if (modo === 'historial' || modo === 'papelera') renderizarHistorial();
+    } catch (error) {
+        console.error('Error al enviar a papelera:', error);
+        alert('No se pudo enviar a papelera.');
+    }
+}
+
+async function recuperarDePapelera(ventaId) {
+    try {
+        await window.Backend.put(`ventas/${ventaId}`, { estado: 'activa' });
+        await cargarVentas();
+        if (modo === 'historial' || modo === 'papelera') renderizarHistorial();
+    } catch (error) {
+        console.error('Error al recuperar de papelera:', error);
+        alert('No se pudo recuperar la venta.');
+    }
+}
+
+async function eliminarDefinitivamente(ventaId) {
+    if (!confirm('¿Está seguro de que desea eliminar permanentemente esta venta? Esta acción no se puede deshacer.')) return;
+
+    try {
+        await window.Backend.delete(`ventas/${ventaId}`);
+        await cargarVentas();
+        if (modo === 'historial' || modo === 'papelera') renderizarHistorial();
+    } catch (error) {
+        console.error('Error al eliminar permanentemente:', error);
+        alert('No se pudo eliminar la venta.');
+    }
+}
+
+
+// ============================================
+// CAMBIAR MODO (Historial / Papelera)
+// ============================================
+function cambiarModo(nuevoModo) {
+    modo = nuevoModo;
+    console.log('Modo cambiado a:', modo);
+    renderizarHistorial();
+}
+>>>>>>> sooosou
 
     // Ordenar por defecto de más recientes a más antiguos
     ventasActuales = ordenarVentas(ventasActuales);

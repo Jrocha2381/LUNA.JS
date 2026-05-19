@@ -27,7 +27,8 @@ module.exports = (sequelize, DataTypes) => {
       usuarioId: { type: DataTypes.INTEGER, allowNull: true },
       metodoPago: { type: DataTypes.STRING(50), allowNull: true },
       total: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
-      items: { type: DataTypes.JSON, allowNull: false, defaultValue: [] }
+      items: { type: DataTypes.JSON, allowNull: false, defaultValue: [] },
+      estado: { type: DataTypes.STRING(20), allowNull: false, defaultValue: 'activa' }
     },
     {
       sequelize,
