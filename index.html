@@ -110,11 +110,14 @@
           const password = document.getElementById("password").value;
 
           try {
-            const res = await fetch(`${baseUrl()}/api/login`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ username, password }),
-            });
+            const res = await fetch(
+              `${baseUrl()}/JuanSebastianRocha Rodriguez_JeronimoRubio_Ibrahim Safadi/login`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, password }),
+              },
+            );
 
             const data = await res.json().catch(() => ({}));
 

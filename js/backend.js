@@ -5,7 +5,7 @@
   const state = {
     enabled: false,
     baseUrl: "",
-    apiPrefix: "/api"
+    apiPrefix: "/JuanSebastianRocha Rodriguez_JeronimoRubio_Ibrahim Safadi"
   };
 
   function normalizarBaseUrl(baseUrl) {
@@ -13,8 +13,8 @@
   }
 
   function normalizarApiPrefix(apiPrefix) {
-    const raw = String(apiPrefix || "/api").trim();
-    if (!raw) return "/api";
+    const raw = String(apiPrefix || "/JuanSebastianRocha Rodriguez_JeronimoRubio_Ibrahim Safadi").trim();
+    if (!raw) return "/JuanSebastianRocha Rodriguez_JeronimoRubio_Ibrahim Safadi";
     return raw.startsWith("/") ? raw.replace(/\/+$/, "") : `/${raw.replace(/\/+$/, "")}`;
   }
 
