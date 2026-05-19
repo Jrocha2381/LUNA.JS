@@ -661,6 +661,68 @@ main {
     font-weight: 600;
 }
 
+/* ==================== PAPELERA Y NUEVOS BOTONES ==================== */
+.btn-papelera,
+.btn-volver-historial {
+    padding: 10px 16px;
+    border: none;
+    background-color: #ff9800;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-papelera:hover,
+.btn-volver-historial:hover {
+    background-color: #f57c00;
+    transform: scale(1.05);
+}
+
+.btn-recuperar-venta {
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-recuperar-venta:hover {
+    background-color: #45a049;
+    transform: scale(1.05);
+}
+
+.btn-eliminar-definitivo {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-eliminar-definitivo:hover {
+    background-color: #d32f2f;
+    transform: scale(1.05);
+}
+
+.fecha-eliminacion {
+    font-size: 11px;
+    color: #ff9800;
+    margin-top: 2px;
+    font-weight: 600;
+}
+
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
     header .header-content {

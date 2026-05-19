@@ -1,339 +1,383 @@
-// carritopage/historial.js
-
+﻿// ============================================
+// VARIABLES GLOBALES
+// ============================================
 let ventasActuales = [];
-let ordenAscendente = false;
+let ventasEliminadas = [];
+let ordenAscendente = true;
 let ventaAEliminar = null;
+let modo = 'historial'; // 'historial' o 'papelera'
 
-function obtenerFechaVenta(venta) {
-  const fecha = new Date(venta?.fecha);
-  return Number.isNaN(fecha.getTime()) ? new Date(0) : fecha;
+// ============================================
+// CARGAR DATOS
+// ============================================
+function cargarVentas() {
+    try {
+        const datosGuardados = localStorage.getItem('ventasCompletadas');
+        ventasActuales = datosGuardados ? JSON.parse(datosGuardados) : [];
+        console.log('Ventas cargadas:', ventasActuales.length);
+    } catch (error) {
+        console.error('Error al cargar ventas:', error);
+        ventasActuales = [];
+    }
 }
 
-function inicioDelDia(fecha) {
-  return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+function cargarPapelera() {
+    try {
+        const datosGuardados = localStorage.getItem('ventasEliminadas');
+        ventasEliminadas = datosGuardados ? JSON.parse(datosGuardados) : [];
+        console.log('Papelera cargada:', ventasEliminadas.length);
+    } catch (error) {
+        console.error('Error al cargar papelera:', error);
+        ventasEliminadas = [];
+    }
 }
 
-function formatearMoneda(valor) {
-  return `$${Number(valor).toLocaleString()}`;
+function guardarDatos() {
+    localStorage.setItem('ventasCompletadas', JSON.stringify(ventasActuales));
+    localStorage.setItem('ventasEliminadas', JSON.stringify(ventasEliminadas));
+    console.log('Datos guardados');
 }
 
-function obtenerNombreProducto(item) {
-  return item.nombre || item.titulo || item.producto?.nombre || "Producto";
-}
-
-async function cargarVentas() {
-  const ventas = await window.obtenerVentas();
-  ventasActuales = Array.isArray(ventas) ? ventas.map((venta) => ({
-    ...venta,
-    items: Array.isArray(venta.items) ? venta.items : []
-  })) : [];
-}
-
-function crearTarjetaVenta(venta) {
-  const ticket = String(venta.id).slice(-6);
-  const totalItems = venta.items.reduce((sum, item) => sum + (item.cantidad || 1), 0);
-  const resumenProductos = venta.items.slice(0, 3).map((item) => `${item.cantidad}x ${obtenerNombreProducto(item)}`).join(", ");
-  const productosExtra = venta.items.length > 3 ? `... +${venta.items.length - 3} mas` : "";
-
-  const tarjeta = document.createElement("div");
-  tarjeta.className = "tarjeta-venta";
-  tarjeta.innerHTML = `
-    <div class="tarjeta-encabezado">
-      <div class="info-ticket">
-        <h3>#${ticket}</h3>
-        <p class="fecha">${new Date(venta.fecha).toLocaleString()}</p>
-      </div>
-      <div class="info-total">
-        <p class="total">Total: ${formatearMoneda(venta.total)}</p>
-        <p class="metodo-pago">${venta.metodoPago || "-"}</p>
-      </div>
-    </div>
-    <div class="tarjeta-cuerpo">
-      <p class="items-info">
-        <strong>${totalItems} articulos:</strong><br>
-        <span class="resumen">${resumenProductos}${productosExtra}</span>
-      </p>
-    </div>
-    <div class="tarjeta-acciones">
-      <button class="btn-ver-detalle" data-id="${venta.id}">Ver detalle</button>
-      <button class="btn-eliminar-venta" data-id="${venta.id}">Eliminar</button>
-    </div>
-  `;
-  return tarjeta;
-}
-
-function renderizarHistorial(ventas) {
-  const contenedor = document.getElementById("lista-ventas");
-  const sinVentas = document.getElementById("sin-ventas");
-
-  if (!ventas || ventas.length === 0) {
-    contenedor.innerHTML = "";
-    sinVentas.style.display = "flex";
-    return;
-  }
-
-  sinVentas.style.display = "none";
-  contenedor.innerHTML = "";
-  ventas.forEach((venta) => contenedor.appendChild(crearTarjetaVenta(venta)));
-  asignarEventosTarjetas();
-}
-
-function asignarEventosTarjetas() {
-  document.querySelectorAll(".btn-ver-detalle").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      const venta = ventasActuales.find((v) => String(v.id) === e.target.dataset.id);
-      if (venta) mostrarModalDetalle(venta);
+// ============================================
+// CREAR TARJETAS
+// ============================================
+function crearTarjetaVenta(venta, esVentaEliminada = false) {
+    const fechaFormato = new Date(venta.fecha).toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
     });
-  });
 
-  document.querySelectorAll(".btn-eliminar-venta").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      ventaAEliminar = e.target.dataset.id;
-      document.getElementById("modal-confirmar").style.display = "flex";
-    });
-  });
-}
+    const total = venta.articulos.reduce((sum, art) => sum + (art.precio * art.cantidad), 0);
+    const cantidadItems = venta.articulos.reduce((sum, art) => sum + art.cantidad, 0);
 
-function mostrarModalDetalle(venta) {
-  const detalles = venta.items.map((item, idx) => {
-    const cantidad = item.cantidad || 1;
-    const precio = item.precio || 0;
-    const subtotal = precio * cantidad;
-    return `
-      <tr>
-        <td>${idx + 1}</td>
-        <td>${obtenerNombreProducto(item)}</td>
-        <td>${cantidad}</td>
-        <td>${formatearMoneda(precio)}</td>
-        <td>${formatearMoneda(subtotal)}</td>
-      </tr>
+    const tarjeta = document.createElement('div');
+    tarjeta.className = 'tarjeta-venta';
+    tarjeta.dataset.ventaId = venta.id;
+    tarjeta.dataset.esEliminada = esVentaEliminada;
+
+    const metodoPago = venta.metodoPago || 'No especificado';
+    const estado = esVentaEliminada ? 'En papelera' : 'Completada';
+
+    tarjeta.innerHTML = `
+        <div class="tarjeta-contenido">
+            <div class="tarjeta-encabezado">
+                <h3>Venta #${venta.id}</h3>
+                <span class="estado-badge">${estado}</span>
+            </div>
+            <div class="tarjeta-info">
+                <p><strong>Fecha:</strong> ${fechaFormato}</p>
+                <p><strong>Artículos:</strong> ${cantidadItems}</p>
+                <p><strong>Total:</strong> $${total.toFixed(2)}</p>
+                <p><strong>Método de pago:</strong> ${metodoPago}</p>
+            </div>
+            <div class="tarjeta-acciones">
+                <button class="btn-detalles" data-venta-id="${venta.id}">Ver Detalles</button>
+                ${!esVentaEliminada ? 
+                    `<button class="btn-papelera" data-venta-id="${venta.id}">Enviar a Papelera</button>` :
+                    `<button class="btn-recuperar" data-venta-id="${venta.id}">Recuperar</button>
+                     <button class="btn-eliminar-def" data-venta-id="${venta.id}">Eliminar Permanentemente</button>`
+                }
+            </div>
+        </div>
     `;
-  }).join("");
 
-  const contenidoModal = `
-    <div class="modal-overlay" id="modal-detalle-overlay">
-      <div class="modal-detalle">
-        <div class="modal-header">
-          <h2>Detalle de Venta #${String(venta.id).slice(-6)}</h2>
-          <button class="btn-cerrar-modal" onclick="document.getElementById('modal-detalle-overlay').remove()">X</button>
-        </div>
-        <div class="modal-body">
-          <div class="detalle-info">
-            <p><strong>Fecha:</strong> ${new Date(venta.fecha).toLocaleString()}</p>
-            <p><strong>Metodo de pago:</strong> ${venta.metodoPago || "-"}</p>
-          </div>
-          <table class="tabla-detalle">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Producto</th>
-                <th>Cantidad</th>
-                <th>Precio</th>
-                <th>Subtotal</th>
-              </tr>
-            </thead>
-            <tbody>${detalles}</tbody>
-          </table>
-          <div style="text-align: right; margin-top: 20px; border-top: 2px solid #eee; padding-top: 15px;">
-            <h3 style="color: #8a9b2f;">Total: ${formatearMoneda(venta.total)}</h3>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn-secundario" onclick="document.getElementById('modal-detalle-overlay').remove()">Cerrar</button>
-        </div>
-      </div>
-    </div>
-  `;
-
-  document.body.insertAdjacentHTML("beforeend", contenidoModal);
-  document.getElementById("modal-detalle-overlay").addEventListener("click", (e) => {
-    if (e.target.id === "modal-detalle-overlay") e.target.remove();
-  });
+    return tarjeta;
 }
 
-function filtrarVentas(terminoBusqueda) {
-  const termino = terminoBusqueda.toLowerCase();
-  return ventasActuales.filter((venta) => {
-    const ticket = String(venta.id).slice(-6);
-    const fecha = String(venta.fecha || "").toLowerCase();
-    return ticket.includes(termino) || fecha.includes(termino);
-  });
-}
+// ============================================
+// RENDERIZAR HISTORIAL Y PAPELERA
+// ============================================
+function renderizarHistorial() {
+    const contenedor = document.getElementById('contenedor-ventas');
+    if (!contenedor) {
+        console.error('Contenedor no encontrado');
+        return;
+    }
 
-function ordenarVentas(ventas) {
-  return [...ventas].sort((a, b) => ordenAscendente ? obtenerFechaVenta(a) - obtenerFechaVenta(b) : obtenerFechaVenta(b) - obtenerFechaVenta(a));
-}
+    const datos = modo === 'historial' ? ventasActuales : ventasEliminadas;
+    
+    if (datos.length === 0) {
+        contenedor.innerHTML = `<div class="sin-datos"><p>No hay ventas para mostrar</p></div>`;
+        return;
+    }
 
-async function eliminarVenta(idVenta) {
-  await window.Backend.delete(`ventas/${idVenta}`);
-  await cargarVentas();
-  renderizarHistorial(ordenarVentas(ventasActuales));
-  mostrarNotificacion("success", "Venta eliminada", "El registro ha sido eliminado correctamente.");
-}
-
-function mostrarNotificacion(tipo, titulo, mensaje) {
-  const notification = document.createElement("div");
-  notification.className = `notification notification-${tipo}`;
-  notification.innerHTML = `<strong>${titulo}:</strong> ${mensaje}`;
-  notification.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: ${tipo === "success" ? "#d4edda" : "#f8d7da"};
-    border: 1px solid ${tipo === "success" ? "#c3e6cb" : "#f5c6cb"};
-    color: ${tipo === "success" ? "#155724" : "#721c24"};
-    padding: 15px 20px;
-    border-radius: 8px;
-    z-index: 9999;
-  `;
-  document.body.appendChild(notification);
-  setTimeout(() => notification.remove(), 3000);
-}
-
-function descargarReporte() {
-  if (ventasActuales.length === 0) {
-    mostrarNotificacion("error", "Sin datos", "No hay ventas para descargar");
-    return;
-  }
-
-  let contenido = "REPORTE DE VENTAS - PAPEL Y LUNA\n";
-  contenido += "=================================\n\n";
-  contenido += `Generado: ${new Date().toLocaleString()}\n`;
-  contenido += `Total de ventas: ${ventasActuales.length}\n`;
-  contenido += `Venta total: ${formatearMoneda(ventasActuales.reduce((sum, v) => sum + v.total, 0))}\n\n`;
-
-  ventasActuales.forEach((venta) => {
-    contenido += `Ticket: #${String(venta.id).slice(-6)}\n`;
-    contenido += `Fecha: ${new Date(venta.fecha).toLocaleString()}\n`;
-    contenido += `Metodo de pago: ${venta.metodoPago}\n`;
-    venta.items.forEach((item) => {
-      contenido += `  - ${obtenerNombreProducto(item)}: ${item.cantidad}x ${formatearMoneda(item.precio)}\n`;
+    // Ordenar ventas
+    const datosOrdenados = [...datos].sort((a, b) => {
+        const fechaA = new Date(a.fecha);
+        const fechaB = new Date(b.fecha);
+        return ordenAscendente ? fechaA - fechaB : fechaB - fechaA;
     });
-    contenido += `Total: ${formatearMoneda(venta.total)}\n\n`;
-  });
 
-  const elemento = document.createElement("a");
-  elemento.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(contenido));
-  elemento.setAttribute("download", `reporte-ventas-${Date.now()}.txt`);
-  elemento.style.display = "none";
-  document.body.appendChild(elemento);
-  elemento.click();
-  document.body.removeChild(elemento);
+    contenedor.innerHTML = '';
+    datosOrdenados.forEach(venta => {
+        const tarjeta = crearTarjetaVenta(venta, modo === 'papelera');
+        contenedor.appendChild(tarjeta);
+    });
+
+    asignarEventosTarjetas();
 }
 
-function obtenerFiltros() {
-  return {
-    fechaDesde: document.getElementById("fecha-desde").value,
-    fechaHasta: document.getElementById("fecha-hasta").value,
-    montoMinimo: Number(document.getElementById("monto-minimo").value) || 0,
-    montoMaximo: Number(document.getElementById("monto-maximo").value) || Infinity,
-    metodoPago: document.getElementById("metodo-pago-filtro").value,
-    itemsMinimo: Number(document.getElementById("items-minimo").value) || 1
-  };
+function filtrarVentas(termino) {
+    const contenedor = document.getElementById('contenedor-ventas');
+    if (!contenedor) return;
+
+    const datos = modo === 'historial' ? ventasActuales : ventasEliminadas;
+    const terminoLower = termino.toLowerCase();
+
+    const datosFiltrados = datos.filter(venta => {
+        const id = venta.id.toString();
+        const total = venta.articulos.reduce((sum, art) => sum + (art.precio * art.cantidad), 0).toString();
+        const metodoPago = (venta.metodoPago || '').toLowerCase();
+        
+        return id.includes(terminoLower) || 
+               total.includes(terminoLower) || 
+               metodoPago.includes(terminoLower) ||
+               venta.articulos.some(art => art.nombre.toLowerCase().includes(terminoLower));
+    });
+
+    contenedor.innerHTML = '';
+    datosFiltrados.forEach(venta => {
+        const tarjeta = crearTarjetaVenta(venta, modo === 'papelera');
+        contenedor.appendChild(tarjeta);
+    });
+
+    asignarEventosTarjetas();
 }
 
-function aplicarFiltrosAvanzados(ventas, filtros) {
-  return ventas.filter((venta) => {
-    if (filtros.fechaDesde || filtros.fechaHasta) {
-      const fechaVenta = inicioDelDia(obtenerFechaVenta(venta));
-      if (filtros.fechaDesde && fechaVenta < inicioDelDia(new Date(`${filtros.fechaDesde}T00:00:00`))) return false;
-      if (filtros.fechaHasta && fechaVenta > inicioDelDia(new Date(`${filtros.fechaHasta}T00:00:00`))) return false;
+// ============================================
+// ASIGNAR EVENTOS A TARJETAS
+// ============================================
+function asignarEventosTarjetas() {
+    document.querySelectorAll('.btn-detalles').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const ventaId = e.target.dataset.ventaId;
+            mostrarDetalles(ventaId);
+        });
+    });
+
+    document.querySelectorAll('.btn-papelera').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const ventaId = e.target.dataset.ventaId;
+            enviarAPapelera(ventaId);
+        });
+    });
+
+    document.querySelectorAll('.btn-recuperar').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const ventaId = e.target.dataset.ventaId;
+            recuperarDePapelera(ventaId);
+        });
+    });
+
+    document.querySelectorAll('.btn-eliminar-def').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const ventaId = e.target.dataset.ventaId;
+            eliminarDefinitivamente(ventaId);
+        });
+    });
+}
+
+// ============================================
+// MODAL DE DETALLES
+// ============================================
+function mostrarDetalles(ventaId) {
+    const datos = modo === 'historial' ? ventasActuales : ventasEliminadas;
+    const venta = datos.find(v => v.id == ventaId);
+    
+    if (!venta) {
+        console.error('Venta no encontrada');
+        return;
     }
 
-    if (venta.total < filtros.montoMinimo || venta.total > filtros.montoMaximo) return false;
-    if (filtros.metodoPago && venta.metodoPago !== filtros.metodoPago) return false;
+    const modal = document.getElementById('modal-detalles');
+    if (!modal) {
+        console.error('Modal no encontrado');
+        return;
+    }
 
-    const totalItems = venta.items.reduce((sum, item) => sum + (item.cantidad || 1), 0);
-    return totalItems >= filtros.itemsMinimo;
-  });
+    const fechaFormato = new Date(venta.fecha).toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
+    let detallesHTML = `
+        <h2>Detalles de Venta #${venta.id}</h2>
+        <div class="detalles-info">
+            <p><strong>Fecha:</strong> ${fechaFormato}</p>
+            <p><strong>Método de pago:</strong> ${venta.metodoPago || 'No especificado'}</p>
+            <p><strong>Estado:</strong> ${modo === 'papelera' ? 'En papelera' : 'Completada'}</p>
+        </div>
+        <div class="detalles-articulos">
+            <h3>Artículos</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unit.</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    let totalGeneral = 0;
+    venta.articulos.forEach(articulo => {
+        const subtotal = articulo.precio * articulo.cantidad;
+        totalGeneral += subtotal;
+        detallesHTML += `
+            <tr>
+                <td>${articulo.nombre}</td>
+                <td>${articulo.cantidad}</td>
+                <td>$${articulo.precio.toFixed(2)}</td>
+                <td>$${subtotal.toFixed(2)}</td>
+            </tr>
+        `;
+    });
+
+    detallesHTML += `
+                </tbody>
+            </table>
+            <div class="total-venta">
+                <h4>Total: $${totalGeneral.toFixed(2)}</h4>
+            </div>
+        </div>
+    `;
+
+    const contenidoModal = document.querySelector('.modal-contenido');
+    if (contenidoModal) {
+        contenidoModal.innerHTML = detallesHTML;
+    }
+
+    modal.style.display = 'block';
+    reasignarEventosModal();
 }
 
-function mostrarFiltrosActivos(filtros) {
-  const contenedor = document.getElementById("filtros-activos");
-  const activos = [];
-  if (filtros.fechaDesde) activos.push(`Desde: ${filtros.fechaDesde}`);
-  if (filtros.fechaHasta) activos.push(`Hasta: ${filtros.fechaHasta}`);
-  if (filtros.montoMinimo > 0) activos.push(`Min: ${formatearMoneda(filtros.montoMinimo)}`);
-  if (filtros.montoMaximo < Infinity) activos.push(`Max: ${formatearMoneda(filtros.montoMaximo)}`);
-  if (filtros.metodoPago) activos.push(filtros.metodoPago);
-  if (filtros.itemsMinimo > 1) activos.push(`${filtros.itemsMinimo}+ items`);
-  contenedor.innerHTML = activos.length ? `<div class="filtros-tag-container">${activos.map((f) => `<span class="filtro-tag">${f}</span>`).join("")}</div>` : "";
+function reasignarEventosModal() {
+    const modal = document.getElementById('modal-detalles');
+    const btnCerrar = document.querySelector('.btn-cerrar');
+    
+    if (btnCerrar) {
+        btnCerrar.onclick = () => {
+            modal.style.display = 'none';
+        };
+    }
+
+    window.onclick = (event) => {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    };
 }
 
-async function inicializarHistorial() {
-  await cargarVentas();
-  ventasActuales = ordenarVentas(ventasActuales);
-  renderizarHistorial(ventasActuales);
+// ============================================
+// GESTIÓN DE PAPELERA
+// ============================================
+function enviarAPapelera(ventaId) {
+    const index = ventasActuales.findIndex(v => v.id == ventaId);
+    if (index !== -1) {
+        const venta = ventasActuales.splice(index, 1)[0];
+        ventasEliminadas.push(venta);
+        guardarDatos();
+        console.log(`Venta #${ventaId} enviada a papelera`);
+        
+        if (modo === 'historial') {
+            renderizarHistorial();
+        }
+    }
+}
 
-  const inputBusqueda = document.getElementById("buscar-venta");
-  const btnLimpiar = document.getElementById("limpiar-busqueda");
-  const btnOrdenar = document.getElementById("ordenar-ventas");
-  const btnDescargar = document.getElementById("descargar-reporte");
-  const toggleFiltros = document.getElementById("toggle-filtros");
-  const filtrosAvanzados = document.getElementById("filtros-avanzados");
-  const btnAplicarFiltros = document.getElementById("aplicar-filtros");
-  const btnLimpiarFiltros = document.getElementById("limpiar-filtros");
-  const modalConfirmar = document.getElementById("modal-confirmar");
-  const btnCancelarEliminar = document.getElementById("cancelar-eliminar");
-  const btnConfirmarEliminar = document.getElementById("confirmar-eliminar");
+function recuperarDePapelera(ventaId) {
+    const index = ventasEliminadas.findIndex(v => v.id == ventaId);
+    if (index !== -1) {
+        const venta = ventasEliminadas.splice(index, 1)[0];
+        ventasActuales.push(venta);
+        guardarDatos();
+        console.log(`Venta #${ventaId} recuperada de papelera`);
+        
+        if (modo === 'papelera') {
+            renderizarHistorial();
+        }
+    }
+}
 
-  inputBusqueda?.addEventListener("input", (e) => renderizarHistorial(ordenarVentas(filtrarVentas(e.target.value))));
-  btnLimpiar?.addEventListener("click", () => {
-    if (inputBusqueda) inputBusqueda.value = "";
-    renderizarHistorial(ventasActuales);
-  });
-  btnOrdenar?.addEventListener("click", () => {
+function eliminarDefinitivamente(ventaId) {
+    if (confirm('¿Está seguro de que desea eliminar permanentemente esta venta? Esta acción no se puede deshacer.')) {
+        const index = ventasEliminadas.findIndex(v => v.id == ventaId);
+        if (index !== -1) {
+            ventasEliminadas.splice(index, 1);
+            guardarDatos();
+            console.log(`Venta #${ventaId} eliminada permanentemente`);
+            renderizarHistorial();
+        }
+    }
+}
+
+// ============================================
+// CAMBIAR MODO (Historial / Papelera)
+// ============================================
+function cambiarModo(nuevoModo) {
+    modo = nuevoModo;
+    console.log('Modo cambiado a:', modo);
+    renderizarHistorial();
+}
+
+// ============================================
+// ORDENAMIENTO
+// ============================================
+function cambiarOrdenamiento() {
     ordenAscendente = !ordenAscendente;
-    btnOrdenar.textContent = ordenAscendente ? "Mas antiguos" : "Mas recientes";
-    ventasActuales = ordenarVentas(ventasActuales);
-    renderizarHistorial(ventasActuales);
-  });
-  btnDescargar?.addEventListener("click", descargarReporte);
-
-  toggleFiltros?.addEventListener("click", () => {
-    const visible = filtrosAvanzados.style.display !== "none";
-    filtrosAvanzados.style.display = visible ? "none" : "flex";
-  });
-
-  btnAplicarFiltros?.addEventListener("click", () => {
-    const filtros = obtenerFiltros();
-    let resultado = aplicarFiltrosAvanzados(ventasActuales, filtros);
-    if (inputBusqueda?.value) resultado = aplicarFiltrosAvanzados(filtrarVentas(inputBusqueda.value), filtros);
-    renderizarHistorial(ordenarVentas(resultado));
-    mostrarFiltrosActivos(filtros);
-  });
-
-  btnLimpiarFiltros?.addEventListener("click", async () => {
-    document.getElementById("fecha-desde").value = "";
-    document.getElementById("fecha-hasta").value = "";
-    document.getElementById("monto-minimo").value = "";
-    document.getElementById("monto-maximo").value = "";
-    document.getElementById("metodo-pago-filtro").value = "";
-    document.getElementById("items-minimo").value = "";
-    if (inputBusqueda) inputBusqueda.value = "";
-    await cargarVentas();
-    ventasActuales = ordenarVentas(ventasActuales);
-    renderizarHistorial(ventasActuales);
-    mostrarFiltrosActivos(obtenerFiltros());
-  });
-
-  btnCancelarEliminar?.addEventListener("click", () => {
-    modalConfirmar.style.display = "none";
-    ventaAEliminar = null;
-  });
-
-  btnConfirmarEliminar?.addEventListener("click", async () => {
-    if (ventaAEliminar) await eliminarVenta(ventaAEliminar);
-    modalConfirmar.style.display = "none";
-    ventaAEliminar = null;
-  });
-
-  modalConfirmar?.addEventListener("click", (e) => {
-    if (e.target === modalConfirmar) {
-      modalConfirmar.style.display = "none";
-      ventaAEliminar = null;
-    }
-  });
+    console.log('Orden:', ordenAscendente ? 'Ascendente' : 'Descendente');
+    renderizarHistorial();
 }
 
-window.inicializarHistorial = inicializarHistorial;
+// ============================================
+// INICIALIZACIÓN
+// ============================================
+function inicializar() {
+    console.log('Inicializando historial...');
+    
+    cargarVentas();
+    cargarPapelera();
+    
+    renderizarHistorial();
+
+    // Asignar eventos a botones de modo
+    const btnHistorial = document.getElementById('btn-historial');
+    const btnPapelera = document.getElementById('btn-papelera');
+    const btnOrdenar = document.getElementById('btn-ordenar');
+    const inputBuscar = document.getElementById('buscar-venta');
+
+    if (btnHistorial) {
+        btnHistorial.addEventListener('click', () => cambiarModo('historial'));
+    }
+
+    if (btnPapelera) {
+        btnPapelera.addEventListener('click', () => cambiarModo('papelera'));
+    }
+
+    if (btnOrdenar) {
+        btnOrdenar.addEventListener('click', cambiarOrdenamiento);
+    }
+
+    if (inputBuscar) {
+        inputBuscar.addEventListener('input', (e) => {
+            filtrarVentas(e.target.value);
+        });
+    }
+
+    console.log('Historial inicializado correctamente');
+}
+
+// Iniciar cuando el DOM está listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', inicializar);
+} else {
+    inicializar();
+}

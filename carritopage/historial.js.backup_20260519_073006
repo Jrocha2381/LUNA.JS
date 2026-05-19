@@ -1,0 +1,491 @@
+// carritopage/historial.js
+
+let ventasActuales = [];
+let ventasEliminadas = [];
+let ordenAscendente = false;
+let ventaAEliminar = null;
+let modo = "activas"; // "activas" o "papelera"
+
+const PAPELERA_KEY = "ventasEliminadas";
+const VENTAS_KEY = "ventas";
+
+function obtenerFechaVenta(venta) {
+  const fecha = new Date(venta?.fecha);
+  return Number.isNaN(fecha.getTime()) ? new Date(0) : fecha;
+}
+
+function inicioDelDia(fecha) {
+  return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+}
+
+function formatearMoneda(valor) {
+  return `$${Number(valor).toLocaleString()}`;
+}
+
+function obtenerNombreProducto(item) {
+  return item.nombre || item.titulo || item.producto?.nombre || "Producto";
+}
+
+async function cargarVentas() {
+  const ventas = await window.obtenerVentas();
+  ventasActuales = Array.isArray(ventas) ? ventas.map((venta) => ({
+    ...venta,
+    items: Array.isArray(venta.items) ? venta.items : []
+  })) : [];
+}
+
+function cargarVentasEliminadas() {
+  try {
+    ventasEliminadas = JSON.parse(localStorage.getItem(PAPELERA_KEY) || "[]");
+  } catch {
+    ventasEliminadas = [];
+  }
+}
+
+function crearTarjetaVenta(venta, esPapelera = false) {
+  const ticket = String(venta.id).slice(-6);
+  const totalItems = venta.items.reduce((sum, item) => sum + (item.cantidad || 1), 0);
+  const resumenProductos = venta.items.slice(0, 3).map((item) => `${item.cantidad}x ${obtenerNombreProducto(item)}`).join(", ");
+  const productosExtra = venta.items.length > 3 ? `... +${venta.items.length - 3} mas` : "";
+
+  const tarjeta = document.createElement("div");
+  tarjeta.className = "tarjeta-venta";
+  
+  let botonesHTML;
+  if (esPapelera) {
+    botonesHTML = `
+      <button class="btn-ver-detalle" data-id="${venta.id}">Ver detalle</button>
+      <button class="btn-recuperar-venta" data-id="${venta.id}">♻️ Recuperar</button>
+      <button class="btn-eliminar-definitivo" data-id="${venta.id}">🗑️ Eliminar</button>
+    `;
+  } else {
+    botonesHTML = `
+      <button class="btn-ver-detalle" data-id="${venta.id}">Ver detalle</button>
+      <button class="btn-eliminar-venta" data-id="${venta.id}">A papelera</button>
+    `;
+  }
+
+  tarjeta.innerHTML = `
+    <div class="tarjeta-encabezado">
+      <div class="info-ticket">
+        <h3>#${ticket}</h3>
+        <p class="fecha">${new Date(venta.fecha).toLocaleString()}</p>
+        ${esPapelera ? `<p class="fecha-eliminacion">Eliminada: ${new Date(venta.fechaEliminacion).toLocaleString()}</p>` : ""}
+      </div>
+      <div class="info-total">
+        <p class="total">Total: ${formatearMoneda(venta.total)}</p>
+        <p class="metodo-pago">${venta.metodoPago || "-"}</p>
+      </div>
+    </div>
+    <div class="tarjeta-cuerpo">
+      <p class="items-info">
+        <strong>${totalItems} articulos:</strong><br>
+        <span class="resumen">${resumenProductos}${productosExtra}</span>
+      </p>
+    </div>
+    <div class="tarjeta-acciones">
+      ${botonesHTML}
+    </div>
+  `;
+  return tarjeta;, false)));
+  asignarEventosTarjetas();
+}
+
+function renderizarPapelera() {
+  const contenedor = document.getElementById("lista-ventas");
+  const sinVentas = document.getElementById("sin-ventas");
+todasLasVentas = [...ventasActuales, ...ventasEliminadas];
+      const venta = todasLasVentas.find((v) => String(v.id) === e.target.dataset.id);
+      if (venta) mostrarModalDetalle(venta);
+    });
+  });
+
+  document.querySelectorAll(".btn-eliminar-venta").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      ventaAEliminar = e.target.dataset.id;
+      const modalContenido = document.querySelector(".modal-contenido");
+      modalContenido.innerHTML = `
+        <h3>⚠️ Mover a papelera</h3>
+        <p>¿Deseas mover este registro de venta a la papelera? Podrás recuperarlo más tarde.</p>
+        <div class="modal-botones">
+          <button id="cancelar-eliminar" class="btn-cancelar">Cancelar</button>
+          <button id="confirmar-eliminar" class="btn-eliminar">Mover a papelera</button>
+        </div>
+      `;
+      reasignarEventosModal();
+      document.getElementById("modal-confirmar").style.display = "flex";
+      document.getElementById("modal-confirmar").dataset.accion = "papelera";
+    });
+  });
+
+  document.querySelectorAll(".btn-eliminar-definitivo").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      ventaAEliminar = e.target.dataset.id;
+      const modalContenido = document.querySelector(".modal-contenido");
+      modalContenido.innerHTML = `
+        <h3>🗑️ Eliminar definitivamente</h3>
+        <p><strong>⚠️ Advertencia:</strong> Estás a punto de eliminar permanentemente este registro de venta. Esta acción no se puede deshacer.</p>
+        <div class="modal-botones">
+          <button id="cancelar-eliminar" class="btn-cancelar">Cancelar</button>
+          <button id="confirmar-eliminar" class="btn-eliminar" style="background-color: #f44336;">Eliminar definitivamente</button>
+        </div>
+      `;
+      reasignarEventosModal();
+      document.getElementById("modal-confirmar").style.display = "flex";
+      document.getElementById("modal-confirmar").dataset.accion = "definitivo";
+    });
+  });
+
+  document.querySelectorAll(".btn-eliminar-definitivo").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      ventaAEliminar = e.target.dataset.id;
+      document.getElementById("modal-confirmar").style.display = "flex";
+      document.getElementById("modal-confirmar").dataset.accion = "definitivo
+  contenedor.innerHTML = "";
+  ventasEliminadas.forEach((venta) => contenedor.appendChild(crearTarjetaVenta(venta, true
+}
+
+function renderizarHistorial(ventas) {
+  const contenedor = document.getElementById("lista-ventas");
+  const sinVentas = document.getElementById("sin-ventas");
+
+  if (!ventas || ventas.length === 0) {
+    contenedor.innerHTML = "";
+    sinVentas.style.display = "flex";
+    return;
+  }
+
+  sinVentas.style.display = "none";
+  contenedor.innerHTML = "";
+  ventas.forEach((venta) => contenedor.appendChild(crearTarjetaVenta(venta)));
+  asignarEventosTarjetas();
+}
+
+function asignarEventosTarjetas() {
+  document.querySelectorAll(".btn-ver-detalle").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const venta = ventasActuales.find((v) => String(v.id) === e.target.dataset.id);
+      if (venta) mostrarModalDetalle(venta);
+    });
+  });
+
+  document.querySelectorAll(".btn-eliminar-venta").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      ventaAEliminar = e.target.dataset.id;
+      document.getElementById("modal-confirmar").style.display = "flex";
+    });
+  });
+}
+
+function mostrarModalDetalle(venta) {
+  const detalles = venta.items.map((item, idx) => {
+    const cantidad = Number(item.cantidad) || 1;
+    const precio = Number(item.precio) || Number(item.precioVenta) || 0;
+    const subtotal = Number((precio * cantidad).toFixed(2));
+    return `
+      <tr>
+        <td>${idx + 1}</td>
+        <td>${obtenerNombreProducto(item)}</td>
+        <td>${cantidad}</td>
+        <td>${formatearMoneda(precio)}</td>
+        <td>${formatearMoneda(subtotal)}</td>
+      </tr>
+    `;
+  }).join("");
+
+  const contenidoModal = `
+    <div class="modal-overlay" id="modal-detalle-overlay">
+      <div class="modal-detalle">
+        <div class="modal-header">
+          <h2>Detalle de Venta #${String(venta.id).slice(-6)}</h2>
+          <button class="btn-cerrar-modal" onclick="document.getElementById('modal-detalle-overlay').remove()">X</button>
+        </div>
+        <div class="modal-body">
+          <div class="detalle-info">
+            <p><strong>Fecha:</strong> ${new Date(venta.fecha).toLocaleString()}</p>
+            <p><strong>Metodo de pago:</strong> ${venta.metodoPago || "-"}</p>
+          </div>
+          <table class="tabla-detalle">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio</th>
+                <th>Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>${detalles}</tbody>
+          </table>
+          <div style="text-align: right; margin-top: 20px; border-top: 2px solid #eee; padding-top: 15px;">
+            <h3 style="color: #8a9b2f;">Total: ${formatearMoneda(venta.total)}</h3>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secundario" onclick="document.getElementById('modal-detalle-overlay').remove()">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML("beforeend", contenidoModal);
+  document.getElementById("modal-detalle-overlay").addEventListener("click", (e) => {
+    if (e.target.id === "modal-detalle-overlay") e.target.remove();
+  });
+}
+
+function filtrarVentas(terminoBusqueda) {
+  const termino = terminoBusqueda.toLowerCase();
+  return ventasActuales.filter((venta) => {
+    const ticket = String(venta.id).slice(-6);
+    const fecha = String(venta.fecha || "").toLowerCase();
+    return ticket.includes(termino) || fecha.includes(termino);
+  });
+}
+
+function ordenarVentas(ventas) {
+  return [...ventas].sort((a, b) => ordenAscendente ? obtenerFechaVenta(a) - obtenerFechaVenta(b) : obtenerFechaVenta(b) - obtenerFechaVenta(a));
+}
+
+async function enviarAPapelera(idVenta) {
+  const ventaAEnviar = ventasActuales.find((v) => String(v.id) === String(idVenta));
+  if (!ventaAEnviar) return;
+
+  ventasEliminadas.push({
+    ...ventaAEnviar,
+    fechaEliminacion: new Date().toISOString()
+  });
+  localStorage.setItem(PAPELERA_KEY, JSON.stringify(ventasEliminadas));
+
+  // Remover de ventas activas si es necesario
+  if (window.Backend && window.Backend.isEnabled && window.Backend.isEnabled()) {
+    try {
+      await window.Backend.delete(`ventas/${idVenta}`);
+    } catch (err) {
+      console.warn("No se pudo eliminar del backend:", err);
+    }
+  }
+
+  await cargarVentas();
+  renderizarHistorial(ordenarVentas(ventasActuales));
+  mostrarNotificacion("success", "Venta a papelera", "La venta fue movida a la papelera.");
+}
+
+async function eliminarDefinitivo(idVenta) {
+  ventasEliminadas = ventasEliminadas.filter((v) => String(v.id) !== String(idVenta));
+  localStorage.setItem(PAPELERA_KEY, JSON.stringify(ventasEliminadas));
+  renderizarPapelera();
+  mostrarNotificacion("success", "Eliminado", "El registro ha sido eliminado permanentemente.");
+}
+
+function recuperarVenta(idVenta) {
+  const ventaARecuperar = ventasEliminadas.find((v) => String(v.id) === String(idVenta));
+  if (!ventaARecuperar) return;
+
+  // Remover de eliminadas
+  ventasEliminadas = ventasEliminadas.filter((v) => String(v.id) !== String(idVenta));
+  localStorage.setItem(PAPELERA_KEY, JSON.stringify(ventasEliminadas));
+
+  // Añadir a activas
+  const ventaRecuperada = { ...ventaARecuperar };
+  delete ventaRecuperada.fechaEliminacion;
+  ventasActuales.push(ventaRecuperada);
+
+  renderizarPapelera();
+  mostrarNotificacion("success", "Venta recuperada", "La venta ha sido restaurada al historial.");
+}
+
+function mostrarNotificacion(tipo, titulo, mensaje) {
+  const notification = document.createElement("div");
+  notification.className = `notification notification-${tipo}`;
+  notification.innerHTML = `<strong>${titulo}:</strong> ${mensaje}`;
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: ${tipo === "success" ? "#d4edda" : "#f8d7da"};
+    border: 1px solid ${tipo === "success" ? "#c3e6cb" : "#f5c6cb"};
+    color: ${tipo === "success" ? "#155724" : "#721c24"};
+    padding: 15px 20px;
+    border-radius: 8px;
+    z-index: 9999;
+  `;
+  document.body.appendChild(notification);
+  setTimeout(() => notification.remove(), 3000);
+}
+
+function descargarReporte() {
+  if (ventasActuales.length === 0) {
+    mostrarNotificacion("error", "Sin datos", "No hay ventas para descargar");
+    return;
+  }
+
+  let contenido = "REPORTE DE VENTAS - PAPEL Y LUNA\n";
+  contenido += "=================================\n\n";
+  contenido += `Generado: ${new Date().toLocaleString()}\n`;
+  contenido += `Total de ventas: ${ventasActuales.length}\n`;
+  contenido += `Venta total: ${formatearMoneda(ventasActuales.reduce((sum, v) => sum + v.total, 0))}\n\n`;
+
+  ventasActuales.forEach((venta) => {
+    contenido += `Ticket: #${String(venta.id).slice(-6)}\n`;
+    contenido += `Fecha: ${new Date(venta.fecha).toLocaleString()}\n`;
+    contenido += `Metodo de pago: ${venta.metodoPago}\n`;
+    venta.items.forEach((item) => {
+      contenido += `  - ${obtenerNombreProducto(item)}: ${item.cantidad}x ${formatearMoneda(item.precio)}\n`;
+    });
+    contenido += `Total: ${formatearMoneda(venta.total)}\n\n`;
+  });
+
+  const elemento = document.createElement("a");
+  cargarVentasEliminadas();
+  await cargarVentas();
+  ventasActuales = ordenarVentas(ventasActuales);
+  renderizarHistorial(ventasActuales);
+
+  const inputBusqueda = document.getElementById("buscar-venta");
+  const btnLimpiar = document.getElementById("limpiar-busqueda");
+  const btnOrdenar = document.getElementById("ordenar-ventas");
+  const btnDescargar = document.getElementById("descargar-reporte");
+  const toggleFiltros = document.getElementById("toggle-filtros");
+  const filtrosAvanzados = document.getElementById("filtros-avanzados");
+  const btnAplicarFiltros = document.getElementById("aplicar-filtros");
+  const btnLimpiarFiltros = document.getElementById("limpiar-filtros");
+  const modalConfirmar = document.getElementById("modal-confirmar");
+  const btnCancelarEliminar = document.getElementById("cancelar-eliminar");
+  const btnConfirmarEliminar = document.getElementById("confirmar-eliminar");
+  const btnPapelera = document.getElementById("btn-papelera");
+  const btnVolverHistorial = document.getElementById("btn-volver-historial
+    itemsMinimo: Number(document.getElementById("items-minimo").value) || 1
+  };
+}
+
+function aplicarFiltrosAvanzados(ventas, filtros) {
+  return ventas.filter((venta) => {
+    if (filtros.fechaDesde || filtros.fechaHasta) {
+      const fechaVenta = inicioDelDia(obtenerFechaVenta(venta));
+      if (filtros.fechaDesde && fechaVenta < inicioDelDia(new Date(`${filtros.fechaDesde}T00:00:00`))) return false;
+      if (filtros.fechaHasta && fechaVenta > inicioDelDia(new Date(`${filtros.fechaHasta}T00:00:00`))) return false;
+    }
+
+    if (venta.total < filtros.montoMinimo || venta.total > filtros.montoMaximo) return false;
+    if (filtros.metodoPago && venta.metodoPago !== filtros.metodoPago) return false;
+
+    const totalItems = venta.items.reduce((sum, item) => sum + (item.cantidad || 1), 0);
+    return totalItems >= filtros.itemsMinimo;
+  });
+}
+
+function mostrarFiltrosActivos(filtros) {
+  const contenedor = document.getElementById("filtros-activos");
+  const activos = [];
+  if (filtros.fechaDesde) activos.push(`Desde: ${filtros.fechaDesde}`);
+  if (filtros.fechaHasta) activos.push(`Hasta: ${filtros.fechaHasta}`);
+  if (filtros.montoMinimo > 0) activos.push(`Min: ${formatearMoneda(filtros.montoMinimo)}`);
+  if (filtros.montoMaximo < Infinity) activos.push(`Max: ${formatearMoneda(filtros.montoMaximo)}`);
+  if (filtros.metodoPago) activos.push(filtros.metodoPago);
+  if (filtros.itemsMinimo > 1) activos.push(`${filtros.itemsMinimo}+ items`);
+  contenedor.innerHTML = activos.length ? `<div class="filtros-tag-container">${activos.map((f) => `<span class="filtro-tag">${f}</span>`).join("")}</div>` : "";
+}
+
+async function inicializarHistorial() {
+  await cargarVentas();
+  ventasActuales = ordenarVentas(ventasActuales);
+  renderizarHistorial(ventasActuales);
+
+  const inputBusqueda = document.getElementById("buscar-venta");
+  const btnLimpiar = document.getElementById("limpiar-busqueda");
+  const btnOrdenar = document.getElementById("ordenar-ventas");
+  const btnDescargar = document.getElementById("descargar-reporte");
+  const toggleFiltros = document.getElementById("toggle-filtros");
+  const filtrosAvanzados = document.getElementById("filtros-avanzados");
+  const btnAplicarFiltros = document.getElementById("aplicar-filtros");
+  const btnLimpiarFiltros = document.getElementById("limpiar-filtros");
+  const modalConfirmar = document.getElementById("modal-confirmar");
+  const btnCancelarEliminar = document.getElementById("cancelar-eliminar");
+  const btnConfirmarEliminar = document.getElementById("confirmar-eliminar");
+
+  inputBusqueda?.addEventListener("input", (e) => renderizarHistorial(ordenarVentas(filtrarVentas(e.target.value))));
+  btnLimpiar?.addEventListener("click", () => {
+    if (inputBusqueda) inputBusqueda.value = "";
+    renderizarHistorial(ventasActuales);
+  });
+  btnOrdenar?.addEventListener("click", () => {
+    ordenAscendente = !ordenAscendente;
+    btnOrdenar.textContent = ordenAscendente ? "Mas antiguos" : "Mas recientes";
+    ventasActuales = ordenarVentas(ventasActuales);
+    renderizarHistorial(ventasActuales);
+  });{
+      const accion = modalConfirmar.dataset.accion || "papelera";
+      if (accion === "papelera") {
+        await enviarAPapelera(ventaAEliminar);
+      } else if (accion === "definitivo") {
+        await eliminarDefinitivo(ventaAEliminar);
+      }
+    }
+    modalConfirmar.style.display = "none";
+    ventaAEliminar = null;
+    delete modalConfirmar.dataset.accion;
+  });
+
+  modalConfirmar?.addEventListener("click", (e) => {
+    if (e.target === modalConfirmar) {
+      modalConfirmar.style.display = "none";
+      ventaAEliminar = null;
+      delete modalConfirmar.dataset.accion;
+    }
+  });
+
+  btnPapelera?.addEventListener("click", () => {
+    modo = "papelera";
+    document.getElementById("sin-ventas").textContent = "La papelera está vacía";
+    renderizarPapelera();
+    btnPapelera.style.display = "none";
+    btnVolverHistorial.style.display = "inline-block";
+  });
+
+  btnVolverHistorial?.addEventListener("click", () => {
+    modo = "activas";
+    document.getElementById("sin-ventas").textContent = "No hay ventas registradas aún.";
+    renderizarHistorial(ventasActuales);
+    btnPapelera.style.display = "inline-block";
+    btnVolverHistorial.style.display = "none";onst filtros = obtenerFiltros();
+    let resultado = aplicarFiltrosAvanzados(ventasActuales, filtros);
+    if (inputBusqueda?.value) resultado = aplicarFiltrosAvanzados(filtrarVentas(inputBusqueda.value), filtros);
+    renderizarHistorial(ordenarVentas(resultado));
+    mostrarFiltrosActivos(filtros);
+  });
+
+  btnLimpiarFiltros?.addEventListener("click", async () => {
+    document.getElementById("fecha-desde").value = "";
+    document.getElementById("fecha-hasta").value = "";
+    document.getElementById("monto-minimo").value = "";
+    document.getElementById("monto-maximo").value = "";
+    document.getElementById("metodo-pago-filtro").value = "";
+    document.getElementById("items-minimo").value = "";
+    if (inputBusqueda) inputBusqueda.value = "";
+    await cargarVentas();
+    ventasActuales = ordenarVentas(ventasActuales);
+    renderizarHistorial(ventasActuales);
+    mostrarFiltrosActivos(obtenerFiltros());
+  });
+
+  btnCancelarEliminar?.addEventListener("click", () => {
+    modalConfirmar.style.display = "none";
+    ventaAEliminar = null;
+  });
+
+  btnConfirmarEliminar?.addEventListener("click", async () => {
+    if (ventaAEliminar) await eliminarVenta(ventaAEliminar);
+    modalConfirmar.style.display = "none";
+    ventaAEliminar = null;
+  });
+
+  modalConfirmar?.addEventListener("click", (e) => {
+    if (e.target === modalConfirmar) {
+      modalConfirmar.style.display = "none";
+      ventaAEliminar = null;
+    }
+  });
+}
+
+window.inicializarHistorial = inicializarHistorial;
