@@ -14,8 +14,13 @@ const createVentaValidator = [
     .withMessage('metodoPago no puede superar 50 caracteres'),
   optionalMoney('total', 'total'),
   optionalItems(),
+  body('estado')
+    .optional({ nullable: true })
+    .isIn(['activa', 'papelera'])
+    .withMessage('estado inválido'),
   validationHandler
 ];
+
 
 const updateVentaValidator = createVentaValidator;
 

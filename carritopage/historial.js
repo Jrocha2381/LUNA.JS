@@ -78,25 +78,63 @@ function deduplicarVentasPorId(ventas) {
 // ============================================
 // CARGAR DATOS
 // ============================================
-function cargarVentas() {
+async function cargarVentas() {
     try {
-        // Fuente principal: `ventas` (usada por factura.js / registrarVenta)
-        // Compatibilidad: `ventasCompletadas` e `historialVentas` (versiones previas)
-        const ventas = leerArrayLocalStorage('ventas');
-        const ventasCompletadas = leerArrayLocalStorage('ventasCompletadas');
-        const historialVentas = leerArrayLocalStorage('historialVentas');
+        if (!window.Backend || !window.Backend.isEnabled || !window.Backend.isEnabled()) {
+            console.warn('Backend no disponible; no se pueden cargar ventas desde API.');
+            ventasActuales = [];
+            return;
+        }
 
-        const combinadas = [...ventas, ...ventasCompletadas, ...historialVentas]
-            .map(normalizarVentaHistorial)
+        const ventas = await window.Backend.get('ventas');
+        const detalles = await window.Backend.get('detalle_ventas');
+
+        const detallesPorVenta = new Map();
+        if (Array.isArray(detalles)) {
+            detalles.forEach(d => {
+                const ventaId = d.ventaId;
+                if (ventaId === undefined || ventaId === null) return;
+                const key = String(ventaId);
+                if (!detallesPorVenta.has(key)) detallesPorVenta.set(key, []);
+                detallesPorVenta.get(key).push(d);
+            });
+        }
+
+        const normalizadas = (Array.isArray(ventas) ? ventas : [])
+            .map((v) => {
+                const articulosDetalles = (detallesPorVenta.get(String(v.id)) || []).map((d) => ({
+                    nombre:
+                        d.nombre ||
+                        d.productoNombre ||
+                        d.producto?.nombre ||
+                        d.nombreProducto ||
+                        'Producto',
+                    cantidad: toNumber(d.cantidad, 1),
+                    precio: toNumber(d.precioUnitario ?? d.precio ?? d.precioVenta, 0)
+                }));
+
+                const totalCalculado = articulosDetalles.reduce((sum, art) => sum + (toNumber(art.precio) * toNumber(art.cantidad)), 0);
+
+                return {
+                    ...v,
+                    id: v.id,
+                    fecha: v.fecha || v.createdAt || new Date().toISOString(),
+                    metodoPago: v.metodoPago || v.metodo || v.paymentMethod || '',
+                    articulos: articulosDetalles,
+                    total: Number.isFinite(Number(v.total)) ? Number(v.total) : totalCalculado,
+                    estado: v.estado || 'activa'
+                };
+            })
             .filter(Boolean);
 
-        ventasActuales = deduplicarVentasPorId(combinadas);
-        console.log('Ventas cargadas:', ventasActuales.length);
+        ventasActuales = deduplicarVentasPorId(normalizadas);
+        console.log('Ventas cargadas desde API:', ventasActuales.length);
     } catch (error) {
-        console.error('Error al cargar ventas:', error);
+        console.error('Error al cargar ventas desde API:', error);
         ventasActuales = [];
     }
 }
+
 
 function cargarPapelera() {
     try {
@@ -376,45 +414,42 @@ function reasignarEventosModal() {
 // ============================================
 // GESTIÓN DE PAPELERA
 // ============================================
-function enviarAPapelera(ventaId) {
-    const index = ventasActuales.findIndex(v => v.id == ventaId);
-    if (index !== -1) {
-        const venta = ventasActuales.splice(index, 1)[0];
-        ventasEliminadas.push(venta);
-        guardarDatos();
-        console.log(`Venta #${ventaId} enviada a papelera`);
-        
-        if (modo === 'historial') {
-            renderizarHistorial();
-        }
+async function enviarAPapelera(ventaId) {
+    try {
+        await window.Backend.put(`ventas/${ventaId}`, { estado: 'papelera' });
+        await cargarVentas();
+        // refrescar modos
+        if (modo === 'historial' || modo === 'papelera') renderizarHistorial();
+    } catch (error) {
+        console.error('Error al enviar a papelera:', error);
+        alert('No se pudo enviar a papelera.');
     }
 }
 
-function recuperarDePapelera(ventaId) {
-    const index = ventasEliminadas.findIndex(v => v.id == ventaId);
-    if (index !== -1) {
-        const venta = ventasEliminadas.splice(index, 1)[0];
-        ventasActuales.push(venta);
-        guardarDatos();
-        console.log(`Venta #${ventaId} recuperada de papelera`);
-        
-        if (modo === 'papelera') {
-            renderizarHistorial();
-        }
+async function recuperarDePapelera(ventaId) {
+    try {
+        await window.Backend.put(`ventas/${ventaId}`, { estado: 'activa' });
+        await cargarVentas();
+        if (modo === 'historial' || modo === 'papelera') renderizarHistorial();
+    } catch (error) {
+        console.error('Error al recuperar de papelera:', error);
+        alert('No se pudo recuperar la venta.');
     }
 }
 
-function eliminarDefinitivamente(ventaId) {
-    if (confirm('¿Está seguro de que desea eliminar permanentemente esta venta? Esta acción no se puede deshacer.')) {
-        const index = ventasEliminadas.findIndex(v => v.id == ventaId);
-        if (index !== -1) {
-            ventasEliminadas.splice(index, 1);
-            guardarDatos();
-            console.log(`Venta #${ventaId} eliminada permanentemente`);
-            renderizarHistorial();
-        }
+async function eliminarDefinitivamente(ventaId) {
+    if (!confirm('¿Está seguro de que desea eliminar permanentemente esta venta? Esta acción no se puede deshacer.')) return;
+
+    try {
+        await window.Backend.delete(`ventas/${ventaId}`);
+        await cargarVentas();
+        if (modo === 'historial' || modo === 'papelera') renderizarHistorial();
+    } catch (error) {
+        console.error('Error al eliminar permanentemente:', error);
+        alert('No se pudo eliminar la venta.');
     }
 }
+
 
 // ============================================
 // CAMBIAR MODO (Historial / Papelera)
