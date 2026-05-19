@@ -8,5 +8,6 @@ const router = express.Router();
 
 router.post('/login', authController.login);
 router.get('/me', authJwt, authController.me);
+router.get('/authors', authController.getAuthors);
 
 module.exports = router;

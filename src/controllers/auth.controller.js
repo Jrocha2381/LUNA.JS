@@ -3,6 +3,12 @@
 const jwt = require('jsonwebtoken');
 const { Usuario } = require('../../models');
 
+const AUTHORS = [
+  { nombre: 'Jeronimo Rubio', codigo: '0000001' },
+  { nombre: 'Sebastian Rocha', codigo: '0000002' },
+  { nombre: 'Ibrahim Safadi', codigo: '0000003' }
+];
+
 function getJwtSecret() {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
@@ -81,7 +87,13 @@ function me(req, res) {
   });
 }
 
+function getAuthors(_req, res) {
+  return res.json(AUTHORS);
+}
+
 module.exports = {
   login,
-  me
+  me,
+  getAuthors,
+  AUTHORS
 };
