@@ -18,8 +18,9 @@ const app = {
 
     // Configurar API Service
     APIService.configure({
-      enabled: false, // Usar mock data en desarrollo
-      useMockData: true
+      // Por defecto: si se sirve desde el backend (http/https), usa la API real.
+      // Si se abre como archivo (file://), APIService entra en modo mock automÃ¡ticamente.
+      enabled: true
     });
 
     // Cargar datos iniciales
@@ -59,7 +60,7 @@ const app = {
       await this.loadPurchasesHistory();
 
       // Cargar historial de ventas
-      this.loadSalesHistory();
+      await this.loadSalesHistory();
     } catch (error) {
       this.showAlert("Error cargando datos iniciales", "error");
       console.error(error);
@@ -398,7 +399,7 @@ const app = {
       this.closePaymentModal();
       this.updateCartDisplay();
       this.loadOpenSalesDisplay();
-      this.loadSalesHistory();
+      await this.loadSalesHistory();
       this.showAlert(`¡Venta completada! Total: $${completedSale.total.toFixed(2)}`, "success");
     } catch (error) {
       this.showAlert("Error al completar venta: " + error.message, "error");
@@ -906,9 +907,14 @@ const app = {
   /**
    * Cargar historial de ventas
    */
-  loadSalesHistory() {
+  async loadSalesHistory() {
     try {
-      const sales = SalesManager.getCompletedSales();
+      let sales = [];
+      try {
+        sales = await APIService.getSales();
+      } catch (_e) {
+        sales = SalesManager.getCompletedSales();
+      }
       this.renderSalesHistory(sales);
     } catch (error) {
       console.error("Error cargando historial de ventas:", error);
@@ -930,12 +936,12 @@ const app = {
     tbody.innerHTML = sales
       .map(sale => `
         <tr>
-          <td>${sale.id.substring(0, 8)}</td>
-          <td>${sale.clientName || "Cliente General"}</td>
-          <td>${sale.items.length}</td>
-          <td>$${sale.total.toFixed(2)}</td>
-          <td>${sale.paymentMethod}</td>
-          <td>${new Date(sale.completedAt).toLocaleDateString()}</td>
+          <td>${String(sale.id).substring(0, 8)}</td>
+          <td>${sale?.cliente?.nombre || sale.clientName || "Cliente General"}</td>
+          <td>${Array.isArray(sale.detalles) ? sale.detalles.length : (Array.isArray(sale.items) ? sale.items.length : 0)}</td>
+          <td>$${Number(sale.total || 0).toFixed(2)}</td>
+          <td>${sale.metodoPago || sale.paymentMethod || ""}</td>
+          <td>${new Date(sale.fecha || sale.completedAt || sale.createdAt).toLocaleDateString()}</td>
         </tr>
       `)
       .join("");

@@ -5,11 +5,36 @@
  */
 
 (function () {
+  function detectApiPrefix() {
+    try {
+      const path = window?.location?.pathname || "";
+      const candidates = [
+        "/Jeronimo%20Rubio_Sebastian%20Rocha_Ibrahim%20Safadi",
+        "/Jeronimo Rubio_Sebastian Rocha_Ibrahim Safadi",
+        "/JuanSebastianRocha Rodriguez_JeronimoRubio_Ibrahim Safadi"
+      ];
+      const match = candidates.find((p) => path.startsWith(p));
+      return match || candidates[0];
+    } catch (_e) {
+      return "/Jeronimo%20Rubio_Sebastian%20Rocha_Ibrahim%20Safadi";
+    }
+  }
+
+  function isHttpContext() {
+    try {
+      const protocol = window?.location?.protocol || "";
+      return protocol === "http:" || protocol === "https:";
+    } catch (_e) {
+      return false;
+    }
+  }
+
   let config = {
-    enabled: false,
-    baseUrl: "http://localhost:3000",
-    apiPrefix: "/api",
-    useMockData: true // Modo desarrollo con datos simulados
+    enabled: true,
+    baseUrl: "",
+    apiPrefix: detectApiPrefix(),
+    // Si se abre el HTML con file://, mantener modo mock por defecto.
+    useMockData: !isHttpContext()
   };
 
   // Endpoints disponibles
@@ -182,6 +207,9 @@
      */
     configure(cfg = {}) {
       config = { ...config, ...cfg };
+      if (!config.apiPrefix) {
+        config.apiPrefix = detectApiPrefix();
+      }
     },
 
     /**

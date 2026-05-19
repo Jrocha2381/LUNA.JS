@@ -10,6 +10,32 @@ let modo = 'historial'; // 'historial' o 'papelera'
 // ============================================
 // NORMALIZACIÓN / COMPATIBILIDAD
 // ============================================
+function detectarApiPrefix() {
+    try {
+        const path = window?.location?.pathname || '';
+        const candidates = [
+            '/Jeronimo%20Rubio_Sebastian%20Rocha_Ibrahim%20Safadi',
+            '/Jeronimo Rubio_Sebastian Rocha_Ibrahim Safadi',
+            '/JuanSebastianRocha Rodriguez_JeronimoRubio_Ibrahim Safadi'
+        ];
+        const match = candidates.find((p) => path.startsWith(p));
+        return match || candidates[0];
+    } catch (_e) {
+        return '/Jeronimo%20Rubio_Sebastian%20Rocha_Ibrahim%20Safadi';
+    }
+}
+
+async function fetchVentasDesdeApi() {
+    const prefix = detectarApiPrefix();
+    const url = `${prefix}/ventas`;
+    const token = (typeof localStorage !== 'undefined' && localStorage.getItem('token')) || null;
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const res = await fetch(url, { method: 'GET', headers });
+    if (!res.ok) throw new Error(`API ${res.status}`);
+    return res.json();
+}
+
 function toNumber(value, fallback = 0) {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : fallback;
@@ -52,6 +78,12 @@ function normalizarVentaHistorial(venta) {
             cantidad: toNumber(art?.cantidad, 1),
             precio: toNumber(art?.precio, 0)
         }))
+        : Array.isArray(venta.detalles)
+            ? venta.detalles.map((det) => ({
+                nombre: det?.producto?.nombre || det?.producto?.name || 'Producto',
+                cantidad: toNumber(det?.cantidad, 1),
+                precio: toNumber(det?.precioUnitario, 0)
+            }))
         : normalizarArticulosDesdeItems(venta.items || venta.itemsJson);
 
     const totalCalculado = articulos.reduce((sum, art) => sum + (toNumber(art.precio) * toNumber(art.cantidad)), 0);
@@ -80,22 +112,37 @@ function deduplicarVentasPorId(ventas) {
 // ============================================
 function cargarVentas() {
     try {
-        // Fuente principal: `ventas` (usada por factura.js / registrarVenta)
-        // Compatibilidad: `ventasCompletadas` e `historialVentas` (versiones previas)
-        const ventas = leerArrayLocalStorage('ventas');
-        const ventasCompletadas = leerArrayLocalStorage('ventasCompletadas');
-        const historialVentas = leerArrayLocalStorage('historialVentas');
-
-        const combinadas = [...ventas, ...ventasCompletadas, ...historialVentas]
-            .map(normalizarVentaHistorial)
-            .filter(Boolean);
-
-        ventasActuales = deduplicarVentasPorId(combinadas);
-        console.log('Ventas cargadas:', ventasActuales.length);
+        ventasActuales = [];
     } catch (error) {
         console.error('Error al cargar ventas:', error);
         ventasActuales = [];
     }
+}
+
+async function cargarVentasPreferenteApi() {
+    try {
+        const apiVentas = await fetchVentasDesdeApi();
+        const normalizadas = (Array.isArray(apiVentas) ? apiVentas : [])
+            .map(normalizarVentaHistorial)
+            .filter(Boolean);
+        ventasActuales = deduplicarVentasPorId(normalizadas);
+        console.log('Ventas cargadas desde API:', ventasActuales.length);
+        return;
+    } catch (error) {
+        console.warn('No se pudo cargar ventas desde API, usando localStorage:', error?.message || error);
+    }
+
+    // Fuente local (compatibilidad)
+    const ventas = leerArrayLocalStorage('ventas');
+    const ventasCompletadas = leerArrayLocalStorage('ventasCompletadas');
+    const historialVentas = leerArrayLocalStorage('historialVentas');
+
+    const combinadas = [...ventas, ...ventasCompletadas, ...historialVentas]
+        .map(normalizarVentaHistorial)
+        .filter(Boolean);
+
+    ventasActuales = deduplicarVentasPorId(combinadas);
+    console.log('Ventas cargadas desde localStorage:', ventasActuales.length);
 }
 
 function cargarPapelera() {
@@ -122,7 +169,7 @@ function guardarDatos() {
 // CREAR TARJETAS
 // ============================================
 function crearTarjetaVenta(venta, esVentaEliminada = false) {
-    const fechaFormato = new Date(normalizada.fecha).toLocaleDateString('es-ES', {
+    const fechaFormato = new Date(venta.fecha).toLocaleDateString('es-ES', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
@@ -437,10 +484,10 @@ function cambiarOrdenamiento() {
 // ============================================
 // INICIALIZACIÓN
 // ============================================
-function inicializar() {
+async function inicializar() {
     console.log('Inicializando historial...');
     
-    cargarVentas();
+    await cargarVentasPreferenteApi();
     cargarPapelera();
     
     renderizarHistorial();

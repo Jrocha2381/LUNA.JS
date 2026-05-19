@@ -206,18 +206,37 @@
       status: "completed"
     };
 
+    let storedInApi = false;
     try {
       // Intentar registrar en la API
-      const result = await APIService.createSale(completedSale);
+      const payload = {
+        clienteId: completedSale.clientId || null,
+        metodoPago: paymentMethod,
+        total: finalAmount,
+        items: (completedSale.items || []).map((i) => ({
+          productoId: i.productId,
+          cantidad: i.quantity,
+          precioUnitario: i.price,
+          subtotal: i.subtotal
+        }))
+      };
+
+      const result = await APIService.createSale(payload);
       console.log("Venta registrada en API:", result);
+      storedInApi = true;
+      if (result && result.id != null) {
+        completedSale.id = String(result.id);
+      }
     } catch (error) {
       console.warn("No se pudo registrar en API, guardando localmente:", error);
     }
 
-    // Guardar localmente
-    const completedSales = JSON.parse(localStorage.getItem(SALES_KEY) || "[]");
-    completedSales.push(completedSale);
-    localStorage.setItem(SALES_KEY, JSON.stringify(completedSales));
+    // Guardar localmente solo si la API falló (fallback)
+    if (!storedInApi) {
+      const completedSales = JSON.parse(localStorage.getItem(SALES_KEY) || "[]");
+      completedSales.push(completedSale);
+      localStorage.setItem(SALES_KEY, JSON.stringify(completedSales));
+    }
 
     // Eliminar de ventas abiertas si existía
     deleteOpenSale(currentSale.id);
