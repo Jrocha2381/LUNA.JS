@@ -12,6 +12,7 @@ const authRouter = require('./routes/auth');
 const usuariosRouter = require('./routes/usuarios');
 const categoriasRouter = require('./routes/categorias');
 const productosRouter = require('./routes/productos');
+const descuentosRouter = require('./routes/descuentos');
 const clientesRouter = require('./routes/clientes');
 const proveedoresRouter = require('./routes/proveedores');
 const ventasRouter = require('./routes/ventas');
@@ -78,6 +79,7 @@ function mountApiRoutes(prefix) {
   app.use(`${prefix}/usuarios`, usuariosRouter);
   app.use(`${prefix}/categorias`, categoriasRouter);
   app.use(`${prefix}/productos`, productosRouter);
+  app.use(`${prefix}/descuentos`, descuentosRouter);
   app.use(`${prefix}/clientes`, clientesRouter);
   app.use(`${prefix}/proveedores`, proveedoresRouter);
   app.use(`${prefix}/ventas`, ventasRouter);

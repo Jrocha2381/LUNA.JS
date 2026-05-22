@@ -12,6 +12,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: { name: 'usuarioId', field: 'usuarioId' },
         as: 'usuario'
       });
+      Venta.belongsTo(models.Descuento, {
+        foreignKey: { name: 'descuentoId', field: 'descuentoId' },
+        as: 'descuento'
+      });
       Venta.hasMany(models.DetalleVenta, {
         foreignKey: { name: 'ventaId', field: 'ventaId' },
         as: 'detalles'
@@ -26,6 +30,9 @@ module.exports = (sequelize, DataTypes) => {
       clienteId: { type: DataTypes.INTEGER, allowNull: true, field: 'clienteId' },
       usuarioId: { type: DataTypes.INTEGER, allowNull: true, field: 'usuarioId' },
       metodoPago: { type: DataTypes.STRING(50), allowNull: true, field: 'metodoPago' },
+      subtotal: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
+      descuentoId: { type: DataTypes.INTEGER, allowNull: true, field: 'descuentoId' },
+      descuentoAplicado: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0, field: 'descuentoAplicado' },
       total: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
       items: { type: DataTypes.JSON, allowNull: false, defaultValue: [] },
       estado: { type: DataTypes.STRING(20), allowNull: false, defaultValue: 'activa' }

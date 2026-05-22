@@ -73,6 +73,15 @@
     updateSale: "PUT /ventas/:id",
     completeSale: "POST /ventas/:id/completar",
 
+    // Descuentos
+    getDiscounts: "GET /descuentos",
+    getDiscountById: "GET /descuentos/:id",
+    createDiscount: "POST /descuentos",
+    updateDiscount: "PUT /descuentos/:id",
+    deleteDiscount: "DELETE /descuentos/:id",
+    applyDiscountToSale: "POST /ventas/:id/descuento",
+    removeDiscountFromSale: "DELETE /ventas/:id/descuento",
+
     // Compras
     getPurchases: "GET /compras",
     createPurchase: "POST /compras",
@@ -325,6 +334,35 @@
 
     async completeSale(id, data) {
       return request("POST", `/ventas/${id}/completar`, data);
+    },
+
+    async applyDiscountToSale(ventaId, descuentoId) {
+      return request("POST", `/ventas/${ventaId}/descuento`, { descuentoId });
+    },
+
+    async removeDiscountFromSale(ventaId) {
+      return request("DELETE", `/ventas/${ventaId}/descuento`);
+    },
+
+    // ========== DESCUENTOS ==========
+    async getDiscounts() {
+      return request("GET", "/descuentos");
+    },
+
+    async getDiscountById(id) {
+      return request("GET", `/descuentos/${id}`);
+    },
+
+    async createDiscount(data) {
+      return request("POST", "/descuentos", data);
+    },
+
+    async updateDiscount(id, data) {
+      return request("PUT", `/descuentos/${id}`, data);
+    },
+
+    async deleteDiscount(id) {
+      return request("DELETE", `/descuentos/${id}`);
     },
 
     // ========== COMPRAS ==========

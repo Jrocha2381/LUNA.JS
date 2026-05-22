@@ -2,11 +2,12 @@
 
 const { body } = require('express-validator');
 const validationHandler = require('./validationHandler');
-const { optionalItems, optionalMoney, optionalPositiveInt } = require('./commonRules');
+const { optionalItems, optionalMoney, optionalPositiveInt, requiredPositiveInt } = require('./commonRules');
 
 const createVentaValidator = [
   optionalPositiveInt('clienteId', 'clienteId'),
   optionalPositiveInt('usuarioId', 'usuarioId'),
+  optionalPositiveInt('descuentoId', 'descuentoId'),
   body('metodoPago')
     .optional({ nullable: true, checkFalsy: true })
     .trim()
@@ -24,7 +25,13 @@ const createVentaValidator = [
 
 const updateVentaValidator = createVentaValidator;
 
+const applyVentaDescuentoValidator = [
+  requiredPositiveInt('descuentoId', 'descuentoId'),
+  validationHandler
+];
+
 module.exports = {
   createVentaValidator,
-  updateVentaValidator
+  updateVentaValidator,
+  applyVentaDescuentoValidator
 };
