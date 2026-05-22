@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Descuentos | Papel y Luna</title>
+    <link rel="stylesheet" href="stylecarrito.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Panel Administrativo</h1>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <a href="/Jeronimo Rubio_Sebastian Rocha_Ibrahim Safadi">Menu de cuenta</a>
+        <a href="../index.html">Volver a la tienda</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="admin-productos">
+        <h2>CRUD de descuentos</h2>
+
+        <form id="descuento-form" class="producto-form">
+          <h3 id="descuento-form-title">Crear descuento</h3>
+
+          <div class="form-grid">
+            <label>
+              Nombre *
+              <input type="text" name="nombre" required />
+            </label>
+
+            <label>
+              Tipo *
+              <select name="tipo" required>
+                <option value="porcentaje">Porcentaje (%)</option>
+                <option value="fijo">Valor fijo</option>
+              </select>
+            </label>
+
+            <label>
+              Valor *
+              <input type="number" name="valor" min="0" step="0.01" required />
+            </label>
+
+            <label class="checkbox-label">
+              <input type="checkbox" name="activo" checked />
+              Activo
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button id="descuento-submit" type="submit" class="btn-admin-primario">
+              Guardar descuento
+            </button>
+            <button id="descuento-cancelar" type="button" class="btn-admin-secundario">
+              Cancelar
+            </button>
+          </div>
+        </form>
+
+        <div class="tabla-wrapper">
+          <table class="tabla-productos">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Tipo</th>
+                <th>Valor</th>
+                <th>Activo</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="admin-descuentos-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="admin-auth.js"></script>
+    <script src="../js/backend.js"></script>
+    <script src="../js/descuentos-data.js"></script>
+    <script src="carrito.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+        if (!window.validarSesionAdmin || !window.validarSesionAdmin()) return;
+
+        try {
+          if (window.sincronizarDescuentosBackend) await window.sincronizarDescuentosBackend();
+        } catch (e) {
+          console.error(e);
+        }
+
+        if (window.renderAdminDescuentos) window.renderAdminDescuentos();
+        if (window.activarEventosAdminDescuentos) window.activarEventosAdminDescuentos();
+
+        window.addEventListener("descuentosActualizados", () => {
+          if (window.renderAdminDescuentos) window.renderAdminDescuentos();
+        });
+      });
+    </script>
+  </body>
+</html>
+
