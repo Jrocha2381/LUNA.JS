@@ -449,10 +449,23 @@ main {
     border-radius: 6px;
 }
 
+.refund-porcentaje {
+    width: 64px;
+}
+
 .tabla-reembolso small {
     display: block;
     color: var(--color-tex-claro);
     margin-top: 4px;
+}
+
+.tabla-reembolso tr.refund-row-error {
+    background-color: #fff3cd;
+}
+
+.tabla-reembolso tr.refund-row-error .refund-subtotal {
+    color: #8a4b00;
+    font-weight: 700;
 }
 
 .motivo-reembolso {

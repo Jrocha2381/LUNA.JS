@@ -9,6 +9,10 @@ function toNumber(valor, fallback = 0) {
   return Number.isFinite(n) ? n : fallback;
 }
 
+function round2(valor) {
+  return Math.round(toNumber(valor) * 100) / 100;
+}
+
 function formatearMoneda(valor) {
   return `$${toNumber(valor).toLocaleString("es-CO")}`;
 }
@@ -131,7 +135,10 @@ function obtenerCantidadReembolsada(movimiento, productoId) {
     const items = Array.isArray(reembolso.items) ? reembolso.items : [];
     return sum + items
       .filter((item) => Number(item.productoId) === Number(productoId))
-      .reduce((itemSum, item) => itemSum + toNumber(item.cantidad), 0);
+      .reduce((itemSum, item) => {
+        const porcentaje = Math.max(0, Math.min(100, toNumber(item.porcentajeReembolso, 100)));
+        return itemSum + (toNumber(item.cantidad) * porcentaje / 100);
+      }, 0);
   }, 0);
 }
 
@@ -277,7 +284,7 @@ function mostrarModalDetalle(movimiento) {
           <div class="reembolso-resumen">
             <strong>${formatearFecha(reembolso.fecha)}</strong>
             <span>${formatearMoneda(reembolso.valorTotal)}</span>
-            <small>${(reembolso.items || []).map((item) => `${item.cantidad}x ${item.nombre}`).join(", ")}</small>
+            <small>${(reembolso.items || []).map((item) => `${item.cantidad}x ${item.nombre} (${toNumber(item.porcentajeReembolso, 100)}%)`).join(", ")}</small>
           </div>
         `).join("")}
       </div>
@@ -339,16 +346,21 @@ function mostrarModalReembolso(movimiento) {
   const filas = movimiento.articulos.map((item, index) => {
     const reembolsada = obtenerCantidadReembolsada(movimiento, item.productoId);
     const disponible = Math.max(0, toNumber(item.cantidad) - reembolsada);
+    const cantidadBase = disponible >= 1 ? 1 : toNumber(item.cantidad);
+    const porcentajeInicial = disponible >= 1 ? 100 : Math.max(1, Math.min(100, round2(disponible * 100 / Math.max(1, cantidadBase))));
     const disabled = disponible <= 0 ? "disabled" : "";
     return `
-      <tr data-factor="${factor}" data-precio="${item.precio}" data-producto-id="${item.productoId}">
+      <tr data-factor="${factor}" data-precio="${item.precio}" data-producto-id="${item.productoId}" data-disponible="${disponible}">
         <td><input type="checkbox" class="refund-select" ${disabled}></td>
         <td>
           <strong>${item.nombre}</strong>
-          <small>Disponible: ${disponible}</small>
+          <small>Disponible: ${round2(disponible)} equivalente</small>
         </td>
         <td>
-          <input type="number" class="refund-cantidad" value="${disponible > 0 ? 1 : 0}" min="1" max="${disponible}" ${disabled}>
+          <input type="number" class="refund-cantidad" value="${disponible > 0 ? cantidadBase : 0}" min="1" max="${item.cantidad}" ${disabled}>
+        </td>
+        <td>
+          <input type="number" class="refund-porcentaje" value="${porcentajeInicial}" min="1" max="100" step="1" ${disabled}>
         </td>
         <td>${formatearMoneda(item.precio)}</td>
         <td><input type="checkbox" class="refund-stock" ${disabled} checked></td>
@@ -378,6 +390,7 @@ function mostrarModalReembolso(movimiento) {
                 <th></th>
                 <th>Producto</th>
                 <th>Cantidad</th>
+                <th>%</th>
                 <th>Precio</th>
                 <th>Inventario</th>
                 <th>Reembolso</th>
@@ -416,16 +429,21 @@ function mostrarModalReembolso(movimiento) {
       const selected = row.querySelector(".refund-select").checked;
       const cantidadInput = row.querySelector(".refund-cantidad");
       const cantidad = Math.max(0, Math.min(toNumber(cantidadInput.value), toNumber(cantidadInput.max)));
+      const porcentajeInput = row.querySelector(".refund-porcentaje");
+      const porcentaje = Math.max(0, Math.min(100, toNumber(porcentajeInput.value, 100)));
+      const disponible = toNumber(row.dataset.disponible);
+      const excedeDisponible = selected && (cantidad * porcentaje / 100) > disponible;
       const precio = toNumber(row.dataset.precio);
       const rowFactor = toNumber(row.dataset.factor, 1);
-      const subtotal = selected ? cantidad * precio * rowFactor : 0;
+      const subtotal = selected ? cantidad * precio * rowFactor * (porcentaje / 100) : 0;
+      row.classList.toggle("refund-row-error", excedeDisponible);
       row.querySelector(".refund-subtotal").textContent = formatearMoneda(subtotal);
       if (selected) total += subtotal;
     });
     document.getElementById("total-reembolso-calculado").textContent = formatearMoneda(total);
   }
 
-  overlay.querySelectorAll(".refund-select, .refund-cantidad").forEach((input) => {
+  overlay.querySelectorAll(".refund-select, .refund-cantidad, .refund-porcentaje").forEach((input) => {
     input.addEventListener("input", recalcular);
     input.addEventListener("change", recalcular);
   });
@@ -442,7 +460,9 @@ function mostrarModalReembolso(movimiento) {
       .map((row) => ({
         productoId: Number(row.dataset.productoId),
         cantidad: Number(row.querySelector(".refund-cantidad").value),
-        retornaInventario: row.querySelector(".refund-stock").checked
+        porcentajeReembolso: Number(row.querySelector(".refund-porcentaje").value),
+        retornaInventario: row.querySelector(".refund-stock").checked,
+        disponible: Number(row.dataset.disponible)
       }))
       .filter((item) => item.productoId && item.cantidad > 0);
 
@@ -451,9 +471,14 @@ function mostrarModalReembolso(movimiento) {
       return;
     }
 
+    if (items.some((item) => (item.cantidad * item.porcentajeReembolso / 100) > item.disponible)) {
+      mostrarNotificacion("error", "Valor excedido", "El porcentaje seleccionado supera lo disponible para reembolsar.");
+      return;
+    }
+
     try {
       await window.Backend.post(`ventas/${movimiento.id}/reembolsos`, {
-        items,
+        items: items.map(({ disponible, ...item }) => item),
         motivo: document.getElementById("motivo-reembolso").value
       });
       cerrar();

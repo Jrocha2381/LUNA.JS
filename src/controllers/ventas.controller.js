@@ -81,14 +81,16 @@ function coerceRefundItems(rawItems) {
     .map((item) => ({
       productoId: Number(item.productoId),
       cantidad: Math.floor(Number(item.cantidad || 0)),
+      porcentajeReembolso: Math.max(0, Math.min(100, Number(item.porcentajeReembolso ?? 100))),
       retornaInventario: Boolean(item.retornaInventario)
     }))
-    .filter((item) => Number.isFinite(item.productoId) && item.productoId > 0 && item.cantidad > 0)
+    .filter((item) => Number.isFinite(item.productoId) && item.productoId > 0 && item.cantidad > 0 && item.porcentajeReembolso > 0)
     .forEach((item) => {
-      const current = grouped.get(item.productoId) || { ...item, cantidad: 0, retornaInventario: false };
+      const key = `${item.productoId}-${item.porcentajeReembolso}-${item.retornaInventario ? 'stock' : 'no-stock'}`;
+      const current = grouped.get(key) || { ...item, cantidad: 0, retornaInventario: false };
       current.cantidad += item.cantidad;
       current.retornaInventario = current.retornaInventario || item.retornaInventario;
-      grouped.set(item.productoId, current);
+      grouped.set(key, current);
     });
 
   return [...grouped.values()];
@@ -127,7 +129,22 @@ function groupRefundedQuantities(reembolsos) {
     items.forEach((item) => {
       const productoId = Number(item.productoId);
       const cantidad = Number(item.cantidad || 0);
+      const porcentaje = Math.max(0, Math.min(100, Number(item.porcentajeReembolso ?? 100)));
       if (!Number.isFinite(productoId) || productoId <= 0 || !Number.isFinite(cantidad)) return;
+      grouped.set(productoId, (grouped.get(productoId) || 0) + (cantidad * porcentaje / 100));
+    });
+  });
+  return grouped;
+}
+
+function groupReturnedQuantities(reembolsos) {
+  const grouped = new Map();
+  parseJsonArray(reembolsos).forEach((reembolso) => {
+    const items = Array.isArray(reembolso?.items) ? reembolso.items : [];
+    items.forEach((item) => {
+      const productoId = Number(item.productoId);
+      const cantidad = Number(item.cantidad || 0);
+      if (!item.retornaInventario || !Number.isFinite(productoId) || productoId <= 0 || !Number.isFinite(cantidad)) return;
       grouped.set(productoId, (grouped.get(productoId) || 0) + cantidad);
     });
   });
@@ -415,6 +432,7 @@ async function createRefund(req, res, next) {
       const soldByProduct = groupSoldItems(detalles);
       const previousRefunds = parseJsonArray(venta.reembolsos);
       const refundedByProduct = groupRefundedQuantities(previousRefunds);
+      const returnedByProduct = groupReturnedQuantities(previousRefunds);
       const subtotalVenta = await inferSubtotalForVenta(venta, { transaction: t });
       const totalVenta = round2(venta.total);
       const factorDescuento = subtotalVenta > 0 ? Math.min(1, Math.max(0, totalVenta / subtotalVenta)) : 1;
@@ -430,20 +448,29 @@ async function createRefund(req, res, next) {
 
         const alreadyRefunded = refundedByProduct.get(item.productoId) || 0;
         const available = Math.max(0, Number(sold.cantidad || 0) - alreadyRefunded);
-        if (item.cantidad > available) {
-          const err = new Error(`Solo quedan ${available} unidades disponibles para reembolsar de ${sold.nombre}`);
+        const equivalentRefundQuantity = item.cantidad * item.porcentajeReembolso / 100;
+        if (equivalentRefundQuantity > available) {
+          const err = new Error(`Solo queda ${round2(available)} equivalente disponible para reembolsar de ${sold.nombre}`);
           err.status = 400;
           throw err;
         }
 
         const precioUnitario = sold.cantidad > 0 ? Number(sold.subtotal || 0) / Number(sold.cantidad) : 0;
         const subtotalLinea = round2(precioUnitario * item.cantidad);
-        const valorReembolso = round2(subtotalLinea * factorDescuento);
+        const valorReembolso = round2(subtotalLinea * factorDescuento * (item.porcentajeReembolso / 100));
+        const alreadyReturned = returnedByProduct.get(item.productoId) || 0;
+        const canReturn = Math.max(0, Number(sold.cantidad || 0) - alreadyReturned);
+        if (item.retornaInventario && item.cantidad > canReturn) {
+          const err = new Error(`Solo quedan ${canReturn} unidades disponibles para retornar al inventario de ${sold.nombre}`);
+          err.status = 400;
+          throw err;
+        }
 
         refundItems.push({
           productoId: item.productoId,
           nombre: sold.nombre,
           cantidad: item.cantidad,
+          porcentajeReembolso: item.porcentajeReembolso,
           precioUnitario: round2(precioUnitario),
           subtotal: subtotalLinea,
           valorReembolso,

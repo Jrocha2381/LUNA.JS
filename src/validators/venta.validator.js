@@ -40,6 +40,10 @@ const createReembolsoValidator = [
   body('items.*.cantidad')
     .isInt({ min: 1 })
     .withMessage('cantidad debe ser un entero positivo'),
+  body('items.*.porcentajeReembolso')
+    .optional({ nullable: true })
+    .isFloat({ gt: 0, max: 100 })
+    .withMessage('porcentajeReembolso debe ser mayor a 0 y maximo 100'),
   body('items.*.retornaInventario')
     .optional({ nullable: true })
     .isBoolean()
