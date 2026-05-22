@@ -3,8 +3,39 @@
 let carritoVentas = []; // Array de {productoId, nombre, cantidad, precioUnitario, subtotal, stock, seguimientoInventario}
 let productosDisponibles = [];
 let clientesDisponibles = [];
+let descuentosDisponibles = [];
 let productoModalActual = null;
 const VENTAS_SYNC_INTERVAL_MS = 8000;
+let descuentoSeleccionadoId = null;
+
+function round2(n) {
+  const num = Number(n || 0);
+  return Math.round((Number.isFinite(num) ? num : 0) * 100) / 100;
+}
+
+function obtenerDescuentoPorId(id) {
+  const numId = Number(id);
+  if (!numId) return null;
+  return (descuentosDisponibles || []).find((d) => Number(d.id) === numId) || null;
+}
+
+function calcularDescuentoAplicado(subtotal, descuento) {
+  const base = Math.max(0, Number(subtotal || 0));
+  if (!descuento) return 0;
+
+  const tipo = String(descuento.tipo || "").trim();
+  const valor = Number(descuento.valor || 0);
+  let aplicado = 0;
+
+  if (tipo === "porcentaje") {
+    aplicado = base * (Math.max(0, Math.min(100, valor)) / 100);
+  } else if (tipo === "fijo") {
+    aplicado = Math.max(0, valor);
+  }
+
+  aplicado = Math.min(base, aplicado);
+  return round2(aplicado);
+}
 
 // === Sistema de Pausa y Reanudación de Ventas ===
 function obtenerVentasAbiertas() {
@@ -38,6 +69,9 @@ function pausarVentaActual() {
     'Cliente No Registrado';
 
   const total = carritoVentas.reduce((s, i) => s + i.subtotal, 0);
+  const descuento = obtenerDescuentoPorId(descuentoSeleccionadoId);
+  const descuentoAplicado = calcularDescuentoAplicado(total, descuento);
+  const totalConDescuento = round2(Math.max(0, total - descuentoAplicado));
   
   const nuevaVentaAbierta = {
     id: Date.now(),
@@ -45,7 +79,11 @@ function pausarVentaActual() {
     clienteId,
     clienteNombre,
     items: [...carritoVentas],
-    total,
+    subtotal: total,
+    descuentoId: descuento ? descuento.id : null,
+    descuentoNombre: descuento ? descuento.nombre : null,
+    descuentoAplicado,
+    total: totalConDescuento,
     metodoPago: document.getElementById('selector-metodo-pago').value || 'No especificado'
   };
 
@@ -66,9 +104,15 @@ function retomarVenta(id) {
   const venta = ventasAbiertas.splice(index, 1)[0];
   guardarVentasAbiertas(ventasAbiertas);
   carritoVentas = venta.items;
+  descuentoSeleccionadoId = venta.descuentoId || null;
   
   const clienteSelect = document.getElementById('selector-cliente');
   clienteSelect.value = venta.clienteId || 'sin-cliente';
+
+  const descuentoSelect = document.getElementById('selector-descuento');
+  if (descuentoSelect) {
+    descuentoSelect.value = venta.descuentoId ? String(venta.descuentoId) : 'sin-descuento';
+  }
   
   const metodoPagoSelect = document.getElementById('selector-metodo-pago');
   if (venta.metodoPago && venta.metodoPago !== 'No especificado') {
@@ -158,6 +202,43 @@ async function cargarClientes() {
     poblarSelectorClientes();
   } catch (error) {
     console.error('Error al cargar clientes:', error);
+  }
+}
+
+// Cargar descuentos desde la API (solo activos)
+async function cargarDescuentos() {
+  try {
+    const descuentos = await window.Backend.get('descuentos');
+    descuentosDisponibles = Array.isArray(descuentos) ? descuentos : [];
+    poblarSelectorDescuentos();
+  } catch (error) {
+    console.error('Error al cargar descuentos:', error);
+  }
+}
+
+function poblarSelectorDescuentos() {
+  const selector = document.getElementById('selector-descuento');
+  if (!selector) return;
+
+  const valorActual = selector.value || 'sin-descuento';
+  selector.innerHTML = '<option value="sin-descuento">Sin descuento</option>';
+
+  const activos = (descuentosDisponibles || []).filter((d) => d && d.activo !== false);
+  activos.forEach((d) => {
+    const option = document.createElement('option');
+    option.value = String(d.id);
+    const tipo = String(d.tipo || '').trim() === 'fijo' ? 'Fijo' : '%';
+    const valor = String(d.tipo || '').trim() === 'fijo' ? formatearMoneda(Number(d.valor || 0)) : `${Number(d.valor || 0)}%`;
+    option.textContent = `${d.nombre} (${tipo === '%' ? valor : `Fijo ${valor}`})`;
+    selector.appendChild(option);
+  });
+
+  if (valorActual !== 'sin-descuento' && activos.some((d) => String(d.id) === String(valorActual))) {
+    selector.value = valorActual;
+    descuentoSeleccionadoId = Number(valorActual);
+  } else {
+    selector.value = 'sin-descuento';
+    descuentoSeleccionadoId = null;
   }
 }
 
@@ -365,8 +446,27 @@ function eliminarDelCarrito(idx) {
 // Calcular totales
 function calcularTotales() {
   const subtotal = carritoVentas.reduce((sum, item) => sum + item.subtotal, 0);
-  document.getElementById('subtotal-valor').textContent = formatearMoneda(subtotal);
-  document.getElementById('total-valor').textContent = formatearMoneda(subtotal);
+  const descuento = obtenerDescuentoPorId(descuentoSeleccionadoId);
+  const descuentoAplicado = calcularDescuentoAplicado(subtotal, descuento);
+  const total = round2(Math.max(0, subtotal - descuentoAplicado));
+
+  const subtotalEl = document.getElementById('subtotal-valor');
+  const totalEl = document.getElementById('total-valor');
+  const lineaDescuento = document.getElementById('linea-descuento');
+  const descuentoEl = document.getElementById('descuento-valor');
+
+  if (subtotalEl) subtotalEl.textContent = formatearMoneda(subtotal);
+  if (totalEl) totalEl.textContent = formatearMoneda(total);
+
+  if (lineaDescuento && descuentoEl) {
+    if (descuentoAplicado > 0) {
+      lineaDescuento.style.display = '';
+      descuentoEl.textContent = `- ${formatearMoneda(descuentoAplicado)}`;
+    } else {
+      lineaDescuento.style.display = 'none';
+      descuentoEl.textContent = formatearMoneda(0);
+    }
+  }
 }
 
 // Vaciar carrito
@@ -401,7 +501,10 @@ async function finalizarVenta() {
     return;
   }
 
-  const total = extraerNumeroDeMoneda(document.getElementById('total-valor').textContent);
+  const subtotal = carritoVentas.reduce((sum, item) => sum + item.subtotal, 0);
+  const descuento = obtenerDescuentoPorId(descuentoSeleccionadoId);
+  const descuentoAplicado = calcularDescuentoAplicado(subtotal, descuento);
+  const total = round2(Math.max(0, subtotal - descuentoAplicado));
 
   // Mostrar modal de confirmación
   const totalItems = carritoVentas.reduce((sum, item) => sum + item.cantidad, 0);
@@ -411,6 +514,8 @@ async function finalizarVenta() {
     ${resumenProductos}<br><br>
     <strong>Cliente:</strong> ${clienteId ? clientesDisponibles.find(c => c.id === clienteId)?.nombre || 'No especificado' : 'Cliente No Registrado'}<br>
     <strong>Método de Pago:</strong> ${metodoPago}<br>
+    <strong>Subtotal:</strong> ${formatearMoneda(subtotal)}<br>
+    <strong>Descuento:</strong> ${descuento ? `${descuento.nombre} (-${formatearMoneda(descuentoAplicado)})` : 'Sin descuento'}<br>
     <strong>Total:</strong> ${formatearMoneda(total)}<br><br>
     ¿Confirmar esta venta?
   `;
@@ -431,7 +536,10 @@ async function confirmarFinalizarVenta() {
 
   const clienteId = clienteSelect.value === 'sin-cliente' ? null : parseInt(clienteSelect.value);
   const metodoPago = metodoPagoSelect.value;
-  const total = extraerNumeroDeMoneda(document.getElementById('total-valor').textContent);
+  const subtotal = carritoVentas.reduce((sum, item) => sum + item.subtotal, 0);
+  const descuento = obtenerDescuentoPorId(descuentoSeleccionadoId);
+  const descuentoAplicado = calcularDescuentoAplicado(subtotal, descuento);
+  const total = round2(Math.max(0, subtotal - descuentoAplicado));
 
   try {
     // Crear la venta
@@ -440,7 +548,9 @@ async function confirmarFinalizarVenta() {
       clienteId,
       usuarioId: null, // Podrías obtenerlo de la sesión
       metodoPago,
-      total,
+      // En el backend, "total" se interpreta como subtotal (pre-descuento) para recalcular el total final.
+      total: subtotal,
+      descuentoId: descuento ? descuento.id : null,
       items: carritoVentas
     };
 
@@ -508,16 +618,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     await cargarProductos();
     await cargarClientes();
+    await cargarDescuentos();
     renderizarCarrito();
+    calcularTotales();
 
     // Asignar eventos
     document.getElementById('btn-vaciar-carrito').addEventListener('click', vaciarCarrito);
     document.getElementById('btn-pausar-venta').addEventListener('click', pausarVentaActual);
     document.getElementById('btn-finalizar-venta').addEventListener('click', finalizarVenta);
     document.getElementById('buscar-producto').addEventListener('input', filtrarProductos);
+    const selectorDescuento = document.getElementById('selector-descuento');
+    if (selectorDescuento) {
+      selectorDescuento.addEventListener('change', () => {
+        const v = selectorDescuento.value;
+        descuentoSeleccionadoId = v && v !== 'sin-descuento' ? Number(v) : null;
+        calcularTotales();
+      });
+    }
 
     setInterval(() => {
-      Promise.all([cargarProductos(), cargarClientes()]).catch((error) => {
+      Promise.all([cargarProductos(), cargarClientes(), cargarDescuentos()]).catch((error) => {
         console.error('Error sincronizando ventas automaticamente:', error);
       });
     }, VENTAS_SYNC_INTERVAL_MS);

@@ -72,6 +72,14 @@
             </table>
           </div>
 
+          <!-- Descuento -->
+          <div class="seccion-metodo-pago" style="margin-top: 14px;">
+            <label for="selector-descuento">Descuento:</label>
+            <select id="selector-descuento" class="input-select">
+              <option value="sin-descuento">Sin descuento</option>
+            </select>
+          </div>
+
           <!-- Método de Pago -->
           <div class="seccion-metodo-pago">
             <label for="selector-metodo-pago">Método de Pago:</label>
@@ -89,6 +97,10 @@
             <div class="linea-resumen">
               <span>Subtotal:</span>
               <span id="subtotal-valor">$0</span>
+            </div>
+            <div class="linea-resumen" id="linea-descuento" style="display:none;">
+              <span>Descuento:</span>
+              <span id="descuento-valor">$0</span>
             </div>
             <div class="linea-resumen linea-total">
               <span>Total:</span>
@@ -180,6 +192,7 @@
     </div>
 
     <script src="../js/backend.js"></script>
+    <script src="../js/descuentos-data.js"></script>
     <script src="carrito.js"></script>
     <script src="ventas.js"></script>
   </body>

@@ -117,8 +117,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     const totalesVenta = document.getElementById("totales-venta");
 
     if (totalesVenta) {
+        const subtotal = venta.subtotal != null ? Number(venta.subtotal) : (Array.isArray(detallesVenta) && detallesVenta.length > 0
+            ? detallesVenta.reduce((s, d) => s + Number(d.subtotal || 0), 0)
+            : (venta.items || []).reduce((s, i) => s + Number(i.subtotal || 0), 0));
+
+        const descuentoAplicado = Number(venta.descuentoAplicado || 0);
+        const descuentoNombre = venta.descuento && venta.descuento.nombre ? venta.descuento.nombre : null;
 
         totalesVenta.innerHTML = `
+            <div style="display:flex; justify-content:space-between; margin-top:10px;">
+                <span>SUBTOTAL:</span>
+                <span>$${Number(subtotal || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+
+            ${descuentoAplicado > 0 ? `
+                <div style="display:flex; justify-content:space-between;">
+                    <span>DESCUENTO${descuentoNombre ? ` (${descuentoNombre})` : ""}:</span>
+                    <span>- $${Number(descuentoAplicado).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+            ` : ""}
+
             <div style="display:flex; justify-content:space-between; margin-top:10px; border-top:1px dashed #000;">
                 <strong>TOTAL:</strong>
                 <strong>$${Number(venta.total).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
