@@ -61,6 +61,94 @@ function coerceItems(rawItems) {
     .filter((item) => Number.isFinite(item.productoId) && item.productoId > 0 && Number.isFinite(item.cantidad) && item.cantidad > 0);
 }
 
+function parseJsonArray(value) {
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value || '[]');
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (_error) {
+      return [];
+    }
+  }
+  return [];
+}
+
+function coerceRefundItems(rawItems) {
+  if (!Array.isArray(rawItems)) return [];
+  const grouped = new Map();
+  rawItems
+    .map((item) => ({
+      productoId: Number(item.productoId),
+      cantidad: Math.floor(Number(item.cantidad || 0)),
+      retornaInventario: Boolean(item.retornaInventario)
+    }))
+    .filter((item) => Number.isFinite(item.productoId) && item.productoId > 0 && item.cantidad > 0)
+    .forEach((item) => {
+      const current = grouped.get(item.productoId) || { ...item, cantidad: 0, retornaInventario: false };
+      current.cantidad += item.cantidad;
+      current.retornaInventario = current.retornaInventario || item.retornaInventario;
+      grouped.set(item.productoId, current);
+    });
+
+  return [...grouped.values()];
+}
+
+function groupSoldItems(detalles) {
+  const grouped = new Map();
+
+  detalles.forEach((detalle) => {
+    const productoId = Number(detalle.productoId);
+    if (!Number.isFinite(productoId) || productoId <= 0) return;
+
+    const current = grouped.get(productoId) || {
+      productoId,
+      nombre: detalle.producto?.nombre || 'Producto',
+      cantidad: 0,
+      subtotal: 0,
+      producto: detalle.producto || null
+    };
+
+    const cantidad = Number(detalle.cantidad || 0);
+    const subtotal = Number(detalle.subtotal || 0);
+    current.cantidad += Number.isFinite(cantidad) ? cantidad : 0;
+    current.subtotal += Number.isFinite(subtotal) ? subtotal : 0;
+    if (!current.producto && detalle.producto) current.producto = detalle.producto;
+    grouped.set(productoId, current);
+  });
+
+  return grouped;
+}
+
+function groupRefundedQuantities(reembolsos) {
+  const grouped = new Map();
+  parseJsonArray(reembolsos).forEach((reembolso) => {
+    const items = Array.isArray(reembolso?.items) ? reembolso.items : [];
+    items.forEach((item) => {
+      const productoId = Number(item.productoId);
+      const cantidad = Number(item.cantidad || 0);
+      if (!Number.isFinite(productoId) || productoId <= 0 || !Number.isFinite(cantidad)) return;
+      grouped.set(productoId, (grouped.get(productoId) || 0) + cantidad);
+    });
+  });
+  return grouped;
+}
+
+async function hydrateVenta(id) {
+  return Venta.findByPk(id, {
+    include: [
+      { model: Cliente, as: 'cliente' },
+      { model: Usuario, as: 'usuario', attributes: ['id', 'nombre', 'correo', 'rol'] },
+      { model: Descuento, as: 'descuento' },
+      {
+        model: DetalleVenta,
+        as: 'detalles',
+        include: [{ model: Producto, as: 'producto' }]
+      }
+    ]
+  });
+}
+
 async function list(_req, res, next) {
   try {
     const rows = await Venta.findAll({
@@ -294,6 +382,124 @@ async function removeDiscount(req, res, next) {
   }
 }
 
+async function createRefund(req, res, next) {
+  const requestedItems = coerceRefundItems(req.body?.items);
+
+  try {
+    const updated = await sequelize.transaction(async (t) => {
+      const venta = await Venta.findByPk(req.params.id, { transaction: t });
+      if (!venta) {
+        const err = new Error('Not found');
+        err.status = 404;
+        throw err;
+      }
+
+      if (venta.estado === 'papelera') {
+        const err = new Error('No se puede reembolsar una venta en papelera');
+        err.status = 400;
+        throw err;
+      }
+
+      if (!requestedItems.length) {
+        const err = new Error('Selecciona al menos un producto para reembolsar');
+        err.status = 400;
+        throw err;
+      }
+
+      const detalles = await DetalleVenta.findAll({
+        where: { ventaId: venta.id },
+        include: [{ model: Producto, as: 'producto' }],
+        transaction: t
+      });
+
+      const soldByProduct = groupSoldItems(detalles);
+      const previousRefunds = parseJsonArray(venta.reembolsos);
+      const refundedByProduct = groupRefundedQuantities(previousRefunds);
+      const subtotalVenta = await inferSubtotalForVenta(venta, { transaction: t });
+      const totalVenta = round2(venta.total);
+      const factorDescuento = subtotalVenta > 0 ? Math.min(1, Math.max(0, totalVenta / subtotalVenta)) : 1;
+      const refundItems = [];
+
+      for (const item of requestedItems) {
+        const sold = soldByProduct.get(item.productoId);
+        if (!sold) {
+          const err = new Error(`El producto ${item.productoId} no pertenece a esta venta`);
+          err.status = 400;
+          throw err;
+        }
+
+        const alreadyRefunded = refundedByProduct.get(item.productoId) || 0;
+        const available = Math.max(0, Number(sold.cantidad || 0) - alreadyRefunded);
+        if (item.cantidad > available) {
+          const err = new Error(`Solo quedan ${available} unidades disponibles para reembolsar de ${sold.nombre}`);
+          err.status = 400;
+          throw err;
+        }
+
+        const precioUnitario = sold.cantidad > 0 ? Number(sold.subtotal || 0) / Number(sold.cantidad) : 0;
+        const subtotalLinea = round2(precioUnitario * item.cantidad);
+        const valorReembolso = round2(subtotalLinea * factorDescuento);
+
+        refundItems.push({
+          productoId: item.productoId,
+          nombre: sold.nombre,
+          cantidad: item.cantidad,
+          precioUnitario: round2(precioUnitario),
+          subtotal: subtotalLinea,
+          valorReembolso,
+          retornaInventario: item.retornaInventario
+        });
+
+        if (item.retornaInventario && sold.producto && sold.producto.seguimientoInventario !== false) {
+          await sold.producto.update(
+            { stock: Number(sold.producto.stock || 0) + item.cantidad },
+            { transaction: t }
+          );
+        }
+      }
+
+      const valorTotal = round2(refundItems.reduce((sum, item) => sum + Number(item.valorReembolso || 0), 0));
+      if (valorTotal <= 0) {
+        const err = new Error('El valor del reembolso debe ser mayor a cero');
+        err.status = 400;
+        throw err;
+      }
+
+      const totalReembolsado = round2(Math.min(totalVenta, Number(venta.totalReembolsado || 0) + valorTotal));
+      const totalUnidadesVendidas = [...soldByProduct.values()].reduce((sum, item) => sum + Number(item.cantidad || 0), 0);
+      const totalUnidadesReembolsadas = [...refundedByProduct.values()].reduce((sum, qty) => sum + Number(qty || 0), 0)
+        + refundItems.reduce((sum, item) => sum + Number(item.cantidad || 0), 0);
+      const estado = totalUnidadesReembolsadas >= totalUnidadesVendidas || totalReembolsado >= totalVenta
+        ? 'reembolsada_total'
+        : 'reembolsada_parcial';
+
+      const reembolso = {
+        id: Date.now(),
+        fecha: new Date().toISOString(),
+        motivo: req.body?.motivo || '',
+        tipo: estado === 'reembolsada_total' ? 'total' : 'parcial',
+        valorTotal,
+        items: refundItems
+      };
+
+      await venta.update(
+        {
+          reembolsos: [...previousRefunds, reembolso],
+          totalReembolsado,
+          estado
+        },
+        { transaction: t }
+      );
+
+      return venta;
+    });
+
+    res.status(201).json(await hydrateVenta(updated.id));
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function remove(req, res, next) {
   try {
     const row = await Venta.findByPk(req.params.id);
@@ -305,4 +511,4 @@ async function remove(req, res, next) {
   }
 }
 
-module.exports = { list, getById, create, update, applyDiscount, removeDiscount, remove };
+module.exports = { list, getById, create, update, applyDiscount, removeDiscount, createRefund, remove };

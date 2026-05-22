@@ -34,6 +34,8 @@ module.exports = (sequelize, DataTypes) => {
       descuentoId: { type: DataTypes.INTEGER, allowNull: true, field: 'descuentoId' },
       descuentoAplicado: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0, field: 'descuentoAplicado' },
       total: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
+      totalReembolsado: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0, field: 'totalReembolsado' },
+      reembolsos: { type: DataTypes.JSON, allowNull: false, defaultValue: [] },
       items: { type: DataTypes.JSON, allowNull: false, defaultValue: [] },
       estado: { type: DataTypes.STRING(20), allowNull: false, defaultValue: 'activa' }
     },

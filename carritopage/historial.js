@@ -44,6 +44,7 @@ function normalizarArticulo(item, tipo) {
     : toNumber(item.precioUnitario ?? item.precio ?? item.precioVenta ?? producto.precio, 0);
 
   return {
+    productoId: Number(item.productoId ?? item.productId ?? item.idProducto ?? producto.id ?? item.id),
     nombre: item.nombre || item.titulo || item.productoNombre || producto.nombre || "Producto",
     cantidad,
     precio,
@@ -60,8 +61,21 @@ function articulosDesdeDetalles(registro, tipo) {
   return parseItems(registro.items).map((item) => normalizarArticulo(item, tipo));
 }
 
+function agruparArticulosPorProducto(articulos) {
+  const agrupados = new Map();
+  articulos.forEach((item) => {
+    const key = Number(item.productoId) || item.nombre;
+    const actual = agrupados.get(key) || { ...item, cantidad: 0, subtotal: 0 };
+    actual.cantidad += toNumber(item.cantidad);
+    actual.subtotal += toNumber(item.subtotal);
+    actual.precio = actual.cantidad > 0 ? actual.subtotal / actual.cantidad : toNumber(item.precio);
+    agrupados.set(key, actual);
+  });
+  return [...agrupados.values()];
+}
+
 function normalizarMovimiento(registro, tipo) {
-  const articulos = articulosDesdeDetalles(registro, tipo);
+  const articulos = agruparArticulosPorProducto(articulosDesdeDetalles(registro, tipo));
   const totalCalculado = articulos.reduce((sum, item) => sum + item.subtotal, 0);
   const tercero = tipo === "compra"
     ? registro.proveedor?.nombre || "Proveedor no especificado"
@@ -76,6 +90,8 @@ function normalizarMovimiento(registro, tipo) {
     metodoPago: registro.metodoPago || registro.metodo || "",
     estado: registro.estado || "activa",
     articulos,
+    reembolsos: parseItems(registro.reembolsos),
+    totalReembolsado: toNumber(registro.totalReembolsado, 0),
     total: Number.isFinite(Number(registro.total)) ? Number(registro.total) : totalCalculado
   };
 }
@@ -110,6 +126,24 @@ function obtenerItemsTotales(movimiento) {
   return movimiento.articulos.reduce((sum, item) => sum + toNumber(item.cantidad), 0);
 }
 
+function obtenerCantidadReembolsada(movimiento, productoId) {
+  return (movimiento.reembolsos || []).reduce((sum, reembolso) => {
+    const items = Array.isArray(reembolso.items) ? reembolso.items : [];
+    return sum + items
+      .filter((item) => Number(item.productoId) === Number(productoId))
+      .reduce((itemSum, item) => itemSum + toNumber(item.cantidad), 0);
+  }, 0);
+}
+
+function subtotalArticulos(movimiento) {
+  return movimiento.articulos.reduce((sum, item) => sum + toNumber(item.subtotal), 0);
+}
+
+function factorReembolso(movimiento) {
+  const subtotal = subtotalArticulos(movimiento);
+  return subtotal > 0 ? Math.min(1, Math.max(0, toNumber(movimiento.total) / subtotal)) : 1;
+}
+
 function crearTarjetaMovimiento(movimiento) {
   const ticket = String(movimiento.id).slice(-6);
   const totalItems = obtenerItemsTotales(movimiento);
@@ -120,6 +154,13 @@ function crearTarjetaMovimiento(movimiento) {
   const extra = movimiento.articulos.length > 3 ? `... +${movimiento.articulos.length - 3} mas` : "";
   const etiquetaTipo = movimiento.tipo === "compra" ? "Compra" : "Venta";
   const claseTipo = movimiento.tipo === "compra" ? "tipo-compra" : "tipo-venta";
+  const tieneReembolsos = movimiento.tipo === "venta" && movimiento.totalReembolsado > 0;
+  const puedeReembolsar = movimiento.tipo === "venta" && movimiento.estado !== "papelera" && movimiento.estado !== "reembolsada_total";
+  const etiquetaEstado = movimiento.estado === "reembolsada_total"
+    ? "Reembolsada total"
+    : movimiento.estado === "reembolsada_parcial"
+      ? "Reembolsada parcial"
+      : "";
 
   const tarjeta = document.createElement("div");
   tarjeta.className = `tarjeta-venta ${claseTipo}`;
@@ -141,11 +182,14 @@ function crearTarjetaMovimiento(movimiento) {
         <strong>${totalItems} articulos:</strong><br>
         <span class="resumen">${resumen}${extra}</span>
       </p>
+      ${etiquetaEstado ? `<span class="estado-reembolso">${etiquetaEstado}</span>` : ""}
+      ${tieneReembolsos ? `<p class="reembolso-info">Reembolsado: ${formatearMoneda(movimiento.totalReembolsado)}</p>` : ""}
     </div>
 
     <div class="tarjeta-acciones">
       <button class="btn-ver-detalle" data-uid="${movimiento.uid}">Ver detalle</button>
       ${movimiento.tipo === "venta" ? `<button class="btn-ver-factura" data-id="${movimiento.id}">Ver factura</button>` : ""}
+      ${puedeReembolsar ? `<button class="btn-reembolsar" data-uid="${movimiento.uid}">Reembolsar</button>` : ""}
       ${movimiento.tipo === "venta" ? `<button class="btn-eliminar-venta" data-id="${movimiento.id}">Eliminar</button>` : ""}
     </div>
   `;
@@ -198,6 +242,13 @@ function asignarEventosTarjetas() {
     });
   });
 
+  document.querySelectorAll(".btn-reembolsar").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const movimiento = buscarMovimientoPorUid(e.currentTarget.dataset.uid);
+      if (movimiento) mostrarModalReembolso(movimiento);
+    });
+  });
+
   document.querySelectorAll(".btn-eliminar-venta").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       movimientoAEliminar = e.currentTarget.dataset.id;
@@ -218,6 +269,20 @@ function mostrarModalDetalle(movimiento) {
       <td>${formatearMoneda(item.subtotal)}</td>
     </tr>
   `).join("");
+  const historialReembolsos = (movimiento.reembolsos || []).length
+    ? `
+      <div class="historial-reembolsos">
+        <h3>Reembolsos</h3>
+        ${(movimiento.reembolsos || []).map((reembolso) => `
+          <div class="reembolso-resumen">
+            <strong>${formatearFecha(reembolso.fecha)}</strong>
+            <span>${formatearMoneda(reembolso.valorTotal)}</span>
+            <small>${(reembolso.items || []).map((item) => `${item.cantidad}x ${item.nombre}`).join(", ")}</small>
+          </div>
+        `).join("")}
+      </div>
+    `
+    : "";
 
   const contenidoModal = `
     <div class="modal-overlay" id="modal-detalle-overlay">
@@ -249,7 +314,10 @@ function mostrarModalDetalle(movimiento) {
 
           <div style="text-align:right; margin-top:20px; border-top:2px solid #eee; padding-top:15px;">
             <h3 style="color:#8a9b2f;">Total: ${formatearMoneda(movimiento.total)}</h3>
+            ${movimiento.totalReembolsado > 0 ? `<p><strong>Reembolsado:</strong> ${formatearMoneda(movimiento.totalReembolsado)}</p>` : ""}
           </div>
+
+          ${historialReembolsos}
         </div>
 
         <div class="modal-footer">
@@ -264,6 +332,142 @@ function mostrarModalDetalle(movimiento) {
   document.getElementById("modal-detalle-overlay").addEventListener("click", (e) => {
     if (e.target.id === "modal-detalle-overlay") e.target.remove();
   });
+}
+
+function mostrarModalReembolso(movimiento) {
+  const factor = factorReembolso(movimiento);
+  const filas = movimiento.articulos.map((item, index) => {
+    const reembolsada = obtenerCantidadReembolsada(movimiento, item.productoId);
+    const disponible = Math.max(0, toNumber(item.cantidad) - reembolsada);
+    const disabled = disponible <= 0 ? "disabled" : "";
+    return `
+      <tr data-factor="${factor}" data-precio="${item.precio}" data-producto-id="${item.productoId}">
+        <td><input type="checkbox" class="refund-select" ${disabled}></td>
+        <td>
+          <strong>${item.nombre}</strong>
+          <small>Disponible: ${disponible}</small>
+        </td>
+        <td>
+          <input type="number" class="refund-cantidad" value="${disponible > 0 ? 1 : 0}" min="1" max="${disponible}" ${disabled}>
+        </td>
+        <td>${formatearMoneda(item.precio)}</td>
+        <td><input type="checkbox" class="refund-stock" ${disabled} checked></td>
+        <td class="refund-subtotal">${formatearMoneda(disponible > 0 ? item.precio * factor : 0)}</td>
+      </tr>
+    `;
+  }).join("");
+
+  const contenidoModal = `
+    <div class="modal-overlay" id="modal-reembolso-overlay">
+      <div class="modal-detalle modal-reembolso">
+        <div class="modal-header">
+          <h2>Reembolso venta #${String(movimiento.id).slice(-6)}</h2>
+          <button class="btn-cerrar-modal" id="cerrar-reembolso">X</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="detalle-info">
+            <p><strong>Cliente:</strong> ${movimiento.tercero}</p>
+            <p><strong>Total venta:</strong> ${formatearMoneda(movimiento.total)}</p>
+            <p><strong>Ya reembolsado:</strong> ${formatearMoneda(movimiento.totalReembolsado)}</p>
+          </div>
+
+          <table class="tabla-detalle tabla-reembolso">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio</th>
+                <th>Inventario</th>
+                <th>Reembolso</th>
+              </tr>
+            </thead>
+            <tbody>${filas}</tbody>
+          </table>
+
+          <label class="motivo-reembolso">
+            Motivo
+            <textarea id="motivo-reembolso" maxlength="250" placeholder="Opcional"></textarea>
+          </label>
+
+          <div class="total-reembolso-box">
+            <span>Total a reembolsar</span>
+            <strong id="total-reembolso-calculado">${formatearMoneda(0)}</strong>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secundario" id="cancelar-reembolso">Cancelar</button>
+          <button class="btn-primario" id="confirmar-reembolso">Confirmar reembolso</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML("beforeend", contenidoModal);
+
+  const overlay = document.getElementById("modal-reembolso-overlay");
+  const cerrar = () => overlay?.remove();
+
+  function recalcular() {
+    let total = 0;
+    overlay.querySelectorAll("tbody tr").forEach((row) => {
+      const selected = row.querySelector(".refund-select").checked;
+      const cantidadInput = row.querySelector(".refund-cantidad");
+      const cantidad = Math.max(0, Math.min(toNumber(cantidadInput.value), toNumber(cantidadInput.max)));
+      const precio = toNumber(row.dataset.precio);
+      const rowFactor = toNumber(row.dataset.factor, 1);
+      const subtotal = selected ? cantidad * precio * rowFactor : 0;
+      row.querySelector(".refund-subtotal").textContent = formatearMoneda(subtotal);
+      if (selected) total += subtotal;
+    });
+    document.getElementById("total-reembolso-calculado").textContent = formatearMoneda(total);
+  }
+
+  overlay.querySelectorAll(".refund-select, .refund-cantidad").forEach((input) => {
+    input.addEventListener("input", recalcular);
+    input.addEventListener("change", recalcular);
+  });
+
+  overlay.querySelector("#cerrar-reembolso").addEventListener("click", cerrar);
+  overlay.querySelector("#cancelar-reembolso").addEventListener("click", cerrar);
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) cerrar();
+  });
+
+  overlay.querySelector("#confirmar-reembolso").addEventListener("click", async () => {
+    const items = [...overlay.querySelectorAll("tbody tr")]
+      .filter((row) => row.querySelector(".refund-select").checked)
+      .map((row) => ({
+        productoId: Number(row.dataset.productoId),
+        cantidad: Number(row.querySelector(".refund-cantidad").value),
+        retornaInventario: row.querySelector(".refund-stock").checked
+      }))
+      .filter((item) => item.productoId && item.cantidad > 0);
+
+    if (!items.length) {
+      mostrarNotificacion("error", "Sin productos", "Selecciona al menos un producto para reembolsar.");
+      return;
+    }
+
+    try {
+      await window.Backend.post(`ventas/${movimiento.id}/reembolsos`, {
+        items,
+        motivo: document.getElementById("motivo-reembolso").value
+      });
+      cerrar();
+      await cargarMovimientos();
+      movimientosActuales = ordenarMovimientos(movimientosActuales);
+      renderizarHistorial(movimientosActivos());
+      mostrarNotificacion("success", "Reembolso registrado", "La venta fue actualizada correctamente.");
+    } catch (error) {
+      console.error("Error registrando reembolso:", error);
+      mostrarNotificacion("error", "Error", error.payload?.error || "No se pudo registrar el reembolso.");
+    }
+  });
+
+  recalcular();
 }
 
 function filtrarMovimientos(terminoBusqueda) {
