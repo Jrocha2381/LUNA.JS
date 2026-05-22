@@ -3,11 +3,16 @@
 const { sequelize } = require('../../models');
 
 async function syncDatabase() {
-  if (process.env.NODE_ENV === 'production' && process.env.DB_AUTO_SYNC == null) {
+  // En producción, SIEMPRE usar migraciones explícitas
+  // NUNCA usar sync automático
+  if (process.env.NODE_ENV === 'production') {
+    console.log('Production environment: skipping automatic sync (use migrations instead)');
     return;
   }
 
-  if (process.env.DB_AUTO_SYNC === 'false') {
+  // En desarrollo, solo sincronizar si DB_AUTO_SYNC está explícitamente habilitado
+  if (process.env.DB_AUTO_SYNC !== 'true') {
+    console.log('DB_AUTO_SYNC not enabled: skipping automatic sync');
     return;
   }
 
