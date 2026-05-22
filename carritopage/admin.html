@@ -82,11 +82,70 @@
           </table>
         </div>
       </section>
+
+      <section class="admin-productos" style="margin-top: 28px;">
+        <h2>CRUD de descuentos</h2>
+
+        <form id="descuento-form" class="producto-form">
+          <h3 id="descuento-form-title">Crear descuento</h3>
+
+          <div class="form-grid">
+            <label>
+              Nombre *
+              <input type="text" name="nombre" required />
+            </label>
+
+            <label>
+              Tipo *
+              <select name="tipo" required>
+                <option value="porcentaje">Porcentaje (%)</option>
+                <option value="fijo">Valor fijo</option>
+              </select>
+            </label>
+
+            <label>
+              Valor *
+              <input type="number" name="valor" min="0" step="0.01" required />
+            </label>
+
+            <label class="checkbox-label">
+              <input type="checkbox" name="activo" checked />
+              Activo
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button id="descuento-submit" type="submit" class="btn-admin-primario">
+              Guardar descuento
+            </button>
+            <button id="descuento-cancelar" type="button" class="btn-admin-secundario">
+              Cancelar
+            </button>
+          </div>
+        </form>
+
+        <div class="tabla-wrapper">
+          <table class="tabla-productos">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Tipo</th>
+                <th>Valor</th>
+                <th>Activo</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="admin-descuentos-body"></tbody>
+          </table>
+        </div>
+      </section>
     </main>
 
     <script src="admin-auth.js"></script>
     <script src="../js/backend.js"></script>
     <script src="../js/entidades-global.js"></script>
+    <script src="../js/descuentos-data.js"></script>
     <script src="../js/data.js"></script>
     <script src="../js/ventas.js"></script>
     <script src="carrito.js"></script>
@@ -100,12 +159,15 @@
           }
           if (window.populateCategoriaSelect) window.populateCategoriaSelect();
           if (window.sincronizarProductosBackend) await window.sincronizarProductosBackend();
+          if (window.sincronizarDescuentosBackend) await window.sincronizarDescuentosBackend();
         } catch (e) {
           console.error(e);
         }
 
         if (window.renderAdminProductos) window.renderAdminProductos();
         if (window.activarEventosAdmin) window.activarEventosAdmin();
+        if (window.renderAdminDescuentos) window.renderAdminDescuentos();
+        if (window.activarEventosAdminDescuentos) window.activarEventosAdminDescuentos();
 
         window.addEventListener("productosActualizados", () => {
           if (window.renderAdminProductos) window.renderAdminProductos();
@@ -114,6 +176,10 @@
         window.addEventListener("categoriasActualizadas", () => {
           if (window.populateCategoriaSelect) window.populateCategoriaSelect();
           if (window.renderAdminProductos) window.renderAdminProductos();
+        });
+
+        window.addEventListener("descuentosActualizados", () => {
+          if (window.renderAdminDescuentos) window.renderAdminDescuentos();
         });
       });
     </script>

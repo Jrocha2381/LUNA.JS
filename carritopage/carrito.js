@@ -3,6 +3,7 @@
 
 let adminListenersActivos = false;
 let productoEnEdicionId = null;
+let descuentoEnEdicionId = null;
 
 function crearContenedorToast() {
   if (!document.getElementById("toast-container")) {
@@ -1095,3 +1096,183 @@ function activarEventosAdmin() {
 
   adminListenersActivos = true;
 }
+
+function limpiarFormularioDescuentos() {
+  const form = document.getElementById("descuento-form");
+  if (!form) return;
+
+  form.reset();
+  form.tipo.value = "porcentaje";
+  form.activo.checked = true;
+  descuentoEnEdicionId = null;
+
+  const titulo = document.getElementById("descuento-form-title");
+  const btnGuardar = document.getElementById("descuento-submit");
+  if (titulo) titulo.textContent = "Crear descuento";
+  if (btnGuardar) btnGuardar.textContent = "Guardar descuento";
+}
+
+function cargarDescuentoEnFormulario(idDescuento) {
+  const lista = window.obtenerDescuentos ? window.obtenerDescuentos() : [];
+  const descuento = lista.find((d) => Number(d.id) === Number(idDescuento));
+  if (!descuento) {
+    mostrarToast("error", "No encontrado", "No se encontro el descuento seleccionado.");
+    return;
+  }
+
+  const form = document.getElementById("descuento-form");
+  if (!form) return;
+
+  form.nombre.value = descuento.nombre || "";
+  form.tipo.value = descuento.tipo === "fijo" ? "fijo" : "porcentaje";
+  form.valor.value = descuento.valor != null ? descuento.valor : 0;
+  form.activo.checked = Boolean(descuento.activo);
+
+  descuentoEnEdicionId = Number(descuento.id);
+  const titulo = document.getElementById("descuento-form-title");
+  const btnGuardar = document.getElementById("descuento-submit");
+  if (titulo) titulo.textContent = `Editar descuento #${descuento.id}`;
+  if (btnGuardar) btnGuardar.textContent = "Guardar cambios";
+}
+
+function renderAdminDescuentos() {
+  const tabla = document.getElementById("admin-descuentos-body");
+  if (!tabla) return;
+
+  const lista = window.obtenerDescuentos ? window.obtenerDescuentos() : [];
+  if (!lista.length) {
+    tabla.innerHTML = `<tr><td colspan="6">No hay descuentos registrados.</td></tr>`;
+    return;
+  }
+
+  tabla.innerHTML = lista
+    .slice()
+    .sort((a, b) => Number(b.id) - Number(a.id))
+    .map((d) => {
+      const tipoLabel = d.tipo === "fijo" ? "Valor fijo" : "Porcentaje";
+      const valorLabel = d.tipo === "porcentaje" ? `${Number(d.valor || 0)}%` : formatearMoneda(d.valor);
+
+      return `
+        <tr>
+          <td>${d.id}</td>
+          <td>${d.nombre || ""}</td>
+          <td>${tipoLabel}</td>
+          <td>${valorLabel}</td>
+          <td>${d.activo ? "Si" : "No"}</td>
+          <td>
+            <button class="btn-admin btn-descuento-editar" data-id="${d.id}">Editar</button>
+            <button class="btn-admin btn-descuento-eliminar" data-id="${d.id}">Eliminar</button>
+          </td>
+        </tr>
+      `;
+    })
+    .join("");
+}
+
+function activarEventosAdminDescuentos() {
+  const form = document.getElementById("descuento-form");
+  const tabla = document.getElementById("admin-descuentos-body");
+  const btnCancelar = document.getElementById("descuento-cancelar");
+
+  if (!form || !tabla) return;
+  if (form.dataset.listenersActivos === "1") return;
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const btnGuardar = document.getElementById("descuento-submit");
+    try {
+      if (btnGuardar) {
+        btnGuardar.disabled = true;
+        btnGuardar.textContent = descuentoEnEdicionId ? "Guardando..." : "Creando...";
+      }
+
+      const payload = {
+        nombre: form.nombre.value,
+        tipo: form.tipo.value,
+        valor: form.valor.value,
+        activo: form.activo.checked
+      };
+
+      const respuesta = await (descuentoEnEdicionId
+        ? window.actualizarDescuento(descuentoEnEdicionId, payload)
+        : window.crearDescuento(payload));
+
+      if (!respuesta || !respuesta.ok) {
+        const msg = (respuesta && respuesta.errores && respuesta.errores.join(" ")) || "No se pudo guardar el descuento.";
+        mostrarToast("error", "No se pudo guardar", msg);
+        return;
+      }
+
+      mostrarToast(
+        "success",
+        descuentoEnEdicionId ? "Descuento actualizado" : "Descuento creado",
+        "Los cambios se guardaron en SQLite."
+      );
+
+      limpiarFormularioDescuentos();
+      renderAdminDescuentos();
+    } catch (error) {
+      console.error("Error guardando descuento:", error);
+      mostrarToast("error", "No se pudo guardar", error.message || "Revisa que el backend este encendido.");
+    } finally {
+      if (btnGuardar) {
+        btnGuardar.disabled = false;
+        btnGuardar.textContent = descuentoEnEdicionId ? "Guardar cambios" : "Guardar descuento";
+      }
+    }
+  });
+
+  tabla.addEventListener("click", (event) => {
+    const target = event.target;
+    const id = Number(target.dataset.id);
+    if (!id) return;
+
+    if (target.classList.contains("btn-descuento-editar")) {
+      cargarDescuentoEnFormulario(id);
+      return;
+    }
+
+    if (target.classList.contains("btn-descuento-eliminar")) {
+      mostrarConfirmacion("Deseas eliminar este descuento?", async () => {
+        const resultado = await window.eliminarDescuento(id);
+
+        if (!resultado || !resultado.ok) {
+          const msg = (resultado && resultado.errores && resultado.errores.join(" ")) || "No se pudo eliminar el descuento.";
+          mostrarToast("error", "Error", msg);
+          return;
+        }
+
+        mostrarToast("success", "Descuento eliminado", "El descuento fue eliminado de la base de datos.");
+
+        if (descuentoEnEdicionId === id) {
+          limpiarFormularioDescuentos();
+        }
+
+        renderAdminDescuentos();
+      });
+    }
+  });
+
+  if (btnCancelar) {
+    btnCancelar.addEventListener("click", () => {
+      limpiarFormularioDescuentos();
+    });
+  }
+
+  form.tipo.addEventListener("change", () => {
+    if (form.tipo.value === "porcentaje") {
+      form.valor.max = "100";
+      form.valor.placeholder = "0 - 100";
+    } else {
+      form.valor.removeAttribute("max");
+      form.valor.placeholder = "0";
+    }
+  });
+
+  form.dataset.listenersActivos = "1";
+}
+
+window.renderAdminDescuentos = renderAdminDescuentos;
+window.activarEventosAdminDescuentos = activarEventosAdminDescuentos;
+window.limpiarFormularioDescuentos = limpiarFormularioDescuentos;
