@@ -21,7 +21,9 @@ module.exports = (sequelize, DataTypes) => {
     {
       sequelize,
       modelName: 'Proveedor',
-      tableName: 'proveedores'
+      tableName: 'proveedores',
+      timestamps: true,
+      underscored: true
     }
   );
 

@@ -8,8 +8,8 @@ module.exports = {
       nombre: { type: Sequelize.STRING(160), allowNull: false },
       correo: { type: Sequelize.STRING(160), allowNull: true, unique: true },
       rol: { type: Sequelize.STRING(40), allowNull: false, defaultValue: 'cajero' },
-      createdAt: { allowNull: false, type: Sequelize.DATE },
-      updatedAt: { allowNull: false, type: Sequelize.DATE }
+      created_at: { allowNull: false, type: Sequelize.DATE },
+      updated_at: { allowNull: false, type: Sequelize.DATE }
     });
   },
 

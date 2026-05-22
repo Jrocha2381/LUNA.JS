@@ -16,8 +16,8 @@ module.exports = {
       metodoPago: { type: Sequelize.STRING(50), allowNull: true },
       total: { type: Sequelize.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
       items: { type: Sequelize.JSON, allowNull: false, defaultValue: [] },
-      createdAt: { allowNull: false, type: Sequelize.DATE },
-      updatedAt: { allowNull: false, type: Sequelize.DATE }
+      created_at: { allowNull: false, type: Sequelize.DATE },
+      updated_at: { allowNull: false, type: Sequelize.DATE }
     });
   },
 

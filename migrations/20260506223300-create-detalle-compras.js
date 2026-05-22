@@ -22,8 +22,8 @@ module.exports = {
       cantidad: { type: Sequelize.INTEGER, allowNull: false, defaultValue: 1 },
       costoUnitario: { type: Sequelize.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
       subtotal: { type: Sequelize.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
-      createdAt: { allowNull: false, type: Sequelize.DATE },
-      updatedAt: { allowNull: false, type: Sequelize.DATE }
+      created_at: { allowNull: false, type: Sequelize.DATE },
+      updated_at: { allowNull: false, type: Sequelize.DATE }
     });
 
     await queryInterface.addIndex('detalle_compras', ['compraId']);

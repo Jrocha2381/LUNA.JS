@@ -17,8 +17,8 @@ module.exports = {
       costo: { type: Sequelize.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
       stock: { type: Sequelize.INTEGER, allowNull: false, defaultValue: 0 },
       seguimientoInventario: { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: true },
-      createdAt: { allowNull: false, type: Sequelize.DATE },
-      updatedAt: { allowNull: false, type: Sequelize.DATE }
+      created_at: { allowNull: false, type: Sequelize.DATE },
+      updated_at: { allowNull: false, type: Sequelize.DATE }
     });
   },
 
