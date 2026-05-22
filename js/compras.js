@@ -40,6 +40,8 @@ async function registrarCompra(items, proveedorId = null) {
 
   if (backendDisponibleCompras()) {
     compraCreada = await window.Backend.post("compras", payload);
+    await window.sincronizarProductosBackend();
+    return compraCreada;
   } else {
     const comprasPrevias = JSON.parse(localStorage.getItem("compras") || "[]");
     compraCreada.id = Date.now();

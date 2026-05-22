@@ -15,12 +15,12 @@ module.exports = {
        SET password = :password,
            role = 'ADMIN',
            rol = 'admin',
-           updatedAt = :updatedAt
+           updated_at = :updated_at
        WHERE username = 'admin@pos.local' OR correo = 'admin@pos.local';`,
       {
         replacements: {
           password: adminPassword,
-          updatedAt: now
+          updated_at: now
         }
       }
     );
@@ -30,12 +30,12 @@ module.exports = {
        SET password = :password,
            role = 'USER',
            rol = 'cajero',
-           updatedAt = :updatedAt
+           updated_at = :updated_at
        WHERE username = 'cajero1@pos.local' OR correo = 'cajero1@pos.local';`,
       {
         replacements: {
           password: cajeroPassword,
-          updatedAt: now
+          updated_at: now
         }
       }
     );
@@ -56,8 +56,8 @@ module.exports = {
         username: 'admin@pos.local',
         password: adminPassword,
         role: 'ADMIN',
-        createdAt: now,
-        updatedAt: now
+        created_at: now,
+        updated_at: now
       });
     }
 
@@ -69,8 +69,8 @@ module.exports = {
         username: 'cajero1@pos.local',
         password: cajeroPassword,
         role: 'USER',
-        createdAt: now,
-        updatedAt: now
+        created_at: now,
+        updated_at: now
       });
     }
 

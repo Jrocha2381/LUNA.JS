@@ -5,15 +5,15 @@ module.exports = (sequelize, DataTypes) => {
   class Venta extends Model {
     static associate(models) {
       Venta.belongsTo(models.Cliente, {
-        foreignKey: 'clienteId',
+        foreignKey: { name: 'clienteId', field: 'clienteId' },
         as: 'cliente'
       });
       Venta.belongsTo(models.Usuario, {
-        foreignKey: 'usuarioId',
+        foreignKey: { name: 'usuarioId', field: 'usuarioId' },
         as: 'usuario'
       });
       Venta.hasMany(models.DetalleVenta, {
-        foreignKey: 'ventaId',
+        foreignKey: { name: 'ventaId', field: 'ventaId' },
         as: 'detalles'
       });
     }
@@ -23,9 +23,9 @@ module.exports = (sequelize, DataTypes) => {
     {
       id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
       fecha: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
-      clienteId: { type: DataTypes.INTEGER, allowNull: true },
-      usuarioId: { type: DataTypes.INTEGER, allowNull: true },
-      metodoPago: { type: DataTypes.STRING(50), allowNull: true },
+      clienteId: { type: DataTypes.INTEGER, allowNull: true, field: 'clienteId' },
+      usuarioId: { type: DataTypes.INTEGER, allowNull: true, field: 'usuarioId' },
+      metodoPago: { type: DataTypes.STRING(50), allowNull: true, field: 'metodoPago' },
       total: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0 },
       items: { type: DataTypes.JSON, allowNull: false, defaultValue: [] },
       estado: { type: DataTypes.STRING(20), allowNull: false, defaultValue: 'activa' }

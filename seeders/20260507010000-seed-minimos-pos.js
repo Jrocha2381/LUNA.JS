@@ -17,6 +17,19 @@ async function maxId(queryInterface, table) {
   return Number(r.m || 0);
 }
 
+async function syncPostgresSequence(queryInterface, table) {
+  if (queryInterface.sequelize.getDialect() !== 'postgres') return;
+
+  await queryInterface.sequelize.query(
+    `SELECT setval(
+      pg_get_serial_sequence(:table, 'id'),
+      GREATEST((SELECT COALESCE(MAX(id), 0) FROM "${table}"), 1),
+      (SELECT COALESCE(MAX(id), 0) FROM "${table}") > 0
+    );`,
+    { replacements: { table } }
+  );
+}
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface) {
@@ -37,7 +50,7 @@ module.exports = {
     const catSet = new Set(catRows.map(c => c.nombre));
     const cats = categoriasObjetivo
       .filter(n => !catSet.has(n))
-      .map(nombre => ({ nombre, createdAt: now, updatedAt: now }));
+      .map(nombre => ({ nombre, created_at: now, updated_at: now }));
     if (cats.length) await queryInterface.bulkInsert('categorias', cats);
 
     // 3) Proveedores (mínimo 5)
@@ -51,8 +64,8 @@ module.exports = {
           nombre: `${faker.company.name()} S.A.S`,
           telefono: faker.phone.number('60########'),
           correo: faker.internet.email({ provider: 'proveedor.co' }).toLowerCase(),
-          createdAt: now,
-          updatedAt: now
+          created_at: now,
+          updated_at: now
         });
       }
       await queryInterface.bulkInsert('proveedores', proveedores);
@@ -72,8 +85,8 @@ module.exports = {
           correo: faker.internet
             .email({ firstName: nombre.split(' ')[0], lastName: nombre.split(' ').slice(1).join(' ') })
             .toLowerCase(),
-          createdAt: now,
-          updatedAt: now
+          created_at: now,
+          updated_at: now
         });
       }
       await queryInterface.bulkInsert('clientes', clientes);
@@ -99,8 +112,8 @@ module.exports = {
           costo,
           stock: faker.number.int({ min: 0, max: 80 }),
           seguimientoInventario: true,
-          createdAt: now,
-          updatedAt: now
+          created_at: now,
+          updated_at: now
         });
       }
       await queryInterface.bulkInsert('productos', productos);
@@ -145,8 +158,8 @@ module.exports = {
             cantidad,
             precioUnitario,
             subtotal,
-            createdAt: now,
-            updatedAt: now
+            created_at: now,
+            updated_at: now
           });
         }
 
@@ -158,8 +171,8 @@ module.exports = {
           metodoPago: faker.helpers.arrayElement(['efectivo', 'tarjeta', 'transferencia']),
           total: Number(total.toFixed(2)),
           items: '[]',
-          createdAt: now,
-          updatedAt: now
+          created_at: now,
+          updated_at: now
         });
 
         ventaId++;
@@ -208,8 +221,8 @@ module.exports = {
             cantidad,
             costoUnitario,
             subtotal,
-            createdAt: now,
-            updatedAt: now
+            created_at: now,
+            updated_at: now
           });
         }
 
@@ -220,8 +233,8 @@ module.exports = {
           usuarioId,
           total: Number(total.toFixed(2)),
           items: '[]',
-          createdAt: now,
-          updatedAt: now
+          created_at: now,
+          updated_at: now
         });
 
         compraId++;
@@ -230,6 +243,11 @@ module.exports = {
       await queryInterface.bulkInsert('compras', compras);
       await queryInterface.bulkInsert('detalle_compras', detalles);
     }
+
+    await syncPostgresSequence(queryInterface, 'ventas');
+    await syncPostgresSequence(queryInterface, 'compras');
+    await syncPostgresSequence(queryInterface, 'detalle_ventas');
+    await syncPostgresSequence(queryInterface, 'detalle_compras');
   },
 
   async down() {

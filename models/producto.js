@@ -5,15 +5,15 @@ module.exports = (sequelize, DataTypes) => {
   class Producto extends Model {
     static associate(models) {
       Producto.belongsTo(models.Categoria, {
-        foreignKey: 'categoriaId',
+        foreignKey: { name: 'categoriaId', field: 'categoriaId' },
         as: 'categoria'
       });
       Producto.hasMany(models.DetalleVenta, {
-        foreignKey: 'productoId',
+        foreignKey: { name: 'productoId', field: 'productoId' },
         as: 'detallesVenta'
       });
       Producto.hasMany(models.DetalleCompra, {
-        foreignKey: 'productoId',
+        foreignKey: { name: 'productoId', field: 'productoId' },
         as: 'detallesCompra'
       });
     }
@@ -23,11 +23,11 @@ module.exports = (sequelize, DataTypes) => {
     {
       id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
       nombre: { type: DataTypes.STRING(160), allowNull: false },
-      categoriaId: { type: DataTypes.INTEGER, allowNull: false },
+      categoriaId: { type: DataTypes.INTEGER, allowNull: false, field: 'categoriaId' },
       precio: { type: DataTypes.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
       costo: { type: DataTypes.DECIMAL(10, 2), allowNull: false, defaultValue: 0 },
       stock: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
-      seguimientoInventario: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true }
+      seguimientoInventario: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true, field: 'seguimientoInventario' }
     },
     {
       sequelize,
