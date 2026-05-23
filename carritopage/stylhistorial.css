@@ -624,10 +624,26 @@ main {
 }
 
 /* ==================== NOTIFICACIONES ==================== */
+#notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+    width: min(360px, calc(100vw - 32px));
+    pointer-events: none;
+}
+
 .notification {
+    width: 100%;
     padding: 15px 20px;
     border-radius: 8px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
     animation: slideIn 0.3s ease;
+    pointer-events: auto;
 }
 
 @keyframes slideIn {

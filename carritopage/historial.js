@@ -587,23 +587,30 @@ function mostrarFiltrosActivos(filtros) {
     : "";
 }
 
+function obtenerContenedorNotificaciones() {
+  let container = document.getElementById("notification-container");
+
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "notification-container";
+    document.body.appendChild(container);
+  }
+
+  return container;
+}
+
 function mostrarNotificacion(tipo, titulo, mensaje) {
+  const container = obtenerContenedorNotificaciones();
   const notification = document.createElement("div");
   notification.className = `notification notification-${tipo}`;
   notification.innerHTML = `<strong>${titulo}:</strong> ${mensaje}`;
   notification.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
     background: ${tipo === "success" ? "#d4edda" : "#f8d7da"};
     border: 1px solid ${tipo === "success" ? "#c3e6cb" : "#f5c6cb"};
     color: ${tipo === "success" ? "#155724" : "#721c24"};
-    padding: 15px 20px;
-    border-radius: 8px;
-    z-index: 9999;
   `;
 
-  document.body.appendChild(notification);
+  container.appendChild(notification);
   setTimeout(() => notification.remove(), 3000);
 }
 
