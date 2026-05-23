@@ -486,6 +486,17 @@ function mostrarModalReembolso(movimiento) {
       movimientosActuales = ordenarMovimientos(movimientosActuales);
       renderizarHistorial(movimientosActivos());
       mostrarNotificacion("success", "Reembolso registrado", "La venta fue actualizada correctamente.");
+
+      const unidadesDevueltas = items.reduce((sum, item) => sum + (item.retornaInventario ? item.cantidad : 0), 0);
+      if (unidadesDevueltas > 0) {
+        mostrarNotificacion(
+          "success",
+          "Inventario",
+          unidadesDevueltas === 1
+            ? "Se devolvió 1 unidad al inventario."
+            : `Se devolvieron ${unidadesDevueltas} unidades al inventario.`
+        );
+      }
     } catch (error) {
       console.error("Error registrando reembolso:", error);
       mostrarNotificacion("error", "Error", error.payload?.error || "No se pudo registrar el reembolso.");
