@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('./config/env').requireEnv('JWT_SECRET');
 
 const path = require('path');
 const express = require('express');
@@ -24,6 +24,7 @@ const app = express();
 const API_PREFIX = '/Jeronimo Rubio_Sebastian Rocha_Ibrahim Safadi';
 const ENCODED_API_PREFIX = '/Jeronimo%20Rubio_Sebastian%20Rocha_Ibrahim%20Safadi';
 const LEGACY_API_PREFIX = '/JuanSebastianRocha Rodriguez_JeronimoRubio_Ibrahim Safadi';
+const SIMPLE_API_PREFIX = '/api';
 const ADMIN_PAGE = path.join(__dirname, '..', 'carritopage', 'acceso-admin.html');
 
 app.use((req, res, next) => {
@@ -41,6 +42,7 @@ app.use(requestLogger);
 app.use(API_PREFIX, authRouter);
 app.use(ENCODED_API_PREFIX, authRouter);
 app.use(LEGACY_API_PREFIX, authRouter);
+app.use(SIMPLE_API_PREFIX, authRouter);
 app.use(sanitizeIds);
 app.use(express.static(path.join(__dirname, '..')));
 
@@ -91,6 +93,7 @@ function mountApiRoutes(prefix) {
 mountApiRoutes(API_PREFIX);
 mountApiRoutes(ENCODED_API_PREFIX);
 mountApiRoutes(LEGACY_API_PREFIX);
+mountApiRoutes(SIMPLE_API_PREFIX);
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'Not found' });
