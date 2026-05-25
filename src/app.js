@@ -7,6 +7,7 @@ const requestLogger = require('./middlewares/requestLogger');
 const sanitizeIds = require('./middlewares/sanitizeIds');
 const authJwt = require('./middlewares/authJwt');
 const requireRole = require('./middlewares/requireRole');
+const requireAdminForWrite = require('./middlewares/requireAdminForWrite');
 
 const authRouter = require('./routes/auth');
 const usuariosRouter = require('./routes/usuarios');
@@ -77,17 +78,22 @@ app.get('/authors', (_req, res) => {
 });
 
 function mountApiRoutes(prefix) {
+  // Usuarios: solo ADMIN (lectura/escritura)
   app.use(`${prefix}/users`, authJwt, requireRole('ADMIN'), usuariosRouter);
-  app.use(`${prefix}/usuarios`, usuariosRouter);
-  app.use(`${prefix}/categorias`, categoriasRouter);
-  app.use(`${prefix}/productos`, productosRouter);
-  app.use(`${prefix}/descuentos`, descuentosRouter);
-  app.use(`${prefix}/clientes`, clientesRouter);
-  app.use(`${prefix}/proveedores`, proveedoresRouter);
-  app.use(`${prefix}/ventas`, ventasRouter);
-  app.use(`${prefix}/detalle_ventas`, detallevRouter);
-  app.use(`${prefix}/detalle_compras`, detallecRouter);
-  app.use(`${prefix}/compras`, comprasRouter);
+  app.use(`${prefix}/usuarios`, authJwt, requireRole('ADMIN'), usuariosRouter);
+
+  // Catálogos/maestros: autenticación requerida; escritura solo ADMIN
+  app.use(`${prefix}/categorias`, authJwt, requireAdminForWrite, categoriasRouter);
+  app.use(`${prefix}/productos`, authJwt, requireAdminForWrite, productosRouter);
+  app.use(`${prefix}/descuentos`, authJwt, requireAdminForWrite, descuentosRouter);
+  app.use(`${prefix}/clientes`, authJwt, requireAdminForWrite, clientesRouter);
+  app.use(`${prefix}/proveedores`, authJwt, requireAdminForWrite, proveedoresRouter);
+
+  // Operaciones: autenticación requerida (USER o ADMIN)
+  app.use(`${prefix}/ventas`, authJwt, ventasRouter);
+  app.use(`${prefix}/detalle_ventas`, authJwt, detallevRouter);
+  app.use(`${prefix}/compras`, authJwt, comprasRouter);
+  app.use(`${prefix}/detalle_compras`, authJwt, detallecRouter);
 }
 
 mountApiRoutes(API_PREFIX);

@@ -558,7 +558,7 @@ Todas las peticiones deben tener:
 
 ```
 Content-Type: application/json
-Authorization: Bearer <token>  (si se implementa autenticación)
+Authorization: Bearer <token>  (requerido para rutas protegidas; público solo /api/login, /api/authors y /api/health)
 X-Request-ID: <uuid>          (para trazabilidad)
 ```
 
