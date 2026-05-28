@@ -2,6 +2,7 @@
 
 const express = require('express');
 const ctrl = require('../controllers/ventas.controller');
+const authJwt = require('../middlewares/authJwt');
 const {
   createVentaValidator,
   updateVentaValidator,
@@ -11,6 +12,8 @@ const {
 const { idValidator } = require('./crudRouter');
 
 const router = express.Router();
+
+router.use(authJwt);
 
 router.get('/', ctrl.list);
 router.get('/:id', idValidator, ctrl.getById);

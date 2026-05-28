@@ -40,10 +40,16 @@ function sesionEsValida() {
   return Boolean(getToken());
 }
 
+async function obtenerUsuarioActual() {
+  if (!sesionEsValida() || !window.Backend || typeof window.Backend.get !== "function") return null;
+  const me = await window.Backend.get("me");
+  return me && me.user ? me.user : null;
+}
+
 window.sesionAdminActiva = sesionEsValida;
 window.cerrarSesionAdmin = clearToken;
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const dashboardContainer = document.getElementById("dashboard-container");
   const btnCerrarSesion = document.getElementById("btn-cerrar-sesion");
   const adminFrame = document.getElementById("admin-frame");
@@ -54,6 +60,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (!sesionEsValida()) {
     window.top.location.href = "/index.html";
+    return;
+  }
+
+  let currentUser = null;
+  try {
+    currentUser = await obtenerUsuarioActual();
+  } catch (_err) {
+    clearToken();
+    window.top.location.href = "/index.html";
+    return;
+  }
+
+  if (!currentUser || currentUser.role !== "ADMIN") {
+    window.top.location.href = "/carritopage/ventas.html";
     return;
   }
 
@@ -68,8 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const actualizarUsuario = async () => {
     if (!sesionEsValida() || !window.Backend || typeof window.Backend.get !== "function") return;
     try {
-      const me = await window.Backend.get("me");
-      const user = me && me.user ? me.user : null;
+      const user = currentUser || await obtenerUsuarioActual();
       const name = (user && (user.username || user.correo)) || "Usuario";
       if (displayUser) displayUser.textContent = name;
       if (userAvatar) userAvatar.textContent = String(name).trim().charAt(0).toUpperCase() || "U";

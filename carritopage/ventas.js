@@ -557,26 +557,20 @@ async function confirmarFinalizarVenta() {
     const ventaCreada = await window.Backend.post('ventas', ventaData);
     const ventaId = ventaCreada.id;
 
-    // Crear detalles de venta y actualizar stock
-    for (const item of carritoVentas) {
-      // Crear detalle de venta
-      const detalleData = {
-        ventaId,
-        productoId: item.productoId,
-        cantidad: item.cantidad,
-        precioUnitario: item.precioUnitario,
-        subtotal: item.subtotal
-      };
-      await window.Backend.post('detalle_ventas', detalleData);
-
-      // Actualizar stock del producto
-      const productoActual = productosDisponibles.find(p => p.id === item.productoId);
-      if (productoActual && item.seguimiento) {
-        const nuevoStock = productoActual.stock - item.cantidad;
-        await window.Backend.put(`productos/${item.productoId}`, { stock: nuevoStock });
-        productoActual.stock = nuevoStock;
+    if (!Array.isArray(ventaCreada.detalles) || ventaCreada.detalles.length === 0) {
+      for (const item of carritoVentas) {
+        const detalleData = {
+          ventaId,
+          productoId: item.productoId,
+          cantidad: item.cantidad,
+          precioUnitario: item.precioUnitario,
+          subtotal: item.subtotal
+        };
+        await window.Backend.post('detalle_ventas', detalleData);
       }
     }
+
+    await cargarProductos();
 
     window.mostrarToast('success', 'Venta completada', '¡Venta registrada exitosamente!');
 

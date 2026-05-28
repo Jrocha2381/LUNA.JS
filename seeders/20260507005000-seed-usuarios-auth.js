@@ -9,6 +9,7 @@ module.exports = {
 
     const adminPassword = await bcrypt.hash('admin123', 10);
     const cajeroPassword = await bcrypt.hash('cajero123', 10);
+    const vendedorPassword = await bcrypt.hash('lunaUser123', 10);
 
     await queryInterface.sequelize.query(
       `UPDATE usuarios
@@ -40,8 +41,23 @@ module.exports = {
       }
     );
 
+    await queryInterface.sequelize.query(
+      `UPDATE usuarios
+       SET password = :password,
+           role = 'USER',
+           rol = 'cajero',
+           updated_at = :updated_at
+       WHERE username = 'vendedor@pos.local' OR correo = 'vendedor@pos.local';`,
+      {
+        replacements: {
+          password: vendedorPassword,
+          updated_at: now
+        }
+      }
+    );
+
     const [rows] = await queryInterface.sequelize.query(
-      "SELECT correo, username FROM usuarios WHERE correo IN ('admin@pos.local','cajero1@pos.local') OR username IN ('admin@pos.local','cajero1@pos.local');"
+      "SELECT correo, username FROM usuarios WHERE correo IN ('admin@pos.local','cajero1@pos.local','vendedor@pos.local') OR username IN ('admin@pos.local','cajero1@pos.local','vendedor@pos.local');"
     );
     const existentesCorreo = new Set(rows.map(r => r.correo).filter(Boolean));
     const existentesUsername = new Set(rows.map(r => r.username).filter(Boolean));
@@ -74,12 +90,25 @@ module.exports = {
       });
     }
 
+    if (!existentesCorreo.has('vendedor@pos.local') && !existentesUsername.has('vendedor@pos.local')) {
+      usuarios.push({
+        nombre: 'Vendedor Luna',
+        correo: 'vendedor@pos.local',
+        rol: 'cajero',
+        username: 'vendedor@pos.local',
+        password: vendedorPassword,
+        role: 'USER',
+        created_at: now,
+        updated_at: now
+      });
+    }
+
     if (usuarios.length) await queryInterface.bulkInsert('usuarios', usuarios);
   },
 
   async down(queryInterface) {
     await queryInterface.bulkDelete('usuarios', {
-      username: ['admin@pos.local', 'cajero1@pos.local']
+      username: ['admin@pos.local', 'cajero1@pos.local', 'vendedor@pos.local']
     });
   }
 };

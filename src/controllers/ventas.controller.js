@@ -1,6 +1,7 @@
 'use strict';
 
 const { Venta, DetalleVenta, Producto, Cliente, Usuario, Descuento, sequelize } = require('../../models');
+const { Op } = require('sequelize');
 
 function round2(n) {
   const num = Number(n || 0);
@@ -166,9 +167,14 @@ async function hydrateVenta(id) {
   });
 }
 
-async function list(_req, res, next) {
+async function list(req, res, next) {
   try {
+    const where = req.user && req.user.role === 'USER'
+      ? { [Op.or]: [{ usuarioId: req.user.id }, { usuarioId: null }] }
+      : undefined;
+
     const rows = await Venta.findAll({
+      where,
       order: [['id', 'DESC']],
       include: [
         { model: Cliente, as: 'cliente' },
@@ -202,6 +208,9 @@ async function getById(req, res, next) {
       ]
     });
     if (!row) return res.status(404).json({ error: 'Not found' });
+    if (!canAccessVenta(req, row)) {
+      return res.status(403).json({ error: 'No puedes administrar pedidos ajenos' });
+    }
     res.json(row);
   } catch (err) {
     next(err);
@@ -238,7 +247,7 @@ async function create(req, res, next) {
       const venta = await Venta.create(
         {
           clienteId: clienteId || null,
-          usuarioId: usuarioId || null,
+          usuarioId: req.user?.role === 'ADMIN' ? (usuarioId || req.user.id || null) : (req.user?.id || null),
           metodoPago: metodoPago || null,
           subtotal,
           descuentoId: descuento ? descuento.id : null,
@@ -258,6 +267,20 @@ async function create(req, res, next) {
           subtotal: item.subtotal
         }));
         await DetalleVenta.bulkCreate(detalleRows, { transaction: t });
+
+        for (const item of items) {
+          const producto = await Producto.findByPk(item.productoId, { transaction: t });
+          if (!producto || producto.seguimientoInventario === false) continue;
+
+          const nuevoStock = Number(producto.stock || 0) - Number(item.cantidad || 0);
+          if (nuevoStock < 0) {
+            const err = new Error(`Stock insuficiente para ${producto.nombre}`);
+            err.status = 400;
+            throw err;
+          }
+
+          await producto.update({ stock: nuevoStock }, { transaction: t });
+        }
       }
 
       return venta;
@@ -286,6 +309,9 @@ async function update(req, res, next) {
   try {
     const row = await Venta.findByPk(req.params.id);
     if (!row) return res.status(404).json({ error: 'Not found' });
+    if (!canAccessVenta(req, row)) {
+      return res.status(403).json({ error: 'No puedes administrar pedidos ajenos' });
+    }
     if (Object.prototype.hasOwnProperty.call(req.body || {}, 'total') && Number(req.body.total) < 0) {
       return res.status(400).json({ error: 'No se permiten totales negativos' });
     }
@@ -305,6 +331,11 @@ async function applyDiscount(req, res, next) {
       if (!venta) {
         const err = new Error('Not found');
         err.status = 404;
+        throw err;
+      }
+      if (!canAccessVenta(req, venta)) {
+        const err = new Error('No puedes administrar pedidos ajenos');
+        err.status = 403;
         throw err;
       }
 
@@ -365,6 +396,11 @@ async function removeDiscount(req, res, next) {
         err.status = 404;
         throw err;
       }
+      if (!canAccessVenta(req, venta)) {
+        const err = new Error('No puedes administrar pedidos ajenos');
+        err.status = 403;
+        throw err;
+      }
 
       const subtotal = await inferSubtotalForVenta(venta, { transaction: t });
       await venta.update(
@@ -408,6 +444,11 @@ async function createRefund(req, res, next) {
       if (!venta) {
         const err = new Error('Not found');
         err.status = 404;
+        throw err;
+      }
+      if (!canAccessVenta(req, venta)) {
+        const err = new Error('No puedes administrar pedidos ajenos');
+        err.status = 403;
         throw err;
       }
 
@@ -531,11 +572,20 @@ async function remove(req, res, next) {
   try {
     const row = await Venta.findByPk(req.params.id);
     if (!row) return res.status(404).json({ error: 'Not found' });
+    if (!canAccessVenta(req, row)) {
+      return res.status(403).json({ error: 'No puedes administrar pedidos ajenos' });
+    }
     await row.destroy();
     res.status(204).end();
   } catch (err) {
     next(err);
   }
+}
+
+function canAccessVenta(req, venta) {
+  if (!req.user) return false;
+  if (req.user.role === 'ADMIN') return true;
+  return Number(venta.usuarioId) === Number(req.user.id) || venta.usuarioId === null;
 }
 
 module.exports = { list, getById, create, update, applyDiscount, removeDiscount, createRefund, remove };
