@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('./config/env').requireEnv('JWT_SECRET');
 
 const path = require('path');
 const express = require('express');
@@ -7,6 +7,7 @@ const requestLogger = require('./middlewares/requestLogger');
 const sanitizeIds = require('./middlewares/sanitizeIds');
 const authJwt = require('./middlewares/authJwt');
 const requireRole = require('./middlewares/requireRole');
+const requireAdminForWrite = require('./middlewares/requireAdminForWrite');
 
 const authRouter = require('./routes/auth');
 const usuariosRouter = require('./routes/usuarios');
@@ -24,7 +25,7 @@ const app = express();
 const API_PREFIX = '/Jeronimo Rubio_Sebastian Rocha_Ibrahim Safadi';
 const ENCODED_API_PREFIX = '/Jeronimo%20Rubio_Sebastian%20Rocha_Ibrahim%20Safadi';
 const LEGACY_API_PREFIX = '/JuanSebastianRocha Rodriguez_JeronimoRubio_Ibrahim Safadi';
-const API_ALIAS_PREFIX = '/api';
+const SIMPLE_API_PREFIX = '/api';
 const ADMIN_PAGE = path.join(__dirname, '..', 'carritopage', 'acceso-admin.html');
 
 app.use((req, res, next) => {
@@ -42,7 +43,7 @@ app.use(requestLogger);
 app.use(API_PREFIX, authRouter);
 app.use(ENCODED_API_PREFIX, authRouter);
 app.use(LEGACY_API_PREFIX, authRouter);
-app.use(API_ALIAS_PREFIX, authRouter);
+app.use(SIMPLE_API_PREFIX, authRouter);
 app.use(sanitizeIds);
 app.use(express.static(path.join(__dirname, '..')));
 
@@ -77,13 +78,18 @@ app.get('/authors', (_req, res) => {
 });
 
 function mountApiRoutes(prefix) {
+  // Usuarios: solo ADMIN (lectura/escritura)
   app.use(`${prefix}/users`, authJwt, requireRole('ADMIN'), usuariosRouter);
   app.use(`${prefix}/usuarios`, authJwt, requireRole('ADMIN'), usuariosRouter);
-  app.use(`${prefix}/categorias`, categoriasRouter);
+
+  // Catalogos visibles para tienda/caja; escritura solo ADMIN.
+  app.use(`${prefix}/categorias`, requireAdminForWrite, categoriasRouter);
   app.use(`${prefix}/productos`, productosRouter);
-  app.use(`${prefix}/descuentos`, descuentosRouter);
-  app.use(`${prefix}/clientes`, clientesRouter);
-  app.use(`${prefix}/proveedores`, proveedoresRouter);
+  app.use(`${prefix}/descuentos`, requireAdminForWrite, descuentosRouter);
+  app.use(`${prefix}/clientes`, requireAdminForWrite, clientesRouter);
+  app.use(`${prefix}/proveedores`, requireAdminForWrite, proveedoresRouter);
+
+  // Operaciones de venta requieren sesion desde sus routers; compras son solo ADMIN.
   app.use(`${prefix}/ventas`, ventasRouter);
   app.use(`${prefix}/detalle_ventas`, detallevRouter);
   app.use(`${prefix}/detalle_compras`, detallecRouter);
@@ -93,7 +99,7 @@ function mountApiRoutes(prefix) {
 mountApiRoutes(API_PREFIX);
 mountApiRoutes(ENCODED_API_PREFIX);
 mountApiRoutes(LEGACY_API_PREFIX);
-mountApiRoutes(API_ALIAS_PREFIX);
+mountApiRoutes(SIMPLE_API_PREFIX);
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'Not found' });
