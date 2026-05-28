@@ -10,7 +10,7 @@
     <header>
       <div class="header-content">
         <h1>🛒 Portal de Ventas</h1>
-        <a href="../index.html" class="btn-volver">Volver a la tienda</a>
+        <button id="btn-cerrar-sesion-ventas" type="button" class="btn-volver">Cerrar sesion</button>
       </div>
     </header>
 
@@ -195,5 +195,12 @@
     <script src="../js/descuentos-data.js"></script>
     <script src="carrito.js"></script>
     <script src="ventas.js"></script>
+    <script>
+      document.getElementById("btn-cerrar-sesion-ventas")?.addEventListener("click", () => {
+        sessionStorage.removeItem("token");
+        localStorage.removeItem("token");
+        window.location.href = "../index.html";
+      });
+    </script>
   </body>
 </html>

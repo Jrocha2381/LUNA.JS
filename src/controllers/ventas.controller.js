@@ -62,6 +62,25 @@ function coerceItems(rawItems) {
     .filter((item) => Number.isFinite(item.productoId) && item.productoId > 0 && Number.isFinite(item.cantidad) && item.cantidad > 0);
 }
 
+function coerceCorrectionItems(rawItems) {
+  const grouped = new Map();
+  coerceItems(rawItems).forEach((item) => {
+    const current = grouped.get(item.productoId) || {
+      productoId: item.productoId,
+      cantidad: 0,
+      precioUnitario: item.precioUnitario
+    };
+    current.cantidad += Math.floor(Number(item.cantidad || 0));
+    current.precioUnitario = Number.isFinite(Number(item.precioUnitario))
+      ? Number(item.precioUnitario)
+      : Number(current.precioUnitario || 0);
+    current.subtotal = round2(current.cantidad * current.precioUnitario);
+    grouped.set(item.productoId, current);
+  });
+
+  return [...grouped.values()].filter((item) => item.cantidad > 0);
+}
+
 function parseJsonArray(value) {
   if (Array.isArray(value)) return value;
   if (typeof value === 'string') {
@@ -148,6 +167,16 @@ function groupReturnedQuantities(reembolsos) {
       if (!item.retornaInventario || !Number.isFinite(productoId) || productoId <= 0 || !Number.isFinite(cantidad)) return;
       grouped.set(productoId, (grouped.get(productoId) || 0) + cantidad);
     });
+  });
+  return grouped;
+}
+
+function groupQuantitiesByProduct(items) {
+  const grouped = new Map();
+  items.forEach((item) => {
+    const productoId = Number(item.productoId);
+    if (!Number.isFinite(productoId) || productoId <= 0) return;
+    grouped.set(productoId, (grouped.get(productoId) || 0) + Number(item.cantidad || 0));
   });
   return grouped;
 }
@@ -568,6 +597,119 @@ async function createRefund(req, res, next) {
   }
 }
 
+async function correctSale(req, res, next) {
+  const items = coerceCorrectionItems(req.body?.items);
+
+  try {
+    const updated = await sequelize.transaction(async (t) => {
+      const venta = await Venta.findByPk(req.params.id, {
+        include: [{ model: DetalleVenta, as: 'detalles' }],
+        transaction: t
+      });
+
+      if (!venta) {
+        const err = new Error('Not found');
+        err.status = 404;
+        throw err;
+      }
+
+      if (!canAccessVenta(req, venta)) {
+        const err = new Error('No puedes administrar pedidos ajenos');
+        err.status = 403;
+        throw err;
+      }
+
+      if (venta.estado === 'papelera') {
+        const err = new Error('No se puede corregir una venta en papelera');
+        err.status = 400;
+        throw err;
+      }
+
+      if (Number(venta.totalReembolsado || 0) > 0 || parseJsonArray(venta.reembolsos).length > 0) {
+        const err = new Error('No se puede corregir una venta con reembolsos registrados');
+        err.status = 400;
+        throw err;
+      }
+
+      if (!items.length) {
+        const err = new Error('Selecciona al menos un producto para corregir la venta');
+        err.status = 400;
+        throw err;
+      }
+
+      const productIds = [...new Set(items.map((item) => item.productoId))];
+      const productos = await Producto.findAll({
+        where: { id: productIds },
+        transaction: t
+      });
+      const productosById = new Map(productos.map((producto) => [Number(producto.id), producto]));
+
+      if (productos.length !== productIds.length) {
+        const err = new Error('Uno o mas productos de la correccion no existen');
+        err.status = 400;
+        throw err;
+      }
+
+      const oldQuantities = groupQuantitiesByProduct(venta.detalles || []);
+      const newQuantities = groupQuantitiesByProduct(items);
+      const affectedIds = new Set([...oldQuantities.keys(), ...newQuantities.keys()]);
+
+      for (const productoId of affectedIds) {
+        const producto = productosById.get(productoId) || await Producto.findByPk(productoId, { transaction: t });
+        if (!producto || producto.seguimientoInventario === false) continue;
+
+        const oldQty = Number(oldQuantities.get(productoId) || 0);
+        const newQty = Number(newQuantities.get(productoId) || 0);
+        const nuevoStock = Number(producto.stock || 0) + oldQty - newQty;
+
+        if (nuevoStock < 0) {
+          const err = new Error(`Stock insuficiente para corregir ${producto.nombre}`);
+          err.status = 400;
+          throw err;
+        }
+
+        await producto.update({ stock: nuevoStock }, { transaction: t });
+      }
+
+      await DetalleVenta.destroy({ where: { ventaId: venta.id }, transaction: t });
+
+      const detalleRows = items.map((item) => ({
+        ventaId: venta.id,
+        productoId: item.productoId,
+        cantidad: item.cantidad,
+        precioUnitario: item.precioUnitario,
+        subtotal: item.subtotal
+      }));
+      await DetalleVenta.bulkCreate(detalleRows, { transaction: t });
+
+      const subtotal = round2(items.reduce((sum, item) => sum + Number(item.subtotal || 0), 0));
+      const descuento = venta.descuentoId
+        ? await Descuento.findByPk(venta.descuentoId, { transaction: t })
+        : null;
+      const descuentoAplicado = computeDiscountAmount(subtotal, descuento);
+      const total = round2(Math.max(0, subtotal - descuentoAplicado));
+
+      await venta.update(
+        {
+          clienteId: Object.prototype.hasOwnProperty.call(req.body || {}, 'clienteId') ? req.body.clienteId : venta.clienteId,
+          metodoPago: req.body?.metodoPago || venta.metodoPago,
+          subtotal,
+          descuentoAplicado,
+          total,
+          items
+        },
+        { transaction: t }
+      );
+
+      return venta;
+    });
+
+    res.json(await hydrateVenta(updated.id));
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function remove(req, res, next) {
   try {
     const row = await Venta.findByPk(req.params.id);
@@ -588,4 +730,4 @@ function canAccessVenta(req, venta) {
   return Number(venta.usuarioId) === Number(req.user.id) || venta.usuarioId === null;
 }
 
-module.exports = { list, getById, create, update, applyDiscount, removeDiscount, createRefund, remove };
+module.exports = { list, getById, create, update, applyDiscount, removeDiscount, createRefund, correctSale, remove };

@@ -86,12 +86,20 @@
 
 <div class="btn-container">
     <button onclick="window.print()">🖨️ Imprimir</button>
-    <button onclick="window.location.href='../index.html'">🛒 Nueva Venta</button>
+    <button onclick="window.location.href='ventas.html'">🛒 Nueva Venta</button>
+    <button id="btn-cerrar-sesion-factura" type="button">Cerrar sesion</button>
 </div>
 
 <!-- 🔴 ESTA ES LA CLAVE 🔴 -->
 <script src="../js/backend.js"></script>
 <script src="factura.js"></script>
+<script>
+    document.getElementById("btn-cerrar-sesion-factura")?.addEventListener("click", () => {
+        sessionStorage.removeItem("token");
+        localStorage.removeItem("token");
+        window.location.href = "../index.html";
+    });
+</script>
 
 </body>
 </html>

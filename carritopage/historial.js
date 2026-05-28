@@ -163,6 +163,7 @@ function crearTarjetaMovimiento(movimiento) {
   const claseTipo = movimiento.tipo === "compra" ? "tipo-compra" : "tipo-venta";
   const tieneReembolsos = movimiento.tipo === "venta" && movimiento.totalReembolsado > 0;
   const puedeReembolsar = movimiento.tipo === "venta" && movimiento.estado !== "papelera" && movimiento.estado !== "reembolsada_total";
+  const puedeCorregir = movimiento.tipo === "venta" && movimiento.estado !== "papelera" && !tieneReembolsos;
   const etiquetaEstado = movimiento.estado === "reembolsada_total"
     ? "Reembolsada total"
     : movimiento.estado === "reembolsada_parcial"
@@ -196,6 +197,7 @@ function crearTarjetaMovimiento(movimiento) {
     <div class="tarjeta-acciones">
       <button class="btn-ver-detalle" data-uid="${movimiento.uid}">Ver detalle</button>
       ${movimiento.tipo === "venta" ? `<button class="btn-ver-factura" data-id="${movimiento.id}">Ver factura</button>` : ""}
+      ${puedeCorregir ? `<button class="btn-corregir-venta" data-uid="${movimiento.uid}">Corregir</button>` : ""}
       ${puedeReembolsar ? `<button class="btn-reembolsar" data-uid="${movimiento.uid}">Reembolsar</button>` : ""}
       ${movimiento.tipo === "venta" ? `<button class="btn-eliminar-venta" data-id="${movimiento.id}">Eliminar</button>` : ""}
     </div>
@@ -253,6 +255,13 @@ function asignarEventosTarjetas() {
     btn.addEventListener("click", (e) => {
       const movimiento = buscarMovimientoPorUid(e.currentTarget.dataset.uid);
       if (movimiento) mostrarModalReembolso(movimiento);
+    });
+  });
+
+  document.querySelectorAll(".btn-corregir-venta").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const movimiento = buscarMovimientoPorUid(e.currentTarget.dataset.uid);
+      if (movimiento) mostrarModalCorreccion(movimiento);
     });
   });
 
@@ -500,6 +509,124 @@ function mostrarModalReembolso(movimiento) {
     } catch (error) {
       console.error("Error registrando reembolso:", error);
       mostrarNotificacion("error", "Error", error.payload?.error || "No se pudo registrar el reembolso.");
+    }
+  });
+
+  recalcular();
+}
+
+function mostrarModalCorreccion(movimiento) {
+  const filas = movimiento.articulos.map((item, index) => `
+    <tr data-producto-id="${item.productoId || ""}">
+      <td>${index + 1}</td>
+      <td>
+        <strong>${item.nombre}</strong>
+        ${!item.productoId ? "<small>No se puede corregir: producto sin ID</small>" : ""}
+      </td>
+      <td>
+        <input type="number" class="correccion-cantidad" min="1" step="1" value="${Math.max(1, Math.floor(toNumber(item.cantidad, 1)))}" ${!item.productoId ? "disabled" : ""}>
+      </td>
+      <td>
+        <input type="number" class="correccion-precio" min="0" step="0.01" value="${round2(item.precio)}" ${!item.productoId ? "disabled" : ""}>
+      </td>
+      <td class="correccion-subtotal">${formatearMoneda(item.subtotal)}</td>
+    </tr>
+  `).join("");
+
+  const contenidoModal = `
+    <div class="modal-overlay" id="modal-correccion-overlay">
+      <div class="modal-detalle modal-reembolso">
+        <div class="modal-header">
+          <h2>Corregir venta #${String(movimiento.id).slice(-6)}</h2>
+          <button class="btn-cerrar-modal" id="cerrar-correccion">X</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="detalle-info">
+            <p><strong>Cliente:</strong> ${movimiento.tercero}</p>
+            <p><strong>Total actual:</strong> ${formatearMoneda(movimiento.total)}</p>
+            <p>La correccion ajusta el total y el inventario segun la diferencia de cantidades.</p>
+          </div>
+
+          <table class="tabla-detalle tabla-reembolso">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio</th>
+                <th>Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>${filas}</tbody>
+          </table>
+
+          <div class="total-reembolso-box">
+            <span>Nuevo subtotal</span>
+            <strong id="total-correccion-calculado">${formatearMoneda(movimiento.total)}</strong>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secundario" id="cancelar-correccion">Cancelar</button>
+          <button class="btn-primario" id="confirmar-correccion">Guardar correccion</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML("beforeend", contenidoModal);
+
+  const overlay = document.getElementById("modal-correccion-overlay");
+  const cerrar = () => overlay?.remove();
+
+  function recalcular() {
+    let total = 0;
+    overlay.querySelectorAll("tbody tr").forEach((row) => {
+      const cantidad = Math.max(1, Math.floor(toNumber(row.querySelector(".correccion-cantidad")?.value, 1)));
+      const precio = Math.max(0, toNumber(row.querySelector(".correccion-precio")?.value, 0));
+      const subtotal = round2(cantidad * precio);
+      row.querySelector(".correccion-subtotal").textContent = formatearMoneda(subtotal);
+      total += subtotal;
+    });
+    document.getElementById("total-correccion-calculado").textContent = formatearMoneda(total);
+  }
+
+  overlay.querySelectorAll(".correccion-cantidad, .correccion-precio").forEach((input) => {
+    input.addEventListener("input", recalcular);
+    input.addEventListener("change", recalcular);
+  });
+
+  overlay.querySelector("#cerrar-correccion").addEventListener("click", cerrar);
+  overlay.querySelector("#cancelar-correccion").addEventListener("click", cerrar);
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) cerrar();
+  });
+
+  overlay.querySelector("#confirmar-correccion").addEventListener("click", async () => {
+    const items = [...overlay.querySelectorAll("tbody tr")]
+      .map((row) => ({
+        productoId: Number(row.dataset.productoId),
+        cantidad: Math.max(1, Math.floor(toNumber(row.querySelector(".correccion-cantidad")?.value, 1))),
+        precioUnitario: Math.max(0, toNumber(row.querySelector(".correccion-precio")?.value, 0))
+      }))
+      .filter((item) => item.productoId && item.cantidad > 0);
+
+    if (!items.length) {
+      mostrarNotificacion("error", "Sin productos", "La venta debe conservar al menos un producto.");
+      return;
+    }
+
+    try {
+      await window.Backend.post(`ventas/${movimiento.id}/correccion`, { items });
+      cerrar();
+      await cargarMovimientos();
+      movimientosActuales = ordenarMovimientos(movimientosActuales);
+      renderizarHistorial(movimientosActivos());
+      mostrarNotificacion("success", "Venta corregida", "El total y el inventario fueron actualizados.");
+    } catch (error) {
+      console.error("Error corrigiendo venta:", error);
+      mostrarNotificacion("error", "Error", error.payload?.error || "No se pudo corregir la venta.");
     }
   });
 

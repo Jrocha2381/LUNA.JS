@@ -7,7 +7,8 @@ const {
   createVentaValidator,
   updateVentaValidator,
   applyVentaDescuentoValidator,
-  createReembolsoValidator
+  createReembolsoValidator,
+  correctVentaValidator
 } = require('../validators/venta.validator');
 const { idValidator } = require('./crudRouter');
 
@@ -21,6 +22,7 @@ router.post('/', createVentaValidator, ctrl.create);
 router.post('/:id/descuento', idValidator, applyVentaDescuentoValidator, ctrl.applyDiscount);
 router.delete('/:id/descuento', idValidator, ctrl.removeDiscount);
 router.post('/:id/reembolsos', idValidator, createReembolsoValidator, ctrl.createRefund);
+router.post('/:id/correccion', idValidator, correctVentaValidator, ctrl.correctSale);
 router.put('/:id', idValidator, updateVentaValidator, ctrl.update);
 router.delete('/:id', idValidator, ctrl.remove);
 

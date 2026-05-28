@@ -56,9 +56,36 @@ const createReembolsoValidator = [
   validationHandler
 ];
 
+const correctVentaValidator = [
+  body('items')
+    .isArray({ min: 1 })
+    .withMessage('items debe tener al menos un producto para corregir la venta'),
+  body('items.*.productoId')
+    .isInt({ min: 1 })
+    .withMessage('productoId debe ser un entero positivo'),
+  body('items.*.cantidad')
+    .isInt({ min: 1 })
+    .withMessage('cantidad debe ser un entero positivo'),
+  body('items.*.precioUnitario')
+    .optional({ nullable: true })
+    .isFloat({ min: 0 })
+    .withMessage('precioUnitario debe ser mayor o igual a 0'),
+  body('clienteId')
+    .optional({ nullable: true })
+    .isInt({ min: 1 })
+    .withMessage('clienteId debe ser un entero positivo'),
+  body('metodoPago')
+    .optional({ nullable: true, checkFalsy: true })
+    .trim()
+    .isLength({ max: 50 })
+    .withMessage('metodoPago no puede superar 50 caracteres'),
+  validationHandler
+];
+
 module.exports = {
   createVentaValidator,
   updateVentaValidator,
   applyVentaDescuentoValidator,
-  createReembolsoValidator
+  createReembolsoValidator,
+  correctVentaValidator
 };
