@@ -8,9 +8,12 @@
   </head>
   <body>
     <header>
-      <div class="header-content">
+      <div class="header-content" style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
         <h1>🛒 Portal de Ventas</h1>
-        <button id="btn-cerrar-sesion-ventas" type="button" class="btn-volver">Cerrar sesion</button>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <a href="historial.html" class="btn-volver" style="text-decoration:none;">Historial</a>
+          <button id="btn-cerrar-sesion-ventas" type="button" class="btn-volver">Cerrar sesion</button>
+        </div>
       </div>
     </header>
 
@@ -191,6 +194,7 @@
       </div>
     </div>
 
+    <script src="admin-auth.js"></script>
     <script src="../js/backend.js"></script>
     <script src="../js/descuentos-data.js"></script>
     <script src="carrito.js"></script>
