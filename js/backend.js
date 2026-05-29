@@ -70,7 +70,9 @@
     if (!res.ok) {
       const detalle =
         payload && typeof payload === "object"
-          ? payload.error || payload.message || (Array.isArray(payload.details) && payload.details[0] && payload.details[0].message)
+          ? (Array.isArray(payload.details) && payload.details.length
+              ? payload.details.map((item) => item.message || item.msg || String(item)).join(". ")
+              : payload.error || payload.message)
           : payload;
       const error = new Error(detalle || `Backend error ${res.status} ${res.statusText}`);
       error.status = res.status;

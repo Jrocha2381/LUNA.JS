@@ -5,9 +5,18 @@ const validationHandler = require('./validationHandler');
 
 function clienteIdRule() {
   return body('clienteId')
+    .optional({ nullable: true })
     .isInt({ min: 1 })
     .withMessage('clienteId debe ser un entero positivo')
     .toInt();
+}
+
+function clienteNombreRule() {
+  return body('clienteNombre')
+    .optional({ nullable: true })
+    .isString()
+    .isLength({ max: 160 })
+    .withMessage('clienteNombre no puede superar 160 caracteres');
 }
 
 function proveedorIdRule() {
@@ -16,6 +25,14 @@ function proveedorIdRule() {
     .isInt({ min: 1 })
     .withMessage('proveedorId debe ser un entero positivo')
     .toInt();
+}
+
+function proveedorNombreRule() {
+  return body('proveedorNombre')
+    .optional({ nullable: true })
+    .isString()
+    .isLength({ max: 160 })
+    .withMessage('proveedorNombre no puede superar 160 caracteres');
 }
 
 function tipoRule() {
@@ -76,7 +93,9 @@ function cantidadResueltaRule() {
 
 const createFaltanteValidator = [
   clienteIdRule(),
+  clienteNombreRule(),
   proveedorIdRule(),
+  proveedorNombreRule(),
   tipoRule(),
   productoIdRule(),
   productoNombreRule(),

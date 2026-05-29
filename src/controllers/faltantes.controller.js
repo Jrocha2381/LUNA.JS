@@ -22,6 +22,16 @@ function normalizeBooleanQuery(value) {
   return undefined;
 }
 
+function cleanName(value) {
+  const text = String(value || '').trim();
+  return text || null;
+}
+
+function positiveIntOrNull(value) {
+  const n = Number(value);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
 function includeFaltante() {
   return [
     { model: Cliente, as: 'cliente' },
@@ -68,11 +78,13 @@ async function create(req, res, next) {
 
     const cantidadSolicitada = Number(body.cantidadSolicitada ?? 1);
     const fechaSolicitado = body.fechaSolicitado ? new Date(body.fechaSolicitado) : new Date();
+    const clienteNombre = cleanName(body.clienteNombre);
+    const proveedorNombre = cleanName(body.proveedorNombre);
 
     const payload = {
-      clienteId: Number(body.clienteId),
-      proveedorId: body.proveedorId === undefined ? null : (body.proveedorId ? Number(body.proveedorId) : null),
-      productoId: body.productoId === undefined ? null : (body.productoId ? Number(body.productoId) : null),
+      clienteId: positiveIntOrNull(body.clienteId),
+      proveedorId: positiveIntOrNull(body.proveedorId),
+      productoId: positiveIntOrNull(body.productoId),
       productoNombre: body.productoNombre ?? null,
       productoCodigo: body.productoCodigo ?? null,
       tipo: (body.tipo || '').toString(),
@@ -102,10 +114,28 @@ async function create(req, res, next) {
         }
       }
 
+      if (!payload.proveedorId && proveedorNombre) {
+        const [proveedor] = await Proveedor.findOrCreate({
+          where: { nombre: proveedorNombre },
+          defaults: { nombre: proveedorNombre },
+          transaction: t
+        });
+        payload.proveedorId = proveedor.id;
+      }
+
       // validar clienteId siempre
-      const cliente = await Cliente.findByPk(payload.clienteId, { transaction: t });
+      if (!payload.clienteId && clienteNombre) {
+        const [cliente] = await Cliente.findOrCreate({
+          where: { nombre: clienteNombre },
+          defaults: { nombre: clienteNombre },
+          transaction: t
+        });
+        payload.clienteId = cliente.id;
+      }
+
+      const cliente = payload.clienteId ? await Cliente.findByPk(payload.clienteId, { transaction: t }) : null;
       if (!cliente) {
-        const err = new Error('clienteId no encontrado');
+        const err = new Error('Selecciona o registra un cliente valido');
         err.status = 400;
         throw err;
       }

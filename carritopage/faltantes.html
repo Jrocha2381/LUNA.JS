@@ -260,6 +260,27 @@
           return Backend.get(`faltantes/insights?${params.toString()}`);
         }
 
+        function idEnteroValido(value) {
+          const n = Number(value);
+          return Number.isInteger(n) && n > 0 ? n : null;
+        }
+
+        function selectedText(selectId) {
+          const select = document.getElementById(selectId);
+          const option = select && select.selectedOptions ? select.selectedOptions[0] : null;
+          const text = option ? option.textContent.trim() : '';
+          return text && !['Todos', '(opcional)'].includes(text) ? text : null;
+        }
+
+        function mensajeErrorBackend(err) {
+          const payload = err && err.payload;
+          if (payload && Array.isArray(payload.details) && payload.details.length) {
+            return payload.details.map(item => item.message || item.msg || String(item)).join('. ');
+          }
+          if (payload && payload.error) return payload.error;
+          return err.message || 'No se pudo registrar';
+        }
+
         function productoKey(it) {
           const codigo = it.productoCodigo ? `(${it.productoCodigo})` : '';
           const nombre = it.productoNombre || it.producto?.nombre || '';
@@ -415,10 +436,12 @@
         form.addEventListener('submit', async (e) => {
           e.preventDefault();
           const payload = {
-            clienteId: Number(document.getElementById('falt-cliente').value),
-            proveedorId: document.getElementById('falt-proveedor').value ? Number(document.getElementById('falt-proveedor').value) : null,
+            clienteId: idEnteroValido(document.getElementById('falt-cliente').value),
+            clienteNombre: selectedText('falt-cliente'),
+            proveedorId: idEnteroValido(document.getElementById('falt-proveedor').value),
+            proveedorNombre: selectedText('falt-proveedor'),
             tipo: document.getElementById('falt-tipo').value.trim(),
-            productoId: document.getElementById('falt-producto-id').value ? Number(document.getElementById('falt-producto-id').value) : null,
+            productoId: idEnteroValido(document.getElementById('falt-producto-id').value),
             productoNombre: document.getElementById('falt-producto-nombre').value.trim() || null,
             productoCodigo: document.getElementById('falt-producto-codigo').value.trim() || null,
             cantidadSolicitada: Number(document.getElementById('falt-cantidad').value),
@@ -434,7 +457,7 @@
             await cargarInsights();
           } catch (err) {
             console.error(err);
-            if (window.mostrarToast) window.mostrarToast('error','Faltantes', err.message || 'No se pudo registrar');
+            if (window.mostrarToast) window.mostrarToast('error','Faltantes', mensajeErrorBackend(err));
             else alert(err.message);
           }
         });
