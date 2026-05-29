@@ -20,6 +20,8 @@ const ventasRouter = require('./routes/ventas');
 const detallevRouter = require('./routes/detalleventas');
 const detallecRouter = require('./routes/detallecompras');
 const comprasRouter = require('./routes/compras');
+const faltantesRouter = require('./routes/faltantes');
+
 
 const app = express();
 const API_PREFIX = '/Jeronimo Rubio_Sebastian Rocha_Ibrahim Safadi';
@@ -94,7 +96,11 @@ function mountApiRoutes(prefix) {
   app.use(`${prefix}/detalle_ventas`, detallevRouter);
   app.use(`${prefix}/detalle_compras`, detallecRouter);
   app.use(`${prefix}/compras`, authJwt, requireRole('ADMIN'), comprasRouter);
+
+  // Faltantes / demanda no atendida
+  app.use(`${prefix}/faltantes`, authJwt, requireRole('ADMIN'), faltantesRouter);
 }
+
 
 mountApiRoutes(API_PREFIX);
 mountApiRoutes(ENCODED_API_PREFIX);
