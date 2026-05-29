@@ -8,11 +8,31 @@
   </head>
   <body>
     <header>
-      <div class="header-content" style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+      <div
+        class="header-content"
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+        "
+      >
         <h1>🛒 Portal de Ventas</h1>
-        <div style="display:flex; gap:10px; align-items:center;">
-          <a href="historial.html" class="btn-volver" style="text-decoration:none;">Historial</a>
-          <button id="btn-cerrar-sesion-ventas" type="button" class="btn-volver">Cerrar sesion</button>
+        <div style="display: flex; gap: 10px; align-items: center">
+          <a
+            href="historial.html"
+            class="btn-volver"
+            style="text-decoration: none"
+            >Historial</a
+          >
+          <button
+            id="btn-cerrar-sesion-ventas"
+            type="button"
+            class="btn-volver"
+          >
+            Cerrar sesion
+          </button>
         </div>
       </div>
     </header>
@@ -76,7 +96,7 @@
           </div>
 
           <!-- Descuento -->
-          <div class="seccion-metodo-pago" style="margin-top: 14px;">
+          <div class="seccion-metodo-pago" style="margin-top: 14px">
             <label for="selector-descuento">Descuento:</label>
             <select id="selector-descuento" class="input-select">
               <option value="sin-descuento">Sin descuento</option>
@@ -95,13 +115,173 @@
             </select>
           </div>
 
+          <!-- Sección de Efectivo Recibido -->
+          <div
+            id="seccion-efectivo"
+            style="
+              display: none;
+              margin-top: 14px;
+              padding: 18px;
+              background: #f8f9fa;
+              border: 2px solid #dee2e6;
+              border-radius: 12px;
+            "
+          >
+            <label
+              style="
+                display: block;
+                margin-bottom: 12px;
+                font-weight: 700;
+                color: #333;
+                font-size: 15px;
+              "
+              >💰 Efectivo Recibido:</label
+            >
+            <input
+              type="number"
+              id="efectivo-recibido"
+              placeholder="0"
+              style="
+                width: 100%;
+                padding: 14px;
+                border: 2px solid #dee2e6;
+                border-radius: 8px;
+                font-size: 16px;
+                font-weight: 600;
+                text-align: center;
+              "
+              min="0"
+              step="500"
+            />
+
+            <div
+              style="
+                margin-top: 16px;
+                padding: 14px;
+                background: white;
+                border-radius: 8px;
+                border: 1px solid #dee2e6;
+              "
+            >
+              <div
+                style="
+                  display: grid;
+                  grid-template-columns: 1fr 1fr;
+                  gap: 12px;
+                  margin-bottom: 12px;
+                  padding-bottom: 12px;
+                  border-bottom: 1px solid #e9ecef;
+                "
+              >
+                <div style="text-align: center">
+                  <p
+                    style="
+                      margin: 0;
+                      font-size: 12px;
+                      color: #666;
+                      font-weight: 500;
+                      text-transform: uppercase;
+                    "
+                  >
+                    Total a Pagar:
+                  </p>
+                  <p
+                    id="total-pagar-efectivo"
+                    style="
+                      margin: 6px 0 0 0;
+                      font-size: 20px;
+                      font-weight: 700;
+                      color: #333;
+                    "
+                  >
+                    $0
+                  </p>
+                </div>
+                <div style="text-align: center">
+                  <p
+                    style="
+                      margin: 0;
+                      font-size: 12px;
+                      color: #666;
+                      font-weight: 500;
+                      text-transform: uppercase;
+                    "
+                  >
+                    Recibido:
+                  </p>
+                  <p
+                    id="recibido-mostrado"
+                    style="
+                      margin: 6px 0 0 0;
+                      font-size: 20px;
+                      font-weight: 700;
+                      color: #495057;
+                    "
+                  >
+                    $0
+                  </p>
+                </div>
+              </div>
+
+              <div
+                style="
+                  background: #e8f5e9;
+                  padding: 14px;
+                  border-radius: 8px;
+                  text-align: center;
+                "
+              >
+                <p
+                  style="
+                    margin: 0;
+                    font-size: 12px;
+                    color: #2e7d32;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                  "
+                >
+                  💵 Vueltas a Entregar:
+                </p>
+                <p
+                  id="vueltas-calculadas"
+                  style="
+                    margin: 8px 0 0 0;
+                    font-size: 28px;
+                    font-weight: 800;
+                    color: #1b5e20;
+                  "
+                >
+                  $0
+                </p>
+              </div>
+            </div>
+
+            <p
+              id="estado-efectivo"
+              style="
+                margin: 12px 0 0 0;
+                padding: 10px;
+                text-align: center;
+                border-radius: 6px;
+                font-weight: 600;
+                font-size: 13px;
+                display: none;
+              "
+            ></p>
+          </div>
+
           <!-- Resumen de Venta -->
           <div class="resumen-venta">
             <div class="linea-resumen">
               <span>Subtotal:</span>
               <span id="subtotal-valor">$0</span>
             </div>
-            <div class="linea-resumen" id="linea-descuento" style="display:none;">
+            <div
+              class="linea-resumen"
+              id="linea-descuento"
+              style="display: none"
+            >
               <span>Descuento:</span>
               <span id="descuento-valor">$0</span>
             </div>
@@ -200,11 +380,13 @@
     <script src="carrito.js"></script>
     <script src="ventas.js"></script>
     <script>
-      document.getElementById("btn-cerrar-sesion-ventas")?.addEventListener("click", () => {
-        sessionStorage.removeItem("token");
-        localStorage.removeItem("token");
-        window.location.href = "../index.html";
-      });
+      document
+        .getElementById("btn-cerrar-sesion-ventas")
+        ?.addEventListener("click", () => {
+          sessionStorage.removeItem("token");
+          localStorage.removeItem("token");
+          window.location.href = "../index.html";
+        });
     </script>
   </body>
 </html>

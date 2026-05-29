@@ -454,9 +454,11 @@ function calcularTotales() {
   const totalEl = document.getElementById('total-valor');
   const lineaDescuento = document.getElementById('linea-descuento');
   const descuentoEl = document.getElementById('descuento-valor');
+  const totalPagarEfectivo = document.getElementById('total-pagar-efectivo');
 
   if (subtotalEl) subtotalEl.textContent = formatearMoneda(subtotal);
   if (totalEl) totalEl.textContent = formatearMoneda(total);
+  if (totalPagarEfectivo) totalPagarEfectivo.textContent = formatearMoneda(total);
 
   if (lineaDescuento && descuentoEl) {
     if (descuentoAplicado > 0) {
@@ -465,6 +467,70 @@ function calcularTotales() {
     } else {
       lineaDescuento.style.display = 'none';
       descuentoEl.textContent = formatearMoneda(0);
+    }
+  }
+}
+
+// Calcular vueltas en efectivo
+function calcularVueltas() {
+  const efectivoRecibidoInput = document.getElementById('efectivo-recibido');
+  const vultasCalculadas = document.getElementById('vueltas-calculadas');
+  const recibidoMostrado = document.getElementById('recibido-mostrado');
+  const estadoEfectivo = document.getElementById('estado-efectivo');
+  const btnFinalizarVenta = document.getElementById('btn-finalizar-venta');
+  
+  if (!efectivoRecibidoInput) return;
+  
+  const subtotal = carritoVentas.reduce((sum, item) => sum + item.subtotal, 0);
+  const descuento = obtenerDescuentoPorId(descuentoSeleccionadoId);
+  const descuentoAplicado = calcularDescuentoAplicado(subtotal, descuento);
+  const total = round2(Math.max(0, subtotal - descuentoAplicado));
+  
+  const efectivoRecibido = Number(efectivoRecibidoInput.value) || 0;
+  const vueltas = efectivoRecibido - total;
+  
+  // Actualizar valor recibido mostrado
+  if (recibidoMostrado) {
+    recibidoMostrado.textContent = formatearMonedaVentas(efectivoRecibido);
+  }
+  
+  // Actualizar vueltas
+  if (vultasCalculadas) {
+    vultasCalculadas.textContent = formatearMonedaVentas(Math.abs(vueltas));
+  }
+  
+  // Cambiar color según estado
+  if (vueltas >= 0) {
+    if (vultasCalculadas) {
+      vultasCalculadas.parentElement.style.background = '#c8e6c9';
+      vultasCalculadas.style.color = '#1b5e20';
+    }
+    if (estadoEfectivo) {
+      estadoEfectivo.textContent = '✓ Dinero suficiente';
+      estadoEfectivo.style.background = '#d4edda';
+      estadoEfectivo.style.color = '#155724';
+      estadoEfectivo.style.display = 'block';
+    }
+    if (btnFinalizarVenta) {
+      btnFinalizarVenta.disabled = false;
+      btnFinalizarVenta.style.opacity = '1';
+      btnFinalizarVenta.style.cursor = 'pointer';
+    }
+  } else {
+    if (vultasCalculadas) {
+      vultasCalculadas.parentElement.style.background = '#ffcdd2';
+      vultasCalculadas.style.color = '#b71c1c';
+    }
+    if (estadoEfectivo) {
+      estadoEfectivo.textContent = `✗ Falta: ${formatearMonedaVentas(Math.abs(vueltas))}`;
+      estadoEfectivo.style.background = '#f8d7da';
+      estadoEfectivo.style.color = '#721c24';
+      estadoEfectivo.style.display = 'block';
+    }
+    if (btnFinalizarVenta) {
+      btnFinalizarVenta.disabled = true;
+      btnFinalizarVenta.style.opacity = '0.5';
+      btnFinalizarVenta.style.cursor = 'not-allowed';
     }
   }
 }
@@ -542,6 +608,13 @@ async function confirmarFinalizarVenta() {
   const total = round2(Math.max(0, subtotal - descuentoAplicado));
 
   try {
+    // Capturar valor recibido en efectivo si aplica
+    let valorRecibido = null;
+    if (metodoPago === 'Efectivo') {
+      const efectivoRecibidoInput = document.getElementById('efectivo-recibido');
+      valorRecibido = efectivoRecibidoInput ? Number(efectivoRecibidoInput.value) || 0 : 0;
+    }
+
     // Crear la venta
     const ventaData = {
       fecha: new Date().toISOString(),
@@ -551,7 +624,8 @@ async function confirmarFinalizarVenta() {
       // En el backend, "total" se interpreta como subtotal (pre-descuento) para recalcular el total final.
       total: subtotal,
       descuentoId: descuento ? descuento.id : null,
-      items: carritoVentas
+      items: carritoVentas,
+      valorRecibido: valorRecibido
     };
 
     const ventaCreada = await window.Backend.post('ventas', ventaData);
@@ -628,6 +702,50 @@ document.addEventListener('DOMContentLoaded', async () => {
         descuentoSeleccionadoId = v && v !== 'sin-descuento' ? Number(v) : null;
         calcularTotales();
       });
+    }
+
+    // Evento para mostrar/ocultar sección de efectivo
+    const metodoPagoSelect = document.getElementById('selector-metodo-pago');
+    const seccionEfectivo = document.getElementById('seccion-efectivo');
+    const efectivoRecibidoInput = document.getElementById('efectivo-recibido');
+    const btnFinalizarVenta = document.getElementById('btn-finalizar-venta');
+    
+    if (metodoPagoSelect) {
+      metodoPagoSelect.addEventListener('change', () => {
+        if (metodoPagoSelect.value === 'Efectivo') {
+          if (seccionEfectivo) seccionEfectivo.style.display = 'block';
+          if (efectivoRecibidoInput) {
+            efectivoRecibidoInput.value = '';
+            efectivoRecibidoInput.focus();
+          }
+          // Deshabilitar botón hasta que haya dinero suficiente
+          if (btnFinalizarVenta) {
+            btnFinalizarVenta.disabled = true;
+            btnFinalizarVenta.style.opacity = '0.5';
+            btnFinalizarVenta.style.cursor = 'not-allowed';
+          }
+          // Resetear valores mostrados
+          const vultasCalculadas = document.getElementById('vueltas-calculadas');
+          const recibidoMostrado = document.getElementById('recibido-mostrado');
+          const estadoEfectivo = document.getElementById('estado-efectivo');
+          if (vultasCalculadas) vultasCalculadas.textContent = '$0';
+          if (recibidoMostrado) recibidoMostrado.textContent = '$0';
+          if (estadoEfectivo) estadoEfectivo.style.display = 'none';
+        } else {
+          if (seccionEfectivo) seccionEfectivo.style.display = 'none';
+          // Habilitar botón para otros métodos
+          if (btnFinalizarVenta) {
+            btnFinalizarVenta.disabled = false;
+            btnFinalizarVenta.style.opacity = '1';
+            btnFinalizarVenta.style.cursor = 'pointer';
+          }
+        }
+      });
+    }
+
+    // Evento para calcular vueltas al ingresar efectivo
+    if (efectivoRecibidoInput) {
+      efectivoRecibidoInput.addEventListener('input', calcularVueltas);
     }
 
     setInterval(() => {
