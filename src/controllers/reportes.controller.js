@@ -174,7 +174,7 @@ async function productosMasVendidos(req, res, next) {
         }
       ],
       group: ['DetalleVenta.productoId', 'producto.id', 'producto.nombre', 'producto.precio'],
-      order: [[sequelize.literal('cantidadVendida'), 'DESC']],
+      order: [['cantidadVendida', 'DESC']],
       limit,
       raw: true,
       nest: true
@@ -255,7 +255,7 @@ async function faltantesFrecuentes(req, res, next) {
         'producto.id',
         'producto.nombre'
       ],
-      order: [[sequelize.literal('solicitudes'), 'DESC']],
+      order: [['solicitudes', 'DESC']],
       limit,
       raw: true,
       nest: true
