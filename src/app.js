@@ -21,6 +21,7 @@ const detallevRouter = require('./routes/detalleventas');
 const detallecRouter = require('./routes/detallecompras');
 const comprasRouter = require('./routes/compras');
 const faltantesRouter = require('./routes/faltantes');
+const reportesRouter = require('./routes/reportes');
 
 
 const app = express();
@@ -99,6 +100,9 @@ function mountApiRoutes(prefix) {
 
   // Faltantes / demanda no atendida
   app.use(`${prefix}/faltantes`, authJwt, requireRole('ADMIN'), faltantesRouter);
+
+  // Reportes basicos
+  app.use(`${prefix}/reportes`, authJwt, requireRole('ADMIN'), reportesRouter);
 }
 
 
