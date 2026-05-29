@@ -83,11 +83,11 @@ function mountApiRoutes(prefix) {
   app.use(`${prefix}/usuarios`, authJwt, requireRole('ADMIN'), usuariosRouter);
 
   // Catalogos visibles para tienda/caja; escritura solo ADMIN.
-  app.use(`${prefix}/categorias`, requireAdminForWrite, categoriasRouter);
+  app.use(`${prefix}/categorias`, authJwt, requireAdminForWrite, categoriasRouter);
   app.use(`${prefix}/productos`, productosRouter);
-  app.use(`${prefix}/descuentos`, requireAdminForWrite, descuentosRouter);
-  app.use(`${prefix}/clientes`, requireAdminForWrite, clientesRouter);
-  app.use(`${prefix}/proveedores`, requireAdminForWrite, proveedoresRouter);
+  app.use(`${prefix}/descuentos`, authJwt, requireAdminForWrite, descuentosRouter);
+  app.use(`${prefix}/clientes`, authJwt, requireAdminForWrite, clientesRouter);
+  app.use(`${prefix}/proveedores`, authJwt, requireAdminForWrite, proveedoresRouter);
 
   // Operaciones de venta requieren sesion desde sus routers; compras son solo ADMIN.
   app.use(`${prefix}/ventas`, ventasRouter);
