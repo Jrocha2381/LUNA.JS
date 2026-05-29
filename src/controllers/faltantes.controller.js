@@ -3,6 +3,10 @@
 const { Faltante, Cliente, Proveedor, Producto, sequelize } = require('../../models');
 const { Op } = require('sequelize');
 
+function likeOperator() {
+  return sequelize.getDialect() === 'postgres' ? Op.iLike : Op.like;
+}
+
 function coerceResolvedQuantity(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return 0;
@@ -32,7 +36,7 @@ async function list(req, res, next) {
     const resuelto = normalizeBooleanQuery(req.query.resuelto);
 
     const where = {};
-    if (tipo) where.tipo = { [Op.iLike]: `%${tipo}%` };
+    if (tipo) where.tipo = { [likeOperator()]: `%${tipo}%` };
     if (proveedorId) where.proveedorId = Number(proveedorId);
     if (typeof resuelto === 'boolean') where.resuelto = resuelto;
 
@@ -150,7 +154,7 @@ async function insights(req, res, next) {
 
     const where = {};
     if (proveedorId) where.proveedorId = Number(proveedorId);
-    if (tipo) where.tipo = { [Op.iLike]: `%${tipo}%` };
+    if (tipo) where.tipo = { [likeOperator()]: `%${tipo}%` };
     if (soloPendientes !== undefined) {
       const pending = normalizeBooleanQuery(soloPendientes);
       if (pending) where.resuelto = false;
@@ -195,6 +199,7 @@ async function insights(req, res, next) {
         'tipo',
         'productoNombre',
         'productoCodigo',
+        [sequelize.fn('COUNT', sequelize.col('id')), 'solicitudes'],
         [sequelize.fn('SUM', sequelize.literal('"cantidadSolicitada" - "cantidadResuelta"')), 'cantidadPendiente']
       ],
       group: ['proveedorId', 'tipo', 'productoNombre', 'productoCodigo'],

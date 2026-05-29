@@ -13,7 +13,7 @@
       .sidebar-header h2 { color: #8a9b2f; margin: 0; font-size: 1.4rem; font-weight: 700; }
       .sidebar-header p { margin: 5px 0 0; font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 1px; }
       
-      .nav-menu { flex: 1; padding: 0 15px; }
+      .nav-menu { flex: 1; padding: 0 15px; overflow-y: auto; min-height: 0; }
       .nav-item { 
         display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-radius: 10px;
         text-decoration: none; color: #555; font-weight: 600; margin-bottom: 8px; transition: 0.2s; cursor: pointer;
@@ -76,7 +76,7 @@
             <span class="icon">🏷️</span> Categorías
           </a>
           <a class="nav-item" data-src="/carritopage/faltantes.html">
-            <span class="icon">📉</span> Faltantes y demanda no atendida
+            <span class="icon">📉</span> Faltantes
           </a>
         </nav>
 

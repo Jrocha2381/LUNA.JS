@@ -32,6 +32,9 @@
       .btn-small { padding: 8px 12px; border-radius: 10px; border:none; cursor:pointer; font-weight:700; }
       .btn-resolver { background:#22c55e; color:white; }
       .btn-ver { background:#e5e7eb; color:#111; border:1px solid #d1d5db; }
+      .summary-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 14px; }
+      .summary-item { background:#f8fafc; border:1px solid #e5e7eb; border-radius: 10px; padding: 12px; }
+      .summary-number { font-size: 1.35rem; font-weight: 800; color:#8a9b2f; }
       @media (max-width: 720px) { .form-grid { grid-template-columns: 1fr; } }
     </style>
   </head>
@@ -152,6 +155,46 @@
           </table>
         </div>
       </section>
+
+      <section class="card">
+        <div class="header-row">
+          <div>
+            <h2 style="margin:0 0 6px 0;">Informacion para proximas compras</h2>
+            <div class="muted">Resumen de faltantes pendientes agrupados por producto, tipo y proveedor.</div>
+          </div>
+          <button class="btn-admin-secundario" type="button" id="btn-actualizar-insights">Actualizar</button>
+        </div>
+
+        <div class="summary-grid">
+          <div class="summary-item">
+            <div class="muted">Solicitudes pendientes</div>
+            <div class="summary-number" id="total-solicitudes-pendientes">0</div>
+          </div>
+          <div class="summary-item">
+            <div class="muted">Unidades pendientes</div>
+            <div class="summary-number" id="total-unidades-pendientes">0</div>
+          </div>
+          <div class="summary-item">
+            <div class="muted">Productos/tipos frecuentes</div>
+            <div class="summary-number" id="total-grupos-pendientes">0</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 14px;" class="tabla-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Tipo</th>
+                <th>Proveedor</th>
+                <th>Solicitudes</th>
+                <th>Unidades pendientes</th>
+              </tr>
+            </thead>
+            <tbody id="insights-body"></tbody>
+          </table>
+        </div>
+      </section>
     </main>
 
     <script src="admin-auth.js"></script>
@@ -207,6 +250,14 @@
           if (resuelto !== undefined && resuelto !== '') params.set('resuelto', resuelto);
           const route = `faltantes?${params.toString()}`;
           return Backend.get(route);
+        }
+
+        async function apiInsights({ tipo, proveedorId }) {
+          const params = new URLSearchParams();
+          if (tipo) params.set('tipo', tipo);
+          if (proveedorId) params.set('proveedorId', proveedorId);
+          params.set('soloPendientes', 'true');
+          return Backend.get(`faltantes/insights?${params.toString()}`);
         }
 
         function productoKey(it) {
@@ -270,6 +321,7 @@
                 });
                 if (window.mostrarToast) window.mostrarToast('success','Faltantes','Marcado como resuelto');
                 await cargarTabla();
+                await cargarInsights();
               } catch (e) {
                 console.error(e);
                 if (window.mostrarToast) window.mostrarToast('error','Faltantes', e.message || 'No se pudo marcar como resuelto');
@@ -290,6 +342,46 @@
           });
         }
 
+        function renderInsights(items) {
+          const body = document.getElementById('insights-body');
+          body.innerHTML = '';
+          const proveedorOptions = Array.from(document.getElementById('filtro-proveedor').options);
+
+          let totalSolicitudes = 0;
+          let totalUnidades = 0;
+          const frag = document.createDocumentFragment();
+
+          items.forEach(it => {
+            const solicitudes = Number(it.solicitudes || 0);
+            const unidades = Number(it.cantidadPendiente || 0);
+            totalSolicitudes += solicitudes;
+            totalUnidades += unidades;
+
+            const tr = document.createElement('tr');
+            const producto = it.productoNombre || it.productoCodigo || '(sin nombre)';
+            const proveedor = proveedorOptions.find(opt => opt.value === String(it.proveedorId));
+            tr.innerHTML = `
+              <td>${producto}</td>
+              <td>${it.tipo || ''}</td>
+              <td>${proveedor ? proveedor.textContent : (it.proveedorId ? `Proveedor #${it.proveedorId}` : 'Sin proveedor')}</td>
+              <td>${solicitudes}</td>
+              <td>${unidades}</td>
+            `;
+            frag.appendChild(tr);
+          });
+
+          if (!items.length) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = '<td colspan="5" class="muted">No hay faltantes pendientes para sugerir compras.</td>';
+            frag.appendChild(tr);
+          }
+
+          body.appendChild(frag);
+          document.getElementById('total-solicitudes-pendientes').textContent = totalSolicitudes;
+          document.getElementById('total-unidades-pendientes').textContent = totalUnidades;
+          document.getElementById('total-grupos-pendientes').textContent = items.length;
+        }
+
         async function cargarTabla() {
           const tipo = document.getElementById('filtro-tipo').value.trim();
           const proveedorId = document.getElementById('filtro-proveedor').value;
@@ -298,6 +390,13 @@
           const resuelto = resueltoRaw === '' ? undefined : (resueltoRaw === 'true' ? true : (resueltoRaw === 'false' ? false : undefined));
           const items = await apiListFaltantes({ tipo, proveedorId: proveedorId || undefined, resuelto });
           renderTabla(items);
+        }
+
+        async function cargarInsights() {
+          const tipo = document.getElementById('filtro-tipo').value.trim();
+          const proveedorId = document.getElementById('filtro-proveedor').value;
+          const items = await apiInsights({ tipo, proveedorId: proveedorId || undefined });
+          renderInsights(items);
         }
 
         // Init: sincroniza clientes/proveedores desde backend
@@ -332,6 +431,7 @@
             form.reset();
             document.getElementById('falt-cantidad').value = 1;
             await cargarTabla();
+            await cargarInsights();
           } catch (err) {
             console.error(err);
             if (window.mostrarToast) window.mostrarToast('error','Faltantes', err.message || 'No se pudo registrar');
@@ -339,9 +439,14 @@
           }
         });
 
-        document.getElementById('btn-aplicar-filtros').addEventListener('click', cargarTabla);
+        document.getElementById('btn-aplicar-filtros').addEventListener('click', async () => {
+          await cargarTabla();
+          await cargarInsights();
+        });
+        document.getElementById('btn-actualizar-insights').addEventListener('click', cargarInsights);
 
         await cargarTabla();
+        await cargarInsights();
       });
     </script>
   </body>
