@@ -9,15 +9,6 @@
   <body>
     <header>
       <h1>Gestión de Categorías</h1>
-      <div style="display: flex; gap: 10px; align-items: center">
-        <button
-          id="btn-sync"
-          class="btn-admin-secundario"
-          style="padding: 5px 10px; font-size: 0.8rem"
-        >
-          🔄 Sincronizar
-        </button>
-      </div>
     </header>
 
     <main>
@@ -121,7 +112,6 @@
 
         const form = document.getElementById("categoria-form");
         const tbody = document.getElementById("lista-categorias");
-        const btnSync = document.getElementById("btn-sync");
         const btnCancelar = document.getElementById("btn-cancelar");
         const btnNueva = document.getElementById("btn-nueva");
         const inputBuscar = document.getElementById("cat-buscar");
@@ -239,15 +229,6 @@
         btnCancelar.onclick = () => {
           resetForm();
           ocultarForm();
-        };
-
-        btnSync.onclick = async () => {
-          btnSync.textContent = "⏳ Sincronizando...";
-          btnSync.disabled = true;
-          await Entidades.sincronizar("categorias");
-          render();
-          btnSync.textContent = "🔄 Sincronizar";
-          btnSync.disabled = false;
         };
 
         btnNueva.onclick = () => {

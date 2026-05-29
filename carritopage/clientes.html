@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
@@ -9,21 +9,47 @@
   <body>
     <header>
       <h1>Gestión de Clientes</h1>
-      <div style="display:flex; gap:10px; align-items:center;">
-        <button id="btn-sync" class="btn-admin-secundario" style="padding: 5px 10px; font-size: 0.8rem;">
-          🔄 Sincronizar
-        </button>
-      </div>
     </header>
 
     <main>
       <section class="admin-productos">
-        <div style="display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:12px;">
-          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-            <button id="btn-nueva" type="button" class="btn-admin-primario">+ Crear cliente</button>
-            <div style="display:flex; gap:8px; align-items:center;">
-              <input id="cli-buscar" type="text" placeholder="Buscar cliente..." style="padding:10px 12px; border:1px solid #ddd; border-radius:10px; min-width:220px;">
-              <span id="cli-contador" style="color:#666; font-size:13px;"></span>
+        <div
+          style="
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+          "
+        >
+          <div
+            style="
+              display: flex;
+              gap: 10px;
+              align-items: center;
+              flex-wrap: wrap;
+            "
+          >
+            <button id="btn-nueva" type="button" class="btn-admin-primario">
+              + Crear cliente
+            </button>
+            <div style="display: flex; gap: 8px; align-items: center">
+              <input
+                id="cli-buscar"
+                type="text"
+                placeholder="Buscar cliente..."
+                style="
+                  padding: 10px 12px;
+                  border: 1px solid #ddd;
+                  border-radius: 10px;
+                  min-width: 220px;
+                "
+              />
+              <span
+                id="cli-contador"
+                style="color: #666; font-size: 13px"
+              ></span>
             </div>
           </div>
         </div>
@@ -33,7 +59,12 @@
           <div class="form-grid">
             <label>
               Nombre Completo *
-              <input type="text" id="cli-nombre" required placeholder="Ej: Juan Pérez" />
+              <input
+                type="text"
+                id="cli-nombre"
+                required
+                placeholder="Ej: Juan Pérez"
+              />
             </label>
             <label>
               Teléfono / WhatsApp
@@ -41,12 +72,24 @@
             </label>
             <label>
               Email
-              <input type="email" id="cli-email" placeholder="cliente@correo.com" />
+              <input
+                type="email"
+                id="cli-email"
+                placeholder="cliente@correo.com"
+              />
             </label>
           </div>
           <div class="form-actions">
-            <button type="submit" id="btn-guardar" class="btn-admin-primario">Guardar Cliente</button>
-            <button type="button" id="btn-cancelar" class="btn-admin-secundario">Cancelar</button>
+            <button type="submit" id="btn-guardar" class="btn-admin-primario">
+              Guardar Cliente
+            </button>
+            <button
+              type="button"
+              id="btn-cancelar"
+              class="btn-admin-secundario"
+            >
+              Cancelar
+            </button>
           </div>
         </form>
 
@@ -77,13 +120,17 @@
 
         const Entidades = window.Entidades;
         if (!Entidades) {
-          if (window.mostrarToast) window.mostrarToast("error", "Clientes", "No se pudo inicializar Entidades.");
+          if (window.mostrarToast)
+            window.mostrarToast(
+              "error",
+              "Clientes",
+              "No se pudo inicializar Entidades.",
+            );
           return;
         }
 
         const form = document.getElementById("cliente-form");
         const tbody = document.getElementById("lista-clientes");
-        const btnSync = document.getElementById("btn-sync");
         const btnCancelar = document.getElementById("btn-cancelar");
         const btnNueva = document.getElementById("btn-nueva");
         const inputBuscar = document.getElementById("cli-buscar");
@@ -91,14 +138,17 @@
         let editId = null;
 
         const notify = (tipo, mensaje) => {
-          if (window.mostrarToast) window.mostrarToast(tipo, "Clientes", mensaje);
+          if (window.mostrarToast)
+            window.mostrarToast(tipo, "Clientes", mensaje);
         };
 
         const resetForm = () => {
           form.reset();
           editId = null;
-          document.getElementById("form-title").textContent = "Registrar Nuevo Cliente";
-          document.getElementById("btn-guardar").textContent = "Guardar Cliente";
+          document.getElementById("form-title").textContent =
+            "Registrar Nuevo Cliente";
+          document.getElementById("btn-guardar").textContent =
+            "Guardar Cliente";
         };
 
         const mostrarForm = () => {
@@ -110,7 +160,10 @@
           form.style.display = "none";
         };
 
-        const normalizarTexto = (valor) => String(valor || "").trim().toLowerCase();
+        const normalizarTexto = (valor) =>
+          String(valor || "")
+            .trim()
+            .toLowerCase();
 
         const render = () => {
           const clientes = Entidades.obtener("clientes");
@@ -139,11 +192,12 @@
                     <button class="btn-admin" style="background:#fee2e2; color:#b91c1c;" onclick="window.eliminarCliente('${c.id}')">Eliminar</button>
                   </td>
                 </tr>
-              `
+              `,
             )
             .join("");
 
-          if (contador) contador.textContent = `${filtrados.length}/${clientes.length}`;
+          if (contador)
+            contador.textContent = `${filtrados.length}/${clientes.length}`;
         };
 
         window.prepararEdicion = (id, nombre, telefono, email) => {
@@ -151,8 +205,10 @@
           document.getElementById("cli-nombre").value = nombre;
           document.getElementById("cli-telefono").value = telefono;
           document.getElementById("cli-email").value = email;
-          document.getElementById("form-title").textContent = "Editando Cliente";
-          document.getElementById("btn-guardar").textContent = "Actualizar Cambios";
+          document.getElementById("form-title").textContent =
+            "Editando Cliente";
+          document.getElementById("btn-guardar").textContent =
+            "Actualizar Cambios";
           mostrarForm();
         };
 
@@ -168,7 +224,7 @@
           const data = {
             nombre: document.getElementById("cli-nombre").value.trim(),
             telefono: document.getElementById("cli-telefono").value.trim(),
-            correo: document.getElementById("cli-email").value.trim()
+            correo: document.getElementById("cli-email").value.trim(),
           };
 
           if (!data.nombre) {
@@ -192,15 +248,6 @@
         btnCancelar.onclick = () => {
           resetForm();
           ocultarForm();
-        };
-
-        btnSync.onclick = async () => {
-          btnSync.textContent = "⏳ Sincronizando...";
-          btnSync.disabled = true;
-          await Entidades.sincronizar("clientes");
-          render();
-          btnSync.textContent = "🔄 Sincronizar";
-          btnSync.disabled = false;
         };
 
         btnNueva.onclick = () => {
