@@ -233,10 +233,10 @@ async function insights(req, res, next) {
         [sequelize.fn('SUM', sequelize.literal('"cantidadSolicitada" - "cantidadResuelta"')), 'cantidadPendiente']
       ],
       group: ['proveedorId', 'tipo', 'productoNombre', 'productoCodigo'],
-      order: [[sequelize.literal('cantidadPendiente'), 'DESC']],
       raw: true
     });
 
+    sumRows.sort((a, b) => Number(b.cantidadPendiente || 0) - Number(a.cantidadPendiente || 0));
     res.json(sumRows);
   } catch (err) {
     next(err);
