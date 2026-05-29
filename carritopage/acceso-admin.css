@@ -234,6 +234,42 @@ input:focus {
   }
 }
 
+@media (max-width: 900px) {
+  /* Responsive layout del dashboard admin */
+  #dashboard-container {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    width: 100% !important;
+    flex-direction: row;
+    padding: 14px 0;
+    border-right: 0;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .sidebar-header {
+    padding: 0 18px 10px;
+    border-bottom: 0;
+    margin-bottom: 10px;
+  }
+
+  .nav-menu {
+    padding: 0 12px;
+  }
+
+  .main-content {
+    overflow: hidden;
+  }
+
+  /* En móvil el iframe debe ocupar el resto de espacio visible */
+  #admin-frame {
+    min-height: calc(100vh - 240px);
+  }
+}
+
 @media (max-width: 375px) {
   body {
     padding: 0.75rem;
