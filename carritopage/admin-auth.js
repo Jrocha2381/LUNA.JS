@@ -1,5 +1,5 @@
 const AUTH_TOKEN_KEY = "token";
-const USER_ALLOWED_PAGES = new Set(["ventas.html", "factura.html"]);
+const USER_ALLOWED_PAGES = new Set(["ventas.html", "factura.html", "historial.html"]);
 
 function validarSesionAdmin() {
   try {
