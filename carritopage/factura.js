@@ -125,7 +125,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const descuentoNombre = venta.descuento && venta.descuento.nombre ? venta.descuento.nombre : null;
         const totalFinal = Number(venta.total || 0);
 
-        let totalHTML = `
+        totalesVenta.innerHTML = `
             <div style="display:flex; justify-content:space-between; margin-top:10px;">
                 <span>SUBTOTAL:</span>
                 <span>$${Number(subtotal || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
@@ -146,24 +146,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         // Mostrar efectivo recibido y cambio si es método de pago en efectivo
         if (venta.metodoPago === "Efectivo" && venta.valorRecibido) {
+            const seccionEfectivo = document.getElementById('seccion-efectivo');
             const valorRecibido = Number(venta.valorRecibido || 0);
             const cambio = Number(venta.cambio != null ? venta.cambio : (valorRecibido - totalFinal));
             
-            totalHTML += `
-                <div style="margin-top:10px; padding-top:8px; border-top:1px dashed #000;">
-                    <div style="display:flex; justify-content:space-between; margin-top:6px;">
-                        <span>Efectivo recibido:</span>
-                        <span>$${valorRecibido.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; margin-top:6px; font-weight:bold; background:#f0f0f0; padding:4px; border-radius:3px;">
-                        <span>Vueltas (cambio):</span>
-                        <span>$${cambio.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                    </div>
-                </div>
-            `;
+            if (seccionEfectivo) {
+                seccionEfectivo.style.display = 'block';
+                document.getElementById('efectivo-recibido-factura').textContent = `$${valorRecibido.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                document.getElementById('vueltas-factura').textContent = `$${cambio.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            }
         }
-
-        totalesVenta.innerHTML = totalHTML;
     }
 
 });

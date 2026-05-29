@@ -1,107 +1,183 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Factura de Venta - Papel y Luna</title>
 
     <style>
-        .factura-box {
-            max-width: 450px;
-            margin: 10px auto;
-            padding: 15px;
-            border: 1px solid #ddd;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 13px;
-            line-height: 1.4;
-            color: #000;
-        }
+      .factura-box {
+        max-width: 450px;
+        margin: 10px auto;
+        padding: 15px;
+        border: 1px solid #ddd;
+        font-family: "Courier New", Courier, monospace;
+        font-size: 13px;
+        line-height: 1.4;
+        color: #000;
+      }
 
-        .header-legal { text-align: center; margin-bottom: 10px; }
-        .header-legal h2 { margin: 5px 0; font-size: 18px; }
-        .linea { border-top: 1px dashed #000; margin: 8px 0; }
-        .flex { display: flex; justify-content: space-between; }
-        table { width: 100%; border-collapse: collapse; }
-        .text-right { text-align: right; }
-        .btn-container { text-align: center; margin-top: 20px; }
-        .btn-container button { margin: 5px; }
+      .header-legal {
+        text-align: center;
+        margin-bottom: 10px;
+      }
+      .header-legal h2 {
+        margin: 5px 0;
+        font-size: 18px;
+      }
+      .linea {
+        border-top: 1px dashed #000;
+        margin: 8px 0;
+      }
+      .flex {
+        display: flex;
+        justify-content: space-between;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .text-right {
+        text-align: right;
+      }
+      .btn-container {
+        text-align: center;
+        margin-top: 20px;
+      }
+      .btn-container button {
+        margin: 5px;
+      }
 
-        @media print {
-            .btn-container { display: none; }
+      @media print {
+        .btn-container {
+          display: none;
         }
+      }
     </style>
+  </head>
 
-</head>
-
-<body>
-
-<div class="factura-box" id="factura-contenido">
-
-    <div class="header-legal">
+  <body>
+    <div class="factura-box" id="factura-contenido">
+      <div class="header-legal">
         <h2>PAPEL Y LUNA</h2>
         <p>
-            <strong>PAPELERIA Y MISCELANEA</strong><br>
-            JURHIANNE GISELLE GOMEZ RIVERA<br>
-            Matrícula: 3988683 | CC. Bogota<br>
-            Establecimiento: 3988684
+          <strong>PAPELERIA Y MISCELANEA</strong><br />
+          JURHIANNE GISELLE GOMEZ RIVERA<br />
+          Matrícula: 3988683 | CC. Bogota<br />
+          Establecimiento: 3988684
         </p>
 
         <p>
-            Calle 10 número 5 -35<br>
-            Chía, Cundinamarca 250002
+          Calle 10 número 5 -35<br />
+          Chía, Cundinamarca 250002
         </p>
 
-        <p><i>"El lugar perfecto para encontrar todo lo que necesitas. 📒✏️💍📿"</i></p>
-    </div>
+        <p>
+          <i
+            >"El lugar perfecto para encontrar todo lo que necesitas.
+            📒✏️💍📿"</i
+          >
+        </p>
+      </div>
 
-    <div class="linea"></div>
+      <div class="linea"></div>
 
-    <!-- INFO DE VENTA -->
-    <div id="info-venta"></div>
+      <!-- INFO DE VENTA -->
+      <div id="info-venta"></div>
 
-    <div class="linea"></div>
+      <div class="linea"></div>
 
-    <!-- PRODUCTOS -->
-    <table>
+      <!-- PRODUCTOS -->
+      <table>
         <thead>
-            <tr>
-                <th align="left">Cant. Descripción</th>
-                <th class="text-right">Total</th>
-            </tr>
+          <tr>
+            <th align="left">Cant. Descripción</th>
+            <th class="text-right">Total</th>
+          </tr>
         </thead>
         <tbody id="lista-productos"></tbody>
-    </table>
+      </table>
 
-    <div class="linea"></div>
+      <div class="linea"></div>
 
-    <!-- TOTALES -->
-    <div id="totales-venta"></div>
+      <!-- TOTALES -->
+      <div id="totales-venta"></div>
 
-    <div class="linea"></div>
+      <!-- EFECTIVO RECIBIDO Y VUELTAS -->
+      <div
+        id="seccion-efectivo"
+        style="
+          display: none;
+          margin-top: 15px;
+          padding: 12px;
+          background: #f9f9f9;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+        "
+      >
+        <table style="width: 100%">
+          <tr>
+            <td style="padding: 6px 0; border-bottom: 1px solid #ddd">
+              <span>Efectivo recibido:</span>
+            </td>
+            <td
+              style="
+                text-align: right;
+                padding: 6px 0;
+                border-bottom: 1px solid #ddd;
+              "
+            >
+              <strong id="efectivo-recibido-factura">$0</strong>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; font-weight: bold; background: #fffacd">
+              <span>Vueltas (cambio):</span>
+            </td>
+            <td
+              style="
+                text-align: right;
+                padding: 6px 0;
+                font-weight: bold;
+                background: #fffacd;
+              "
+            >
+              <strong id="vueltas-factura">$0</strong>
+            </td>
+          </tr>
+        </table>
+      </div>
 
-    <p style="text-align:center;">¡Gracias por preferirnos!</p>
+      <div class="linea"></div>
 
-</div>
+      <p style="text-align: center">¡Gracias por preferirnos!</p>
+    </div>
 
-<div class="btn-container">
-    <button onclick="window.print()">🖨️ Imprimir</button>
-    <button onclick="window.location.href='ventas.html'">🛒 Nueva Venta</button>
-    <button onclick="window.location.href='historial.html'">📊 Historial</button>
-    <button id="btn-cerrar-sesion-factura" type="button">Cerrar sesion</button>
-</div>
+    <div class="btn-container">
+      <button onclick="window.print()">🖨️ Imprimir</button>
+      <button onclick="window.location.href = 'ventas.html'">
+        🛒 Nueva Venta
+      </button>
+      <button onclick="window.location.href = 'historial.html'">
+        📊 Historial
+      </button>
+      <button id="btn-cerrar-sesion-factura" type="button">
+        Cerrar sesion
+      </button>
+    </div>
 
-<!-- 🔴 ESTA ES LA CLAVE 🔴 -->
-<script src="admin-auth.js"></script>
-<script src="../js/backend.js"></script>
-<script src="factura.js"></script>
-<script>
-    document.getElementById("btn-cerrar-sesion-factura")?.addEventListener("click", () => {
-        sessionStorage.removeItem("token");
-        localStorage.removeItem("token");
-        window.location.href = "../index.html";
-    });
-</script>
-
-</body>
+    <!-- 🔴 ESTA ES LA CLAVE 🔴 -->
+    <script src="admin-auth.js"></script>
+    <script src="../js/backend.js"></script>
+    <script src="factura.js"></script>
+    <script>
+      document
+        .getElementById("btn-cerrar-sesion-factura")
+        ?.addEventListener("click", () => {
+          sessionStorage.removeItem("token");
+          localStorage.removeItem("token");
+          window.location.href = "../index.html";
+        });
+    </script>
+  </body>
 </html>
