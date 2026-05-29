@@ -13,7 +13,8 @@
       .filters { display:flex; gap: 10px; align-items:flex-end; flex-wrap: wrap; }
       .filters label { display:flex; flex-direction: column; gap:6px; font-weight:600; color:#444; font-size: 0.9rem; }
       .filters input, .filters select { padding: 10px 12px; border:1px solid #ddd; border-radius: 10px; min-width: 180px; }
-      .btn-admin-primario { background:#8a9b2f; color:white; border:none; padding: 10px 16px; border-radius: 10px; cursor:pointer; font-weight:700; }
+      .container-faltantes .btn-admin-primario { background:#8a9b2f; color:#fff !important; border:none; padding: 10px 16px; border-radius: 10px; cursor:pointer; font-weight:700; }
+      .container-faltantes .btn-admin-primario:hover, .container-faltantes .btn-admin-primario:focus { color:#fff !important; background:#6f7d25; }
       .btn-admin-secundario { background:#f3f4f6; color:#111; border:1px solid #e5e7eb; padding: 10px 16px; border-radius: 10px; cursor:pointer; font-weight:700; }
       .tabla-wrapper { overflow:auto; border-radius:12px; border:1px solid #eee; }
       table { width:100%; border-collapse: collapse; min-width: 900px; background:#fff; }
@@ -30,7 +31,8 @@
       .actions-row { display:flex; gap: 10px; justify-content:flex-end; margin-top: 12px; flex-wrap: wrap; }
       .table-actions { display:flex; gap: 8px; flex-wrap: wrap; }
       .btn-small { padding: 8px 12px; border-radius: 10px; border:none; cursor:pointer; font-weight:700; }
-      .btn-resolver { background:#22c55e; color:white; }
+      .btn-resolver { background:#22c55e; color:#fff !important; }
+      .btn-resolver:hover, .btn-resolver:focus { background:#16a34a; color:#fff !important; }
       .btn-ver { background:#e5e7eb; color:#111; border:1px solid #d1d5db; }
       .summary-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 14px; }
       .summary-item { background:#f8fafc; border:1px solid #e5e7eb; border-radius: 10px; padding: 12px; }
@@ -331,14 +333,16 @@
           body.querySelectorAll('button[data-id]').forEach(btn => {
             btn.addEventListener('click', async () => {
               const id = btn.getAttribute('data-id');
-              const cantidad = prompt('Cantidad resuelta:', '0');
-              if (cantidad === null) return;
-              const comentarios = prompt('Comentarios (opcional):', '');
+              const row = items.find(item => String(item.id) === String(id));
+              const cantidadPendiente = Math.max(
+                0,
+                Number(row?.cantidadSolicitada || 0) - Number(row?.cantidadResuelta || 0)
+              );
 
               try {
                 await Backend.put(`faltantes/${id}/resuelto`, {
-                  cantidadResuelta: Number(cantidad),
-                  comentarios: comentarios || null
+                  cantidadResuelta: cantidadPendiente,
+                  comentarios: row?.comentarios || null
                 });
                 if (window.mostrarToast) window.mostrarToast('success','Faltantes','Marcado como resuelto');
                 await cargarTabla();
