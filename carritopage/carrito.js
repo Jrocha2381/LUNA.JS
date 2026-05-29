@@ -742,10 +742,29 @@ function mostrarModalPago(carrito) {
           </button>
         </div>
 
-        <div id="div-efectivo" style="display:none; margin-bottom:20px; padding:15px; background:#fff3cd; border-radius:8px;">
-          <label style="display:block; margin-bottom:8px; font-weight:600;">Valor recibido:</label>
-          <input type="number" id="valor-recibido" placeholder="Ingresa el valor" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; font-size:14px;">
-          <p id="cambio-calculado" style="margin:10px 0 0 0; font-size:13px; color:#666;"></p>
+        <div id="div-efectivo" style="display:none; margin-bottom:20px; padding:20px; background:#f8f9fa; border:2px solid #dee2e6; border-radius:12px;">
+          <label style="display:block; margin-bottom:12px; font-weight:700; color:#333; font-size:15px;">💰 Ingresa el valor recibido:</label>
+          <input type="number" id="valor-recibido" placeholder="0" style="width:100%; padding:14px; border:2px solid #dee2e6; border-radius:8px; font-size:16px; font-weight:600; text-align:center;" min="0" step="500">
+          
+          <div style="margin-top:18px; padding:12px; background:white; border-radius:8px; border:1px solid #dee2e6;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #e9ecef;">
+              <div style="text-align:left;">
+                <p style="margin:0; font-size:12px; color:#666; font-weight:500;">Total a pagar:</p>
+                <p style="margin:4px 0 0 0; font-size:18px; font-weight:700; color:#333;">${formatearMoneda(totalGeneral)}</p>
+              </div>
+              <div style="text-align:right;">
+                <p style="margin:0; font-size:12px; color:#666; font-weight:500;">Valor recibido:</p>
+                <p id="valor-recibido-mostrado" style="margin:4px 0 0 0; font-size:18px; font-weight:700; color:#495057;">$0</p>
+              </div>
+            </div>
+            
+            <div style="background:#e8f5e9; padding:12px; border-radius:8px; text-align:center;">
+              <p style="margin:0; font-size:12px; color:#2e7d32; font-weight:500; text-transform:uppercase; letter-spacing:0.5px;">Vueltas a entregar:</p>
+              <p id="cambio-calculado" style="margin:6px 0 0 0; font-size:24px; font-weight:800; color:#1b5e20;">$0</p>
+            </div>
+          </div>
+          
+          <p id="estado-pago" style="margin:12px 0 0 0; padding:10px; text-align:center; border-radius:6px; font-weight:600; font-size:13px; display:none;"></p>
         </div>
 
         <div style="display:flex; gap:10px;">
@@ -788,8 +807,29 @@ function mostrarModalPago(carrito) {
 
       if (metodoPagoSeleccionado === "Efectivo") {
         divEfectivo.style.display = "block";
+        // Limpiar y deshabilitar input
+        inputValorRecibido.value = "";
+        inputValorRecibido.focus();
+        if (btnConfirmar) {
+          btnConfirmar.disabled = true;
+          btnConfirmar.style.opacity = "0.5";
+          btnConfirmar.style.cursor = "not-allowed";
+        }
+        // Reiniciar valores mostrados
+        const cambioP = document.getElementById("cambio-calculado");
+        const valorMostrado = document.getElementById("valor-recibido-mostrado");
+        const estadoPago = document.getElementById("estado-pago");
+        if (cambioP) cambioP.textContent = "$0";
+        if (valorMostrado) valorMostrado.textContent = "$0";
+        if (estadoPago) estadoPago.style.display = "none";
       } else {
         divEfectivo.style.display = "none";
+        // Habilitar botón para otros métodos
+        if (btnConfirmar) {
+          btnConfirmar.disabled = false;
+          btnConfirmar.style.opacity = "1";
+          btnConfirmar.style.cursor = "pointer";
+        }
       }
     };
   });
@@ -800,12 +840,49 @@ function mostrarModalPago(carrito) {
       const valorRecibido = Number(e.target.value) || 0;
       const cambio = valorRecibido - totalGeneral;
       const cambioP = document.getElementById("cambio-calculado");
+      const valorMostrado = document.getElementById("valor-recibido-mostrado");
+      const estadoPago = document.getElementById("estado-pago");
+      
+      // Actualizar valor recibido mostrado
+      if (valorMostrado) {
+        valorMostrado.textContent = formatearMoneda(valorRecibido);
+      }
+      
+      // Actualizar estado del cambio
       if (cambio >= 0) {
-        cambioP.textContent = `Cambio: ${formatearMoneda(cambio)}`;
-        cambioP.style.color = "#28a745";
+        cambioP.textContent = formatearMoneda(cambio);
+        cambioP.parentElement.style.background = "#c8e6c9";
+        cambioP.style.color = "#1b5e20";
+        
+        if (estadoPago) {
+          estadoPago.textContent = "✓ Dinero suficiente";
+          estadoPago.style.background = "#d4edda";
+          estadoPago.style.color = "#155724";
+          estadoPago.style.display = "block";
+        }
+        
+        if (btnConfirmar) {
+          btnConfirmar.disabled = false;
+          btnConfirmar.style.opacity = "1";
+          btnConfirmar.style.cursor = "pointer";
+        }
       } else {
-        cambioP.textContent = `Falta: ${formatearMoneda(Math.abs(cambio))}`;
-        cambioP.style.color = "#dc3545";
+        cambioP.textContent = formatearMoneda(Math.abs(cambio));
+        cambioP.parentElement.style.background = "#ffcdd2";
+        cambioP.style.color = "#b71c1c";
+        
+        if (estadoPago) {
+          estadoPago.textContent = `✗ Falta: ${formatearMoneda(Math.abs(cambio))}`;
+          estadoPago.style.background = "#f8d7da";
+          estadoPago.style.color = "#721c24";
+          estadoPago.style.display = "block";
+        }
+        
+        if (btnConfirmar) {
+          btnConfirmar.disabled = true;
+          btnConfirmar.style.opacity = "0.5";
+          btnConfirmar.style.cursor = "not-allowed";
+        }
       }
     });
   }
