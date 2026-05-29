@@ -68,7 +68,11 @@
     const payload = contentType.includes("application/json") ? await res.json() : await res.text();
 
     if (!res.ok) {
-      const error = new Error(`Backend error ${res.status} ${res.statusText}`);
+      const detalle =
+        payload && typeof payload === "object"
+          ? payload.error || payload.message || (Array.isArray(payload.details) && payload.details[0] && payload.details[0].message)
+          : payload;
+      const error = new Error(detalle || `Backend error ${res.status} ${res.statusText}`);
       error.status = res.status;
       error.payload = payload;
       throw error;
