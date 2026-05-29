@@ -245,10 +245,10 @@ input:focus {
   .sidebar {
     width: 100% !important;
     flex-direction: column;
-    padding: 16px 0;
+    padding: 12px 0;
     border-right: 0;
     border-bottom: 1px solid #e0e0e0;
-    max-height: 38vh;
+    max-height: 28vh;
   }
 
   .sidebar-header {
