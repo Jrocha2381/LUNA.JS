@@ -28,7 +28,7 @@ body {
   background-color: var(--color-fondo);
   color: var(--color-texto);
   min-height: 100vh;
-  padding: 20px 40px; /* Espaciado similar a tus secciones */
+  padding: clamp(1rem, 5%, 40px); /* Espaciado responsivo */
 }
 
 /* HEADER (Estilo igual a tu .header)
@@ -37,30 +37,34 @@ body {
 header {
   background: var(--color-blanco);
   color: var(--color-texto);
-  padding: 18px 40px;
+  padding: clamp(0.9rem, 4%, 18px) clamp(1rem, 5%, 40px);
   border-radius: 12px;
-  margin-bottom: 50px;
+  margin-bottom: clamp(2rem, 8%, 50px);
   box-shadow: 0 4px 15px rgba(0,0,0,0.05); /* Tu sombra de header */
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 header h1 {
-  font-size: 2.2rem;
+  font-size: clamp(1.5rem, 5vw, 2.2rem);
   font-weight: 600;
   color: var(--color-primario); /* Tu verde logo */
   letter-spacing: 1px;
+  word-break: break-word;
 }
 
 header a {
   background: var(--color-primario);
-  padding: 12px 35px; /* Tu padding de .btn-ver */
+  padding: clamp(0.6rem, 3vw, 12px) clamp(1rem, 5vw, 35px);
   border-radius: 8px;
   text-decoration: none;
   color: var(--color-blanco);
   font-weight: 550;
   transition: 0.3s ease;
+  white-space: nowrap;
 }
 
 header a:hover {
@@ -74,9 +78,9 @@ header a:hover {
 
 .buscador-container {
   background: var(--color-blanco);
-  padding: 25px;
+  padding: clamp(1rem, 4%, 25px);
   border-radius: var(--radio);
-  margin-bottom: 40px;
+  margin-bottom: clamp(2rem, 8%, 40px);
   box-shadow: var(--sombra-suave);
 }
 
@@ -240,10 +244,11 @@ header a:hover {
   transition: 0.3s ease;
 }
 .img-carrito {
-  width: 80px;           /* Tamaño de la miniatura */
-  height: 80px;
+  width: clamp(60px, 15vw, 80px);           /* Tamaño responsivo */
+  height: clamp(60px, 15vw, 80px);
   object-fit: cover;     /* No deforma la imagen */
   border-radius: 10px;
+  flex-shrink: 0;
 }
 
 .info-carrito {
@@ -259,17 +264,102 @@ header a:hover {
 
 @media (max-width: 768px) {
   body {
-    padding: 1rem;
+    padding: clamp(0.8rem, 3%, 1rem);
   }
 
   header {
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1rem;
     text-align: center;
   }
 
+  header a {
+    width: 100%;
+  }
+
   .item-carrito {
-    padding: 20px;
+    padding: clamp(1rem, 3%, 20px);
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .img-carrito {
+    margin: 0 auto;
+  }
+
+  .info-carrito {
+    width: 100%;
+  }
+
+  .controles-item {
+    width: 100%;
+    align-items: center;
+  }
+
+  .buscador-wrapper {
+    flex-direction: column;
+  }
+
+  .input-buscar {
+    width: 100%;
+  }
+
+  .btn-buscar,
+  .btn-limpiar {
+    width: 100%;
+  }
+
+  .item-carrito input[type="number"] {
+    width: 100%;
+    max-width: 120px;
+  }
+
+  .item-carrito button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    padding: 0.75rem;
+  }
+
+  header {
+    padding: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  header h1 {
+    font-size: 1.3rem;
+  }
+
+  .buscador-container {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .item-carrito {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .img-carrito {
+    width: 50px;
+    height: 50px;
+  }
+
+  .item-carrito h4 {
+    font-size: 1.1rem;
+  }
+
+  .controles-cantidad {
+    width: 100%;
+  }
+
+  .btn-finalizar,
+  .btn-vaciar {
+    width: 100%;
+    padding: 12px 16px;
   }
 }
 

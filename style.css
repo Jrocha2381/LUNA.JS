@@ -14,13 +14,13 @@
 .header__container {
     max-width: 75rem; /* 1200px */
     margin: auto;
-    padding: 0.8rem 2.5rem;
+    padding: clamp(0.6rem, 2%, 0.8rem) clamp(1rem, 5%, 2.5rem);
 
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: nowrap;
-    gap: 1.5rem;
+    flex-wrap: wrap;
+    gap: clamp(0.8rem, 2%, 1.5rem);
 }
 .carro{
     text-decoration: none;
@@ -28,12 +28,13 @@
 
 /* LOGO */
 .header__logo h1 {
-    font-size: 1.8rem;
+    font-size: clamp(1.3rem, 5vw, 1.8rem);
     font-weight: 600;
     color: #8a9b2f;
     letter-spacing: 0.06rem;
-    padding-right: 0.8rem;
+    padding-right: clamp(0.3rem, 2%, 0.8rem);
     margin: 0;
+    word-break: break-word;
 }
 
 /* MENÚ */
@@ -54,9 +55,9 @@
     color: #333;
     font-weight: 550;
     transition: 0.3s;
-    font-size: 1rem;
+    font-size: clamp(0.8rem, 2vw, 1rem);
     letter-spacing: 0.06rem;
-    padding: 0.8rem 0.5rem;
+    padding: clamp(0.4rem, 2%, 0.8rem) clamp(0.2rem, 1%, 0.5rem);
 }
 
 .header__menu a:hover {
@@ -66,10 +67,12 @@
 /* ICONOS Y BUSCADOR */
 .header__icons {
     display: flex;
-    gap: 0.8rem;
-    font-size: 1.1rem;
+    gap: clamp(0.4rem, 2%, 0.8rem);
+    font-size: clamp(1rem, 2vw, 1.1rem);
     cursor: pointer;
     align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 .header__icons span {
@@ -83,22 +86,24 @@
 /* BUSCADOR EN HEADER */
 .buscador-header {
     display: flex;
-    gap: 0.4rem;
+    gap: clamp(0.3rem, 1%, 0.4rem);
     align-items: center;
     background: #f7f7f4;
-    padding: 0.5rem 0.6rem;
+    padding: clamp(0.3rem, 2%, 0.5rem) clamp(0.4rem, 2%, 0.6rem);
     border-radius: 0.4rem;
     border: 2px solid transparent;
     transition: 0.3s ease;
     white-space: nowrap;
+    flex: 1;
+    min-width: clamp(150px, 20vw, 180px);
 }
 
 /* ICON-LINK (carrito / historial) */
 .icon-link {
     display: inline-flex;
     align-items: center;
-    gap: 0.45rem;
-    padding: 0.35rem 0.6rem;
+    gap: clamp(0.2rem, 1%, 0.45rem);
+    padding: clamp(0.2rem, 2%, 0.35rem) clamp(0.3rem, 2%, 0.6rem);
     border-radius: 0.45rem;
     text-decoration: none;
     color: inherit;
@@ -112,7 +117,7 @@
 }
 
 .icon-emoji { font-size: 1.15rem; }
-.icon-label { font-size: 0.92rem; font-weight:600; color:#333; }
+.icon-label { font-size: clamp(0.75rem, 2vw, 0.92rem); font-weight:600; color:#333; }
 
 .icon-badge {
     background: #e63946;
@@ -140,9 +145,9 @@
     border: none;
     background: transparent;
     outline: none;
-    padding: 0.4rem 0.6rem;
-    font-size: 0.85rem;
-    min-width: 100px;
+    padding: clamp(0.3rem, 2%, 0.4rem) clamp(0.4rem, 2%, 0.6rem);
+    font-size: clamp(0.75rem, 2vw, 0.85rem);
+    min-width: clamp(80px, 12vw, 100px);
     width: 100%;
     max-width: 140px;
 }
@@ -155,10 +160,10 @@
     background: #8a9b2f;
     border: none;
     color: white;
-    padding: 0.35rem 0.5rem;
+    padding: clamp(0.25rem, 2%, 0.35rem) clamp(0.35rem, 2%, 0.5rem);
     border-radius: 0.3rem;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: clamp(0.7rem, 2vw, 0.85rem);
     transition: 0.3s ease;
     white-space: nowrap;
 }
@@ -353,14 +358,14 @@
 
 /* TITULOS */
 .titulo {
-    font-size: 2.2rem;
+    font-size: clamp(1.6rem, 6vw, 2.2rem);
     font-weight: 500;
     margin-bottom: 0.6rem;
     color: #333;
 }
 
 .subtitulo {
-    font-size: 1.1rem;
+    font-size: clamp(0.9rem, 3vw, 1.1rem);
     color: #666;
     margin-bottom: 3rem;
 }
@@ -369,28 +374,26 @@
 .cartas {
     display: flex;
     justify-content: center;
-    gap: 2.2rem;
+    gap: clamp(1rem, 4%, 2.2rem);
     flex-wrap: wrap;
-    margin-bottom: 2.5rem;
-    padding: 0 2rem;
+    margin-bottom: clamp(1.5rem, 6%, 2.5rem);
+    padding: 0 clamp(1rem, 5%, 2rem);
 }
 
 /* CARD */
 .carta {
-    width: 14rem;
+    width: clamp(80%, 90vw, 14rem);
     min-height: 13.5rem;
     background: #ffffff;
     border-radius: 1.1rem;
-    padding: 2.5rem 1.2rem;
+    padding: clamp(1rem, 4%, 2.5rem) clamp(0.8rem, 3%, 1.2rem);
     box-shadow: 0 0.5rem 1.2rem rgba(0,0,0,0.08);
     transition: 0.3s ease;
     cursor: pointer;
-    
-}
-.carta {
     text-decoration: none;
     color: inherit;
     display: block;
+    margin: 0 auto;
 }
 
 .carta img {
@@ -415,12 +418,13 @@
 .btn-ver {
     background: #8a9b2f;
     color: white;
-    padding: 0.8rem 2.2rem;
+    padding: clamp(0.6rem, 3%, 0.8rem) clamp(1.5rem, 8%, 2.2rem);
     border: none;
     border-radius: 0.5rem;
-    font-size: 1rem;
+    font-size: clamp(0.9rem, 2vw, 1rem);
     cursor: pointer;
     transition: 0.3s;
+    white-space: nowrap;
 }
 
 .btn-ver:hover {
@@ -438,7 +442,7 @@
 .productos-inicio__container {
     max-width: 75rem;
     margin: 0 auto;
-    padding: 0 2rem;
+    padding: 0 clamp(1rem, 5%, 2rem);
     text-align: center;
 }
 
@@ -465,7 +469,7 @@
 
 .card img {
     width: 100%;
-    height: 170px;
+    height: clamp(120px, 30vw, 170px);
     object-fit: contain;
     margin-bottom: 0.8rem;
 }
@@ -519,6 +523,7 @@
     .header__logo h1 {
         font-size: 1.5rem;
         padding-right: 0.5rem;
+        word-break: break-word;
     }
 
     .header__menu {
@@ -542,7 +547,7 @@
     }
 
     .carta {
-        width: 12rem;
+        width: min(100%, 12rem);
         padding: 2rem 1rem;
     }
 
@@ -567,6 +572,8 @@
     .header__logo h1 {
         font-size: 1.3rem;
         padding-right: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .header__menu {
@@ -595,6 +602,7 @@
 
     .cartas {
         gap: 1.2rem;
+        padding: 0 0.8rem;
     }
 
     .carta {
@@ -606,7 +614,7 @@
     }
 
     .btn-ver {
-        width: 80%;
+        width: min(100%, 280px);
     }
 }
 

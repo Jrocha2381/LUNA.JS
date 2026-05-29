@@ -20,7 +20,7 @@ body {
   min-height: 100vh;
   background: radial-gradient(circle at top, #ffffff 0%, var(--color-fondo) 55%);
   color: var(--color-texto);
-  padding: 24px;
+  padding: clamp(1rem, 4%, 24px);
 }
 
 .acceso-wrapper {
@@ -37,7 +37,7 @@ body {
   border-radius: 18px;
   box-shadow: var(--sombra);
   border: 1px solid var(--color-borde);
-  padding: 32px;
+  padding: clamp(1.5rem, 5%, 32px);
 }
 
 .oculto {
@@ -57,6 +57,7 @@ h2 {
   margin-top: 8px;
   margin-bottom: 8px;
   color: var(--color-primario);
+  word-break: break-word;
 }
 
 .descripcion {
@@ -91,11 +92,12 @@ input:focus {
 .btn-secundario,
 .btn-link {
   border-radius: 10px;
-  padding: 11px 14px;
+  padding: clamp(0.65rem, 2.5%, 11px) clamp(1rem, 4%, 14px);
   font-weight: 600;
   text-decoration: none;
   text-align: center;
   display: inline-block;
+  font-size: clamp(0.9rem, 2vw, 1rem);
 }
 
 .btn-primario {
@@ -184,16 +186,120 @@ input:focus {
 }
 
 @media (max-width: 640px) {
+  .acceso-wrapper {
+    min-height: calc(100vh - 32px);
+  }
+
   .acceso-card {
-    padding: 24px;
+    padding: clamp(1rem, 4%, 24px);
+    border-radius: 12px;
+  }
+
+  h1, h2 {
+    font-size: clamp(1.3rem, 5vw, 1.8rem);
   }
 
   .menu-grid {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .menu-item {
+    padding: 12px;
+    border-radius: 8px;
+  }
+
+  .menu-item h3 {
+    font-size: clamp(0.95rem, 3vw, 1.1rem);
+  }
+
+  .menu-item p {
+    font-size: clamp(0.8rem, 2vw, 0.9rem);
   }
 
   .acciones-finales {
     flex-direction: column;
     align-items: stretch;
+    gap: 10px;
+  }
+
+  .btn-primario,
+  .btn-secundario,
+  .btn-link {
+    width: 100%;
+  }
+
+  input {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 375px) {
+  body {
+    padding: 0.75rem;
+  }
+
+  .acceso-wrapper {
+    min-height: calc(100vh - 24px);
+  }
+
+  .acceso-card {
+    padding: 1rem;
+  }
+
+  .eyebrow {
+    font-size: 0.7rem;
+  }
+
+  h1, h2 {
+    font-size: 1.2rem;
+    margin: 4px 0;
+  }
+
+  .descripcion {
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+  }
+
+  label {
+    font-size: 0.85rem;
+    gap: 4px;
+  }
+
+  input {
+    padding: 9px 10px;
+    font-size: 16px;
+    border-radius: 8px;
+  }
+
+  .btn-primario,
+  .btn-secundario,
+  .btn-link {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+
+  .menu-grid {
+    gap: 8px;
+  }
+
+  .menu-item {
+    padding: 10px;
+  }
+
+  .menu-item h3 {
+    font-size: 0.95rem;
+  }
+
+  .menu-item p {
+    font-size: 0.8rem;
+  }
+
+  .acciones-finales {
+    gap: 8px;
+  }
+
+  .credenciales {
+    font-size: 0.8rem;
   }
 }
