@@ -245,10 +245,33 @@ input:focus {
   .sidebar {
     width: 100% !important;
     flex-direction: column;
-    padding: 12px 0;
+    padding: 10px 0;
     border-right: 0;
     border-bottom: 1px solid #e0e0e0;
-    max-height: 28vh;
+    max-height: none;
+  }
+
+  /* Menú compacto arriba (horizontal seleccionable) */
+  .sidebar-header {
+    padding: 0 18px 8px;
+    border-bottom: 0;
+    margin-bottom: 0;
+  }
+
+  .nav-menu {
+    flex: 0 0 auto;
+    padding: 0 10px 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    display: flex;
+    gap: 10px;
+  }
+
+  .nav-item {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    margin-bottom: 0;
+    padding: 10px 12px;
   }
 
   .sidebar-header {
