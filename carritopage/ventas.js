@@ -610,9 +610,11 @@ async function confirmarFinalizarVenta() {
   try {
     // Capturar valor recibido en efectivo si aplica
     let valorRecibido = null;
+    let cambio = null;
     if (metodoPago === 'Efectivo') {
       const efectivoRecibidoInput = document.getElementById('efectivo-recibido');
       valorRecibido = efectivoRecibidoInput ? Number(efectivoRecibidoInput.value) || 0 : 0;
+      cambio = round2(Math.max(0, valorRecibido - total));
     }
 
     // Crear la venta
@@ -625,7 +627,8 @@ async function confirmarFinalizarVenta() {
       total: subtotal,
       descuentoId: descuento ? descuento.id : null,
       items: carritoVentas,
-      valorRecibido: valorRecibido
+      valorRecibido: valorRecibido,
+      cambio: cambio
     };
 
     const ventaCreada = await window.Backend.post('ventas', ventaData);

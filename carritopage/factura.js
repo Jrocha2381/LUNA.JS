@@ -123,8 +123,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         const descuentoAplicado = Number(venta.descuentoAplicado || 0);
         const descuentoNombre = venta.descuento && venta.descuento.nombre ? venta.descuento.nombre : null;
+        const totalFinal = Number(venta.total || 0);
 
-        totalesVenta.innerHTML = `
+        let totalHTML = `
             <div style="display:flex; justify-content:space-between; margin-top:10px;">
                 <span>SUBTOTAL:</span>
                 <span>$${Number(subtotal || 0).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
@@ -137,22 +138,32 @@ document.addEventListener("DOMContentLoaded", async () => {
                 </div>
             ` : ""}
 
-            <div style="display:flex; justify-content:space-between; margin-top:10px; border-top:1px dashed #000;">
-                <strong>TOTAL:</strong>
-                <strong>$${Number(venta.total).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+            <div style="display:flex; justify-content:space-between; margin-top:10px; border-top:1px dashed #000; padding-top:8px; font-weight:bold;">
+                <span>TOTAL:</span>
+                <span>$${Number(totalFinal).toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
-
-            ${venta.metodoPago === "Efectivo" && venta.valorRecibido ? `
-                <div style="display:flex; justify-content:space-between;">
-                    <span>Recibido:</span>
-                    <span>$${Number(venta.valorRecibido).toLocaleString('es-CO')}</span>
-                </div>
-                <div style="display:flex; justify-content:space-between;">
-                    <span>Cambio:</span>
-                    <span>$${Number(venta.cambio || 0).toLocaleString('es-CO')}</span>
-                </div>
-            ` : ""}
         `;
+
+        // Mostrar efectivo recibido y cambio si es método de pago en efectivo
+        if (venta.metodoPago === "Efectivo" && venta.valorRecibido) {
+            const valorRecibido = Number(venta.valorRecibido || 0);
+            const cambio = Number(venta.cambio != null ? venta.cambio : (valorRecibido - totalFinal));
+            
+            totalHTML += `
+                <div style="margin-top:10px; padding-top:8px; border-top:1px dashed #000;">
+                    <div style="display:flex; justify-content:space-between; margin-top:6px;">
+                        <span>Efectivo recibido:</span>
+                        <span>$${valorRecibido.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-top:6px; font-weight:bold; background:#f0f0f0; padding:4px; border-radius:3px;">
+                        <span>Vueltas (cambio):</span>
+                        <span>$${cambio.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        totalesVenta.innerHTML = totalHTML;
     }
 
 });
