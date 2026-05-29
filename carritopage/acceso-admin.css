@@ -238,37 +238,44 @@ input:focus {
   /* Responsive layout del dashboard admin */
   #dashboard-container {
     flex-direction: column;
-    height: auto;
+    height: 100vh;
     min-height: 100vh;
   }
 
   .sidebar {
     width: 100% !important;
-    flex-direction: row;
-    padding: 14px 0;
+    flex-direction: column;
+    padding: 16px 0;
     border-right: 0;
     border-bottom: 1px solid #e0e0e0;
+    max-height: 38vh;
   }
 
   .sidebar-header {
-    padding: 0 18px 10px;
+    padding: 0 18px 12px;
     border-bottom: 0;
-    margin-bottom: 10px;
+    margin-bottom: 0;
   }
 
   .nav-menu {
-    padding: 0 12px;
+    padding: 0 10px;
+    overflow: auto;
   }
 
+  /* Mantener header + iframe utilizables sin que se coma toda la pantalla */
   .main-content {
     overflow: hidden;
+    min-height: 0;
   }
 
-  /* En móvil el iframe debe ocupar el resto de espacio visible */
+  /* iframe ocupa el resto del viewport debajo del top-bar */
   #admin-frame {
-    min-height: calc(100vh - 240px);
+    width: 100%;
+    height: calc(100vh - 60px - 38vh);
+    min-height: 240px;
   }
 }
+
 
 @media (max-width: 375px) {
   body {
