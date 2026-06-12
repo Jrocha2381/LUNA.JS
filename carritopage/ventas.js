@@ -542,11 +542,11 @@ function vaciarCarrito() {
     return;
   }
 
-  if (confirm('¿Estás seguro de que quieres vaciar el carrito?')) {
+  window.mostrarConfirmacion('¿Estás seguro de que quieres vaciar el carrito?', () => {
     carritoVentas = [];
     renderizarCarrito();
     calcularTotales();
-  }
+  });
 }
 
 // Finalizar venta

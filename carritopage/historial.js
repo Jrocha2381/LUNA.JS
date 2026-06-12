@@ -78,6 +78,16 @@ function agruparArticulosPorProducto(articulos) {
   return [...agrupados.values()];
 }
 
+function normalizarMetodoPago(raw) {
+  const m = (raw || "").toLowerCase().trim();
+  if (m === "efectivo") return "Efectivo";
+  if (m === "transferencia") return "Transferencia";
+  if (m.includes("debito") || m.includes("débito")) return "Tarjeta Debito";
+  if (m.includes("credito") || m.includes("crédito")) return "Tarjeta Credito";
+  if (m.startsWith("tarjeta")) return "Tarjeta";
+  return raw || "";
+}
+
 function normalizarMovimiento(registro, tipo) {
   const articulos = agruparArticulosPorProducto(articulosDesdeDetalles(registro, tipo));
   const totalCalculado = articulos.reduce((sum, item) => sum + item.subtotal, 0);
@@ -91,7 +101,7 @@ function normalizarMovimiento(registro, tipo) {
     tipo,
     fecha: registro.fecha || registro.createdAt || registro.created_at || new Date().toISOString(),
     tercero,
-    metodoPago: registro.metodoPago || registro.metodo || "",
+    metodoPago: normalizarMetodoPago(registro.metodoPago || registro.metodo || ""),
     estado: registro.estado || "activa",
     articulos,
     reembolsos: parseItems(registro.reembolsos),

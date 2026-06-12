@@ -215,11 +215,16 @@
           mostrarForm();
         };
 
-        window.eliminarProv = async (id) => {
-          if (confirm("Eliminar este proveedor de la base de datos?")) {
-            await Entidades.eliminar("proveedores", id);
-            render();
-          }
+        window.eliminarProv = (id) => {
+          window.mostrarConfirmacion("¿Eliminar este proveedor de la base de datos?", async () => {
+            try {
+              await Entidades.eliminar("proveedores", id);
+              render();
+              notify("success", "Proveedor eliminado correctamente.");
+            } catch (err) {
+              notify("error", err.message || "No se pudo eliminar el proveedor.");
+            }
+          });
         };
 
         form.onsubmit = async (e) => {

@@ -212,11 +212,16 @@
           mostrarForm();
         };
 
-        window.eliminarCliente = async (id) => {
-          if (confirm("¿Eliminar este cliente de la base de datos?")) {
-            await Entidades.eliminar("clientes", id);
-            render();
-          }
+        window.eliminarCliente = (id) => {
+          window.mostrarConfirmacion("¿Eliminar este cliente de la base de datos?", async () => {
+            try {
+              await Entidades.eliminar("clientes", id);
+              render();
+              notify("success", "Cliente eliminado correctamente.");
+            } catch (err) {
+              notify("error", err.message || "No se pudo eliminar el cliente.");
+            }
+          });
         };
 
         form.onsubmit = async (e) => {

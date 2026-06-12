@@ -116,6 +116,9 @@ app.use((_req, res) => {
 });
 
 app.use((err, _req, res, _next) => {
+  if (err.name === 'SequelizeForeignKeyConstraintError') {
+    return res.status(409).json({ error: 'No se puede eliminar este registro porque tiene datos relacionados (ventas, compras u otros registros asociados).' });
+  }
   const status = err.status || 500;
   res.status(status).json({ error: err.message || 'Internal Server Error' });
 });
