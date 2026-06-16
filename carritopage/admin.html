@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panel Administrativo | Papel y Luna</title>
+    <link rel="stylesheet" href="stylecarrito.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Panel Administrativo</h1>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <a href="/Jeronimo Rubio_Sebastian Rocha_Ibrahim Safadi">Menu de cuenta</a>
+        <a href="../index.html">Volver a la tienda</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="admin-productos">
+        <h2>CRUD de productos</h2>
+
+        <form id="producto-form" class="producto-form">
+          <h3 id="producto-form-title">Crear producto</h3>
+
+          <div class="form-grid">
+            <label>
+              Nombre *
+              <input type="text" name="nombre" required />
+            </label>
+
+            <label>
+              Categoria *
+              <select name="categoriaId" id="producto-categoria" required></select>
+            </label>
+
+            <label>
+              Precio *
+              <input type="number" name="precio" min="0" step="0.01" required />
+            </label>
+
+            <label>
+              Costo *
+              <input type="number" name="costo" min="0" step="0.01" required />
+            </label>
+
+            <label class="checkbox-label">
+              <input type="checkbox" name="seguimientoInventario" checked />
+              Seguimiento de inventario
+            </label>
+
+            <label>
+              Stock
+              <input type="number" name="stock" min="0" step="1" value="0" />
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button id="producto-submit" type="submit" class="btn-admin-primario">
+              Guardar producto
+            </button>
+            <button id="producto-cancelar" type="button" class="btn-admin-secundario">
+              Cancelar
+            </button>
+          </div>
+        </form>
+
+        <div class="tabla-wrapper">
+          <table class="tabla-productos">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Categoria</th>
+                <th>Precio</th>
+                <th>Costo</th>
+                <th>Stock</th>
+                <th>Seguimiento</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="admin-productos-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="admin-auth.js"></script>
+    <script src="../js/backend.js"></script>
+    <script src="../js/entidades-global.js"></script>
+    <script src="../js/data.js"></script>
+    <script src="../js/ventas.js"></script>
+    <script src="carrito.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+        if (!window.validarSesionAdmin || !window.validarSesionAdmin()) return;
+
+        try {
+          if (window.Entidades && window.Entidades.sincronizar) {
+            await window.Entidades.sincronizar("categorias");
+          }
+          if (window.populateCategoriaSelect) window.populateCategoriaSelect();
+          if (window.sincronizarProductosBackend) await window.sincronizarProductosBackend();
+        } catch (e) {
+          console.error(e);
+        }
+
+        if (window.renderAdminProductos) window.renderAdminProductos();
+        if (window.activarEventosAdmin) window.activarEventosAdmin();
+
+        window.addEventListener("productosActualizados", () => {
+          if (window.renderAdminProductos) window.renderAdminProductos();
+        });
+
+        window.addEventListener("categoriasActualizadas", () => {
+          if (window.populateCategoriaSelect) window.populateCategoriaSelect();
+          if (window.renderAdminProductos) window.renderAdminProductos();
+        });
+
+      });
+    </script>
+  </body>
+</html>

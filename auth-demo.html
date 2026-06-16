@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Demo JWT</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 720px;
+        margin: 40px auto;
+        padding: 0 16px;
+      }
+
+      label,
+      input,
+      button {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      label {
+        margin-top: 12px;
+      }
+
+      input,
+      button {
+        padding: 10px;
+        margin-top: 6px;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      pre {
+        background: #f4f4f4;
+        padding: 12px;
+        overflow: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Demo autenticacion JWT</h1>
+
+    <label for="username">Username</label>
+    <input id="username" value="admin@pos.local" />
+
+    <label for="password">Password</label>
+    <input id="password" type="password" value="admin123" />
+
+    <button type="button" onclick="login()">Login</button>
+    <button type="button" onclick="loadUsers()">Cargar Usuarios</button>
+
+    <h2>Usuarios</h2>
+    <ul id="userList"></ul>
+
+    <h2>Salida</h2>
+    <pre id="output">{}</pre>
+
+    <script src="login.js"></script>
+  </body>
+</html>

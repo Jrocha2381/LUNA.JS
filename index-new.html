@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS - Papel y Luna</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #FF6B6B;
+            --secondary: #4ECDC4;
+            --dark: #2C3E50;
+            --light: #F7F8FA;
+            --border: #E0E4E8;
+            --success: #51CF66;
+            --warning: #FFD93D;
+            --danger: #FF6B6B;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--light);
+            color: var(--dark);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* ========== HEADER ========== */
+        .header {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        /* ========== BUTTONS ========== */
+        .btn {
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #ff5252;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #45b9af;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            border: 2px solid var(--primary);
+            background-color: white;
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #ff5252;
+        }
+
+        /* ========== MAIN LAYOUT ========== */
+        .main {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            padding: 1rem 0;
+        }
+
+        @media (min-width: 768px) {
+            .main {
+                grid-template-columns: 1fr 350px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .main {
+                grid-template-columns: 1fr 400px;
+            }
+        }
+
+        /* ========== PANELS ========== */
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+        }
+
+        .panel-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        /* ========== SECTIONS ========== */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* ========== PRODUCTOS ========== */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            }
+        }
+
+        .product-card {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .product-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.1);
+            transform: translateY(-4px);
+        }
+
+        .product-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin: 0.5rem 0;
+            color: var(--dark);
+        }
+
+        .product-price {
+            font-size: 1.25rem;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .product-stock {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 0.5rem;
+        }
+
+        /* ========== CARRITO ========== */
+        .cart-item {
+            display: flex;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            align-items: center;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .item-price {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .item-controls {
+            display: flex;
+            gap: 0.25rem;
+            align-items: center;
+        }
+
+        .quantity-input {
+            width: 40px;
+            padding: 0.25rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .btn-xs {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        /* ========== CARRITO TOTAL ========== */
+        .cart-summary {
+            border-top: 2px solid var(--border);
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .summary-row.total {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            border-top: 1px solid var(--border);
+            padding-top: 0.5rem;
+        }
+
+        /* ========== FORMULARIOS ========== */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-family: inherit;
+        }
+
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+        }
+
+        /* ========== TABLA ========== */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        .table th {
+            background-color: var(--light);
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* ========== MODAL ========== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #888;
+        }
+
+        .modal-close:hover {
+            color: var(--dark);
+        }
+
+        /* ========== BADGE ========== */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-primary {
+            background-color: rgba(255, 107, 107, 0.1);
+            color: var(--primary);
+        }
+
+        .badge-success {
+            background-color: rgba(81, 207, 102, 0.1);
+            color: var(--success);
+        }
+
+        .badge-warning {
+            background-color: rgba(255, 217, 61, 0.1);
+            color: #ff9800;
+        }
+
+        /* ========== ALERTS ========== */
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background-color: rgba(81, 207, 102, 0.1);
+            color: var(--success);
+            border-left: 4px solid var(--success);
+        }
+
+        .alert-error {
+            background-color: rgba(255, 107, 107, 0.1);
+            color: var(--danger);
+            border-left: 4px solid var(--danger);
+        }
+
+        /* ========== LOADING ========== */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 767px) {
+            .header-content {
+                flex-direction: column;
+            }
+
+            .nav-buttons {
+                width: 100%;
+            }
+
+            .btn {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            }
+
+            .main {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                padding: 1.5rem;
+                max-width: 100%;
+            }
+        }
+
+        /* ========== UTILITIES ========== */
+        .mt-1 { margin-top: 0.5rem; }
+        .mt-2 { margin-top: 1rem; }
+        .mb-1 { margin-bottom: 0.5rem; }
+        .mb-2 { margin-bottom: 1rem; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <!-- ========== HEADER ========== -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>📦 POS - Papel y Luna</h1>
+                </div>
+                <div class="nav-buttons">
+                    <button class="btn btn-primary" onclick="app.showSection('sales')">💰 Ventas</button>
+                    <button class="btn btn-secondary" onclick="app.showSection('purchases')">📥 Compras</button>
+                    <button class="btn btn-outline" onclick="app.showSection('products')">📦 Productos</button>
+                    <button class="btn btn-outline" onclick="app.showSection('categories')">📂 Categorías</button>
+                    <button class="btn btn-outline" onclick="app.showSection('suppliers')">🏭 Proveedores</button>
+                    <button class="btn btn-outline" onclick="app.showSection('clients')">👥 Clientes</button>
+                    <button class="btn btn-outline" onclick="app.showSection('history')">📊 Historial</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <main class="container">
+        <div id="alert-container"></div>
+
+        <!-- ========== SECCIÓN VENTAS ========== -->
+        <section id="sales" class="section active">
+            <div class="main">
+                <!-- Productos -->
+                <div class="panel">
+                    <div class="panel-title">Catálogo de Productos</div>
+                    <div id="products-container" class="products-grid">
+                        <div class="text-center">
+                            <div class="loading"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Carrito -->
+                <div class="panel">
+                    <div class="panel-title">🛒 Carrito</div>
+                    <div id="cart-container"></div>
+                    <div class="cart-summary">
+                        <div class="summary-row">
+                            <span>Subtotal:</span>
+                            <span id="subtotal">$0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Descuento:</span>
+                            <input type="number" id="discount-input" placeholder="0.00" class="form-input" value="0">
+                        </div>
+                        <div class="summary-row total">
+                            <span>Total:</span>
+                            <span id="total">$0.00</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-sm mt-2" style="width: 100%;" onclick="app.openPaymentModal()">
+                        Completar Venta
+                    </button>
+                    <button class="btn btn-outline btn-sm mt-2" style="width: 100%;" onclick="app.saveOpenSale()">
+                        Guardar Venta Abierta
+                    </button>
+                    <button class="btn btn-danger btn-sm mt-2" style="width: 100%;" onclick="app.clearCart()">
+                        Limpiar Carrito
+                    </button>
+                </div>
+            </div>
+
+            <!-- Ventas Abiertas -->
+            <div class="panel mt-2">
+                <div class="panel-title">Ventas Abiertas</div>
+                <div id="open-sales-container"></div>
+            </div>
+        </section>
+
+        <!-- ========== SECCIÓN COMPRAS ========== -->
+        <section id="purchases" class="section">
+            <div class="panel">
+                <div class="panel-title">📥 Registrar Compra</div>
+                <form id="purchase-form">
+                    <div class="form-group">
+                        <label class="form-label">Proveedor</label>
+                        <select id="supplier-select" class="form-select" required></select>
+                        <button type="button" class="btn btn-outline btn-sm mt-1" onclick="app.openSupplierModal()">
+                            + Nuevo Proveedor
+                        </button>
+                    </div>
+
+                    <div id="purchase-items-container"></div>
+
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="app.addPurchaseItem()">
+                        + Agregar Producto
+                    </button>
+
+                    <div class="form-group mt-2">
+                        <label class="form-label">Notas</label>
+                        <textarea class="form-textarea" id="purchase-notes"></textarea>
+                    </div>
+
+                    <div class="summary-row total">
+                        <span>Total Costo:</span>
+                        <span id="purchase-total">$0.00</span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary mt-2" style="width: 100%;">
+                        Registrar Compra
+                    </button>
+                </form>
+            </div>
+
+            <div class="panel mt-2">
+                <div class="panel-title">Historial de Compras</div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Proveedor</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="purchases-history-tbody">
+                        <tr>
+                            <td colspan="6" class="text-center">Cargando...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ========== SECCIÓN CATEGORÍAS ========== -->
+        <section id="categories" class="section">
+            <div class="main">
+                <div class="panel">
+                    <div class="panel-title">Crear Categoría</div>
+                    <form id="category-form">
+                        <div class="form-group">
+                            <label class="form-label">Nombre</label>
+                            <input type="text" id="category-name" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Descripción</label>
+                            <textarea class="form-textarea" id="category-description"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">
+                            Crear Categoría
+                        </button>
+                    </form>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title">Categorías</div>
+                    <div id="categories-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== SECCIÓN PROVEEDORES ========== -->
+        <section id="suppliers" class="section">
+            <div class="main">
+                <div class="panel">
+                    <div class="panel-title">Crear Proveedor</div>
+                    <form id="supplier-form">
+                        <div class="form-group">
+                            <label class="form-label">Nombre</label>
+                            <input type="text" id="supplier-name" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Contacto</label>
+                            <input type="text" id="supplier-contact" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Teléfono</label>
+                            <input type="tel" id="supplier-phone" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" id="supplier-email" class="form-input">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">
+                            Crear Proveedor
+                        </button>
+                    </form>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title">Proveedores</div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Contacto</th>
+                                <th>Teléfono</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="suppliers-tbody">
+                            <tr>
+                                <td colspan="4" class="text-center">Cargando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== SECCIÓN CLIENTES ========== -->
+        <section id="clients" class="section">
+            <div class="main">
+                <div class="panel">
+                    <div class="panel-title">Crear Cliente</div>
+                    <form id="client-form">
+                        <div class="form-group">
+                            <label class="form-label">Nombre</label>
+                            <input type="text" id="client-name" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" id="client-email" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Teléfono</label>
+                            <input type="tel" id="client-phone" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Dirección</label>
+                            <input type="text" id="client-address" class="form-input">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">
+                            Crear Cliente
+                        </button>
+                    </form>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title">Clientes</div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                                <th>Teléfono</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clients-tbody">
+                            <tr>
+                                <td colspan="4" class="text-center">Cargando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== SECCIÓN HISTORIAL ========== -->
+        <section id="history" class="section">
+            <div class="panel">
+                <div class="panel-title">📊 Historial de Ventas</div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Cliente</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Pago</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sales-history-tbody">
+                        <tr>
+                            <td colspan="6" class="text-center">Cargando...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ========== SECCIÓN INVENTARIO/PRODUCTOS ========== -->
+        <section id="products" class="section">
+            <div class="panel">
+                <div class="panel-title">📦 CRUD de Productos</div>
+                
+                <!-- Formulario de Crear Producto -->
+                <div style="background: var(--light); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+                    <h3 style="margin-bottom: 1rem; color: var(--dark);">Crear Nuevo Producto</h3>
+                    <form id="product-form" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">Nombre *</label>
+                            <input type="text" id="product-name" class="form-input" placeholder="Nombre del producto" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Categoría *</label>
+                            <select id="product-category" class="form-input" required>
+                                <option value="">Seleccionar categoría...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Proveedor *</label>
+                            <select id="product-supplier" class="form-input" required>
+                                <option value="">Seleccionar proveedor...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Precio de Venta *</label>
+                            <input type="number" id="product-price" class="form-input" placeholder="0.00" step="0.01" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Costo *</label>
+                            <input type="number" id="product-cost" class="form-input" placeholder="0.00" step="0.01" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Stock</label>
+                            <input type="number" id="product-stock" class="form-input" placeholder="0" value="0">
+                        </div>
+
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label class="form-label">Descripción</label>
+                            <textarea id="product-description" class="form-input" rows="3" placeholder="Descripción del producto"></textarea>
+                        </div>
+
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label class="form-label">URL Imagen (opcional)</label>
+                            <input type="text" id="product-image" class="form-input" placeholder="https://...">
+                        </div>
+
+                        <div style="grid-column: 1 / -1; display: flex; gap: 1rem;">
+                            <button type="submit" class="btn btn-primary">💾 Guardar Producto</button>
+                            <button type="reset" class="btn btn-outline">Limpiar Formulario</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Tabla de Productos -->
+                <h3 style="margin-bottom: 1rem; color: var(--dark);">Lista de Productos</h3>
+                <div style="overflow-x: auto;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Categoría</th>
+                                <th>Proveedor</th>
+                                <th>Precio</th>
+                                <th>Costo</th>
+                                <th>Stock</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-list-tbody">
+                            <tr>
+                                <td colspan="7" class="text-center">Cargando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ========== MODALES ========== -->
+    <!-- Modal de Pago -->
+    <div id="payment-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Completar Venta</h2>
+                <button class="modal-close" onclick="app.closePaymentModal()">✕</button>
+            </div>
+            <form id="payment-form">
+                <div class="form-group">
+                    <label class="form-label">Método de Pago</label>
+                    <select id="payment-method" class="form-select" required>
+                        <option value="">Seleccionar...</option>
+                        <option value="efectivo">Efectivo</option>
+                        <option value="tarjeta">Tarjeta</option>
+                        <option value="transferencia">Transferencia</option>
+                        <option value="cheque">Cheque</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descuento Adicional</label>
+                    <input type="number" id="payment-discount" class="form-input" min="0" value="0">
+                </div>
+                <div class="summary-row total mt-2">
+                    <span>Total a Pagar:</span>
+                    <span id="payment-total">$0.00</span>
+                </div>
+                <button type="submit" class="btn btn-primary mt-2" style="width: 100%;">
+                    Procesar Pago
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Editar Producto -->
+    <div id="edit-item-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Editar Producto</h2>
+                <button class="modal-close" onclick="app.closeEditModal()">✕</button>
+            </div>
+            <form id="edit-item-form">
+                <div class="form-group">
+                    <label class="form-label">Producto</label>
+                    <input type="text" id="edit-item-name" class="form-input" disabled>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Cantidad</label>
+                    <input type="number" id="edit-item-quantity" class="form-input" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Precio Unitario</label>
+                    <input type="number" id="edit-item-price" class="form-input" min="0" step="0.01" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    Guardar Cambios
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Proveedor -->
+    <div id="supplier-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Nuevo Proveedor</h2>
+                <button class="modal-close" onclick="app.closeSupplierModal()">✕</button>
+            </div>
+            <form id="quick-supplier-form">
+                <div class="form-group">
+                    <label class="form-label">Nombre</label>
+                    <input type="text" id="quick-supplier-name" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Contacto</label>
+                    <input type="text" id="quick-supplier-contact" class="form-input">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    Crear Proveedor
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========== SCRIPTS ========== -->
+    <script src="js/api-service.js"></script>
+    <script src="js/sales-manager.js"></script>
+    <script src="js/purchase-manager.js"></script>
+    <script src="js/crud-manager.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

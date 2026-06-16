@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Faltantes y demanda no atendida | Papel y Luna</title>
+    <link rel="stylesheet" href="stylecarrito.css" />
+    <style>
+      .container-faltantes { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
+      .card { background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.04); padding: 1.25rem; margin-bottom: 1.25rem; }
+      .header-row { display:flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+      h1 { font-size: 1.5rem; margin:0; color:#222; }
+      .filters { display:flex; gap: 10px; align-items:flex-end; flex-wrap: wrap; }
+      .filters label { display:flex; flex-direction: column; gap:6px; font-weight:600; color:#444; font-size: 0.9rem; }
+      .filters input, .filters select { padding: 10px 12px; border:1px solid #ddd; border-radius: 10px; min-width: 180px; }
+      .container-faltantes .btn-admin-primario { background:#8a9b2f; color:#fff !important; border:none; padding: 10px 16px; border-radius: 10px; cursor:pointer; font-weight:700; }
+      .container-faltantes .btn-admin-primario:hover, .container-faltantes .btn-admin-primario:focus { color:#fff !important; background:#6f7d25; }
+      .btn-admin-secundario { background:#f3f4f6; color:#111; border:1px solid #e5e7eb; padding: 10px 16px; border-radius: 10px; cursor:pointer; font-weight:700; }
+      .tabla-wrapper { overflow:auto; border-radius:12px; border:1px solid #eee; }
+      table { width:100%; border-collapse: collapse; min-width: 900px; background:#fff; }
+      th, td { padding: 12px 14px; text-align:left; border-bottom: 1px solid #f1f1f1; }
+      th { background:#f8f9fa; color:#333; font-weight: 700; }
+      .badge { font-size: 12px; padding: 4px 8px; border-radius: 999px; background:#eef2ff; color:#3730a3; font-weight:700; display:inline-block; }
+      .badge.resuelto { background:#dcfce7; color:#166534; }
+      .muted { color:#6b7280; font-size: 0.9rem; }
+      .form-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .form-grid .full { grid-column: 1 / -1; }
+      .form-grid label { display:flex; flex-direction: column; gap:6px; font-weight: 600; color:#444; font-size: 0.9rem; }
+      .form-grid input, .form-grid select { padding: 10px 12px; border:1px solid #ddd; border-radius: 10px; }
+      textarea { min-height: 80px; resize: vertical; padding: 10px 12px; border:1px solid #ddd; border-radius: 10px; }
+      .actions-row { display:flex; gap: 10px; justify-content:flex-end; margin-top: 12px; flex-wrap: wrap; }
+      .table-actions { display:flex; gap: 8px; flex-wrap: wrap; }
+      .btn-small { padding: 8px 12px; border-radius: 10px; border:none; cursor:pointer; font-weight:700; }
+      .btn-resolver { background:#22c55e; color:#fff !important; }
+      .btn-resolver:hover, .btn-resolver:focus { background:#16a34a; color:#fff !important; }
+      .btn-ver { background:#e5e7eb; color:#111; border:1px solid #d1d5db; }
+      .summary-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 14px; }
+      .summary-item { background:#f8fafc; border:1px solid #e5e7eb; border-radius: 10px; padding: 12px; }
+      .summary-number { font-size: 1.35rem; font-weight: 800; color:#8a9b2f; }
+      @media (max-width: 720px) { .form-grid { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Faltantes y demanda no atendida</h1>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <a href="/Jeronimo Rubio_Sebastian Rocha_Ibrahim Safadi" style="color:#8a9b2f; text-decoration:none; font-weight:700;">Volver al Panel</a>
+        <a href="../index.html" style="color:#8a9b2f; text-decoration:none; font-weight:700;">Volver a la tienda</a>
+      </div>
+    </header>
+
+    <main class="container-faltantes">
+      <section class="card">
+        <div class="header-row">
+          <div>
+            <h2 style="margin:0 0 6px 0;">Registrar faltante</h2>
+            <div class="muted">Útil cuando el producto no existe o está agotado para facilitar próximas compras.</div>
+          </div>
+        </div>
+
+        <form id="faltante-form" style="margin-top: 16px;">
+          <div class="form-grid">
+            <label>
+              Cliente *
+              <select id="falt-cliente" required></select>
+            </label>
+
+            <label>
+              Proveedor (opcional)
+              <select id="falt-proveedor"></select>
+            </label>
+
+            <label>
+              Tipo *
+              <input type="text" id="falt-tipo" required placeholder="Ej: producto / escolar / etc." maxlength="80" />
+            </label>
+
+            <label>
+              Cantidad solicitada *
+              <input type="number" id="falt-cantidad" required min="1" step="1" value="1" />
+            </label>
+
+            <label class="full">
+              Producto ID (opcional si existe en inventario)
+              <input type="number" id="falt-producto-id" min="1" step="1" placeholder="Si no existe, déjalo vacío" />
+            </label>
+
+            <label>
+              Código producto (cuando no existe en inventario)
+              <input type="text" id="falt-producto-codigo" placeholder="Opcional" maxlength="80" />
+            </label>
+
+            <label>
+              Nombre producto (cuando no existe en inventario)
+              <input type="text" id="falt-producto-nombre" placeholder="Opcional" maxlength="160" />
+            </label>
+
+            <label class="full">
+              Comentarios
+              <textarea id="falt-comentarios" placeholder="Ej: talla, color, marca, observaciones."></textarea>
+            </label>
+          </div>
+
+          <div class="actions-row">
+            <button type="button" class="btn-admin-secundario" id="btn-limpiar">Limpiar</button>
+            <button type="submit" class="btn-admin-primario">Registrar faltante</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="header-row">
+          <div>
+            <h2 style="margin:0 0 6px 0;">Lista / filtros</h2>
+            <div class="muted">Filtra por tipo y proveedor. También puedes mostrar pendientes.</div>
+          </div>
+        </div>
+
+        <div class="filters" style="margin-top: 14px;">
+          <label>
+            Tipo
+            <input id="filtro-tipo" type="text" placeholder="Contiene..." />
+          </label>
+          <label>
+            Proveedor
+            <select id="filtro-proveedor">
+              <option value="">Todos</option>
+            </select>
+          </label>
+          <label>
+            Mostrar
+            <select id="filtro-resuelto">
+              <option value="false">Solo pendientes</option>
+              <option value="">Todos</option>
+              <option value="true">Resueltos</option>
+            </select>
+          </label>
+          <button class="btn-admin-primario" type="button" id="btn-aplicar-filtros">Aplicar</button>
+        </div>
+
+        <div style="margin-top: 14px;" class="tabla-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Cliente</th>
+                <th>Proveedor</th>
+                <th>Producto</th>
+                <th>Cant. solicitada</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="faltantes-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="header-row">
+          <div>
+            <h2 style="margin:0 0 6px 0;">Informacion para proximas compras</h2>
+            <div class="muted">Resumen de faltantes pendientes agrupados por producto, tipo y proveedor.</div>
+          </div>
+          <button class="btn-admin-secundario" type="button" id="btn-actualizar-insights">Actualizar</button>
+        </div>
+
+        <div class="summary-grid">
+          <div class="summary-item">
+            <div class="muted">Solicitudes pendientes</div>
+            <div class="summary-number" id="total-solicitudes-pendientes">0</div>
+          </div>
+          <div class="summary-item">
+            <div class="muted">Unidades pendientes</div>
+            <div class="summary-number" id="total-unidades-pendientes">0</div>
+          </div>
+          <div class="summary-item">
+            <div class="muted">Productos/tipos frecuentes</div>
+            <div class="summary-number" id="total-grupos-pendientes">0</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 14px;" class="tabla-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Tipo</th>
+                <th>Proveedor</th>
+                <th>Solicitudes</th>
+                <th>Unidades pendientes</th>
+              </tr>
+            </thead>
+            <tbody id="insights-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="admin-auth.js"></script>
+    <script src="../js/backend.js"></script>
+    <script src="../js/entidades-global.js"></script>
+    <script src="../js/data.js"></script>
+    <script src="carrito.js"></script>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', async () => {
+        if (window.validarSesionAdmin && !window.validarSesionAdmin()) return;
+
+        const Backend = window.Backend;
+        if (!Backend || !Backend.get) {
+          if (window.mostrarToast) window.mostrarToast('error','Faltantes','Backend no disponible');
+          return;
+        }
+
+        const cargarSelect = async () => {
+          const clientes = window.Entidades ? window.Entidades.obtener('clientes') : [];
+          const proveedores = window.Entidades ? window.Entidades.obtener('proveedores') : [];
+
+          const selCliente = document.getElementById('falt-cliente');
+          selCliente.innerHTML = '';
+          clientes.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = c.nombre;
+            selCliente.appendChild(opt);
+          });
+
+          const selProv = document.getElementById('falt-proveedor');
+          const selProvFiltro = document.getElementById('filtro-proveedor');
+          selProv.innerHTML = '<option value="">(opcional)</option>';
+          selProvFiltro.innerHTML = '<option value="">Todos</option>';
+          proveedores.forEach(p => {
+            const opt1 = document.createElement('option');
+            opt1.value = p.id;
+            opt1.textContent = p.nombre;
+            selProv.appendChild(opt1);
+
+            const opt2 = document.createElement('option');
+            opt2.value = p.id;
+            opt2.textContent = p.nombre;
+            selProvFiltro.appendChild(opt2);
+          });
+        };
+
+        async function apiListFaltantes({ tipo, proveedorId, resuelto }) {
+          const params = new URLSearchParams();
+          if (tipo) params.set('tipo', tipo);
+          if (proveedorId) params.set('proveedorId', proveedorId);
+          if (resuelto !== undefined && resuelto !== '') params.set('resuelto', resuelto);
+          const route = `faltantes?${params.toString()}`;
+          return Backend.get(route);
+        }
+
+        async function apiInsights({ tipo, proveedorId }) {
+          const params = new URLSearchParams();
+          if (tipo) params.set('tipo', tipo);
+          if (proveedorId) params.set('proveedorId', proveedorId);
+          params.set('soloPendientes', 'true');
+          return Backend.get(`faltantes/insights?${params.toString()}`);
+        }
+
+        function idEnteroValido(value) {
+          const n = Number(value);
+          return Number.isInteger(n) && n > 0 ? n : null;
+        }
+
+        function selectedText(selectId) {
+          const select = document.getElementById(selectId);
+          const option = select && select.selectedOptions ? select.selectedOptions[0] : null;
+          const text = option ? option.textContent.trim() : '';
+          return text && !['Todos', '(opcional)'].includes(text) ? text : null;
+        }
+
+        function mensajeErrorBackend(err) {
+          const payload = err && err.payload;
+          if (payload && Array.isArray(payload.details) && payload.details.length) {
+            return payload.details.map(item => item.message || item.msg || String(item)).join('. ');
+          }
+          if (payload && payload.error) return payload.error;
+          return err.message || 'No se pudo registrar';
+        }
+
+        function productoKey(it) {
+          const codigo = it.productoCodigo ? `(${it.productoCodigo})` : '';
+          const nombre = it.productoNombre || it.producto?.nombre || '';
+          const idProd = it.productoId ? `#${it.productoId}` : '';
+          const proveedorTxt = it.proveedor?.nombre || '';
+          return [nombre ? nombre : '', codigo, idProd].join(' ').trim() || '(sin producto)';
+        }
+
+        function renderTabla(items) {
+          const body = document.getElementById('faltantes-body');
+          body.innerHTML = '';
+          const frag = document.createDocumentFragment();
+
+          items.forEach(it => {
+            const tr = document.createElement('tr');
+            const clienteNombre = it.cliente?.nombre || '';
+            const provNombre = it.proveedor?.nombre || (it.proveedorId ? `Proveedor #${it.proveedorId}` : '');
+            const productoTxt = it.productoNombre || (it.producto && it.producto.nombre) || it.productoCodigo || '';
+
+            const estadoBadge = it.resuelto
+              ? `<span class="badge resuelto">Resuelto</span>`
+              : `<span class="badge">Pendiente</span>`;
+
+            tr.innerHTML = `
+              <td><small>${it.id}</small></td>
+              <td>${it.fechaSolicitado ? new Date(it.fechaSolicitado).toLocaleDateString() : ''}</td>
+              <td>${it.tipo || ''}</td>
+              <td>${clienteNombre}</td>
+              <td>${provNombre || ''}</td>
+              <td>${productoTxt || ''}</td>
+              <td>${it.cantidadSolicitada ?? 0}</td>
+              <td>${estadoBadge}</td>
+              <td>
+                ${it.resuelto ? '' : `
+                  <div class="table-actions">
+                    <button class="btn-small btn-resolver" data-id="${it.id}">Marcar resuelto</button>
+                    <button class="btn-small btn-ver" data-ver="${it.id}">Ver</button>
+                  </div>
+                `}
+              </td>
+            `;
+
+            frag.appendChild(tr);
+          });
+
+          body.appendChild(frag);
+
+          body.querySelectorAll('button[data-id]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = btn.getAttribute('data-id');
+              const row = items.find(item => String(item.id) === String(id));
+              const cantidadPendiente = Math.max(
+                0,
+                Number(row?.cantidadSolicitada || 0) - Number(row?.cantidadResuelta || 0)
+              );
+
+              try {
+                await Backend.put(`faltantes/${id}/resuelto`, {
+                  cantidadResuelta: cantidadPendiente,
+                  comentarios: row?.comentarios || null
+                });
+                if (window.mostrarToast) window.mostrarToast('success','Faltantes','Marcado como resuelto');
+                await cargarTabla();
+                await cargarInsights();
+              } catch (e) {
+                console.error(e);
+                if (window.mostrarToast) window.mostrarToast('error','Faltantes', e.message || 'No se pudo marcar como resuelto');
+              }
+            });
+          });
+
+          body.querySelectorAll('button[data-ver]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = btn.getAttribute('data-ver');
+              try {
+                const item = await Backend.get(`faltantes/${id}`);
+                const overlay = document.createElement('div');
+                overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
+                overlay.innerHTML = `
+                  <div style="background:white;border-radius:12px;padding:24px;max-width:420px;width:90%;box-shadow:0 4px 24px rgba(0,0,0,0.15);">
+                    <h3 style="margin:0 0 16px;color:#333;">Detalle Faltante #${item.id}</h3>
+                    <div style="display:grid;gap:8px;font-size:14px;color:#555;">
+                      <p style="margin:0;"><strong>Cliente:</strong> ${item.cliente?.nombre || item.clienteNombre || 'No registrado'}</p>
+                      <p style="margin:0;"><strong>Tipo:</strong> ${item.tipo || '-'}</p>
+                      <p style="margin:0;"><strong>Producto:</strong> ${item.productoNombre || item.productoCodigo || '-'}</p>
+                      <p style="margin:0;"><strong>Cantidad solicitada:</strong> ${item.cantidadSolicitada || 0}</p>
+                      <p style="margin:0;"><strong>Proveedor:</strong> ${item.proveedor?.nombre || item.proveedorNombre || '-'}</p>
+                      ${item.comentarios ? `<p style="margin:0;"><strong>Comentarios:</strong> ${item.comentarios}</p>` : ''}
+                      <p style="margin:0;"><strong>Resuelto:</strong> ${item.resuelto ? 'Sí' : 'No'}</p>
+                    </div>
+                    <div style="text-align:right;margin-top:20px;">
+                      <button id="cerrar-detalle-faltante" style="padding:8px 20px;background:#8a9b2f;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Cerrar</button>
+                    </div>
+                  </div>
+                `;
+                document.body.appendChild(overlay);
+                overlay.querySelector('#cerrar-detalle-faltante').onclick = () => overlay.remove();
+                overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+              } catch (e) {
+                console.error(e);
+                window.mostrarToast('error', 'Faltantes', 'No se pudo cargar el detalle.');
+              }
+            });
+          });
+        }
+
+        function renderInsights(items) {
+          const body = document.getElementById('insights-body');
+          body.innerHTML = '';
+          const proveedorOptions = Array.from(document.getElementById('filtro-proveedor').options);
+
+          let totalSolicitudes = 0;
+          let totalUnidades = 0;
+          const frag = document.createDocumentFragment();
+
+          items.forEach(it => {
+            const solicitudes = Number(it.solicitudes || 0);
+            const unidades = Number(it.cantidadPendiente || 0);
+            totalSolicitudes += solicitudes;
+            totalUnidades += unidades;
+
+            const tr = document.createElement('tr');
+            const producto = it.productoNombre || it.productoCodigo || '(sin nombre)';
+            const proveedor = proveedorOptions.find(opt => opt.value === String(it.proveedorId));
+            tr.innerHTML = `
+              <td>${producto}</td>
+              <td>${it.tipo || ''}</td>
+              <td>${proveedor ? proveedor.textContent : (it.proveedorId ? `Proveedor #${it.proveedorId}` : 'Sin proveedor')}</td>
+              <td>${solicitudes}</td>
+              <td>${unidades}</td>
+            `;
+            frag.appendChild(tr);
+          });
+
+          if (!items.length) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = '<td colspan="5" class="muted">No hay faltantes pendientes para sugerir compras.</td>';
+            frag.appendChild(tr);
+          }
+
+          body.appendChild(frag);
+          document.getElementById('total-solicitudes-pendientes').textContent = totalSolicitudes;
+          document.getElementById('total-unidades-pendientes').textContent = totalUnidades;
+          document.getElementById('total-grupos-pendientes').textContent = items.length;
+        }
+
+        async function cargarTabla() {
+          const tipo = document.getElementById('filtro-tipo').value.trim();
+          const proveedorId = document.getElementById('filtro-proveedor').value;
+          const resueltoRaw = document.getElementById('filtro-resuelto').value;
+
+          const resuelto = resueltoRaw === '' ? undefined : (resueltoRaw === 'true' ? true : (resueltoRaw === 'false' ? false : undefined));
+          const items = await apiListFaltantes({ tipo, proveedorId: proveedorId || undefined, resuelto });
+          renderTabla(items);
+        }
+
+        async function cargarInsights() {
+          const tipo = document.getElementById('filtro-tipo').value.trim();
+          const proveedorId = document.getElementById('filtro-proveedor').value;
+          const items = await apiInsights({ tipo, proveedorId: proveedorId || undefined });
+          renderInsights(items);
+        }
+
+        // Init: sincroniza clientes/proveedores desde backend
+        if (window.Entidades && window.Entidades.sincronizar) {
+          await window.Entidades.sincronizar('clientes');
+          await window.Entidades.sincronizar('proveedores');
+        }
+        await cargarSelect();
+
+        const form = document.getElementById('faltante-form');
+        document.getElementById('btn-limpiar').addEventListener('click', () => {
+          form.reset();
+          document.getElementById('falt-cantidad').value = 1;
+        });
+
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const payload = {
+            clienteId: idEnteroValido(document.getElementById('falt-cliente').value),
+            clienteNombre: selectedText('falt-cliente'),
+            proveedorId: idEnteroValido(document.getElementById('falt-proveedor').value),
+            proveedorNombre: selectedText('falt-proveedor'),
+            tipo: document.getElementById('falt-tipo').value.trim(),
+            productoId: idEnteroValido(document.getElementById('falt-producto-id').value),
+            productoNombre: document.getElementById('falt-producto-nombre').value.trim() || null,
+            productoCodigo: document.getElementById('falt-producto-codigo').value.trim() || null,
+            cantidadSolicitada: Number(document.getElementById('falt-cantidad').value),
+            comentarios: document.getElementById('falt-comentarios').value.trim() || null
+          };
+
+          try {
+            await Backend.post('faltantes', payload);
+            if (window.mostrarToast) window.mostrarToast('success','Faltantes','Faltante registrado');
+            form.reset();
+            document.getElementById('falt-cantidad').value = 1;
+            await cargarTabla();
+            await cargarInsights();
+          } catch (err) {
+            console.error(err);
+            window.mostrarToast('error', 'Faltantes', mensajeErrorBackend(err));
+          }
+        });
+
+        document.getElementById('btn-aplicar-filtros').addEventListener('click', async () => {
+          await cargarTabla();
+          await cargarInsights();
+        });
+        document.getElementById('btn-actualizar-insights').addEventListener('click', cargarInsights);
+
+        await cargarTabla();
+        await cargarInsights();
+      });
+    </script>
+  </body>
+</html>
+

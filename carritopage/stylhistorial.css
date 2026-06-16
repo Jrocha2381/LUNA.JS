@@ -1,0 +1,1201 @@
+/* carritopage/stylhistorial.css */
+
+:root {
+    --color-primario: #8a9b2f;
+    --color-secundario: #5a6b1f;
+    --color-fondo: #f5f5f5;
+    --color-borde: #ddd;
+    --color-tex-claro: #666;
+    --color-tex-oscuro: #333;
+    --color-error: #dc3545;
+    --color-exito: #28a745;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--color-fondo);
+    color: var(--color-tex-oscuro);
+    padding: 0;
+}
+
+header {
+    background-color: var(--color-primario);
+    color: white;
+    padding: clamp(1rem, 4%, 20px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: clamp(1.5rem, 6%, 30px);
+}
+
+header .header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    font-size: clamp(1.5rem, 5vw, 28px);
+}
+
+.btn-volver {
+    background-color: white;
+    color: var(--color-primario);
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-volver:hover {
+    background-color: #f0f0f0;
+    transform: translateX(-3px);
+}
+
+main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 clamp(1rem, 4%, 20px);
+}
+
+.historial-container {
+    background-color: white;
+    border-radius: 12px;
+    padding: clamp(1rem, 4%, 25px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* ==================== CONTROLES ==================== */
+.controles-historial {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: clamp(0.8rem, 3%, 15px);
+    margin-bottom: clamp(1.5rem, 6%, 25px);
+    align-items: center;
+}
+
+.busqueda-control {
+    flex: 1;
+}
+
+.input-buscar-venta {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--color-borde);
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.input-buscar-venta:focus {
+    outline: none;
+    border-color: var(--color-primario);
+    box-shadow: 0 0 0 3px rgba(138, 155, 47, 0.1);
+}
+
+.botones-control {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-limpiar,
+.btn-ordenar,
+.btn-descargar {
+    padding: 10px 16px;
+    border: 1px solid var(--color-borde);
+    background-color: white;
+    color: var(--color-tex-oscuro);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-limpiar:hover,
+.btn-ordenar:hover,
+.btn-descargar:hover {
+    background-color: var(--color-fondo);
+    border-color: var(--color-primario);
+    color: var(--color-primario);
+}
+
+/* ==================== SIN VENTAS ==================== */
+.sin-ventas-container {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.sin-ventas-container .icono {
+    font-size: 64px;
+    margin-bottom: 15px;
+}
+
+.sin-ventas-container p {
+    font-size: 18px;
+    color: var(--color-tex-claro);
+    margin-bottom: 25px;
+}
+
+.btn-primario {
+    display: inline-block;
+    background-color: var(--color-primario);
+    color: white;
+    padding: 12px 28px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primario:hover {
+    background-color: var(--color-secundario);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(138, 155, 47, 0.3);
+}
+
+/* ==================== LISTA DE VENTAS ==================== */
+.lista-ventas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+    gap: clamp(1rem, 4%, 20px);
+}
+
+.tarjeta-venta {
+    background-color: #fafafa;
+    border: 1px solid var(--color-borde);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.tarjeta-venta:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+    border-color: var(--color-primario);
+}
+
+.tarjeta-encabezado {
+    background: linear-gradient(135deg, var(--color-primario), var(--color-secundario));
+    color: white;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.info-ticket h3 {
+    font-size: 18px;
+    margin-bottom: 4px;
+}
+
+.fecha {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+.info-total {
+    text-align: right;
+}
+
+.total {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.metodo-pago {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+.tarjeta-cuerpo {
+    padding: 16px;
+    flex: 1;
+    border-bottom: 1px solid #eee;
+}
+
+.items-info {
+    font-size: 13px;
+    color: var(--color-tex-claro);
+    line-height: 1.5;
+}
+
+.items-info strong {
+    color: var(--color-tex-oscuro);
+}
+
+.resumen {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--color-tex-claro);
+    max-height: 40px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tarjeta-acciones {
+    padding: 12px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
+    gap: 8px;
+}
+
+.btn-ver-detalle,
+.btn-ver-factura,
+.btn-reembolsar,
+.btn-eliminar-venta {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+}
+
+.btn-ver-detalle,
+.btn-ver-factura {
+    background-color: var(--color-primario);
+    color: white;
+}
+
+.btn-ver-detalle:hover,
+.btn-ver-factura:hover {
+    background-color: var(--color-secundario);
+    transform: scale(1.05);
+}
+
+.btn-reembolsar {
+    background-color: #e8f5e9;
+    color: #256029;
+    border: 1px solid #a5d6a7;
+}
+
+.btn-reembolsar:hover {
+    background-color: #2e7d32;
+    color: white;
+}
+
+.btn-eliminar-venta {
+    background-color: #ffebee;
+    color: var(--color-error);
+    border: 1px solid #ffcdd2;
+}
+
+.estado-reembolso {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background-color: #e3f2fd;
+    color: #0d47a1;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.reembolso-info {
+    margin-top: 8px;
+    color: #256029;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.btn-eliminar-venta:hover {
+    background-color: var(--color-error);
+    color: white;
+}
+
+/* ==================== MODALES ==================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-detalle {
+    background-color: white;
+    border-radius: 12px;
+    max-width: min(95vw, 600px);
+    max-height: 90vh;
+    overflow-y: auto;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+}
+
+.modal-reembolso {
+    max-width: 820px;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    background-color: var(--color-primario);
+    color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    font-size: 20px;
+}
+
+.btn-cerrar-modal {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.btn-cerrar-modal:hover {
+    transform: scale(1.2);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.detalle-info {
+    background-color: var(--color-fondo);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.detalle-info p {
+    margin: 6px 0;
+    font-size: 14px;
+}
+
+.tabla-detalle {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+    font-size: 13px;
+}
+
+.tabla-detalle thead {
+    background-color: var(--color-fondo);
+}
+
+.tabla-detalle th {
+    padding: 10px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid var(--color-borde);
+    color: var(--color-tex-oscuro);
+}
+
+.tabla-detalle td {
+    padding: 10px;
+    border-bottom: 1px solid var(--color-borde);
+}
+
+.tabla-detalle tbody tr:hover {
+    background-color: #fafafa;
+}
+
+.tabla-reembolso input[type="number"] {
+    width: 72px;
+    padding: 7px;
+    border: 1px solid var(--color-borde);
+    border-radius: 6px;
+}
+
+.refund-porcentaje {
+    width: 64px;
+}
+
+.tabla-reembolso small {
+    display: block;
+    color: var(--color-tex-claro);
+    margin-top: 4px;
+}
+
+.tabla-reembolso tr.refund-row-error {
+    background-color: #fff3cd;
+}
+
+.tabla-reembolso tr.refund-row-error .refund-subtotal {
+    color: #8a4b00;
+    font-weight: 700;
+}
+
+.motivo-reembolso {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-top: 18px;
+    font-weight: 600;
+}
+
+.motivo-reembolso textarea {
+    min-height: 72px;
+    resize: vertical;
+    padding: 10px;
+    border: 1px solid var(--color-borde);
+    border-radius: 8px;
+    font: inherit;
+}
+
+.total-reembolso-box {
+    margin-top: 16px;
+    padding: 14px;
+    background-color: #f1f8e9;
+    border: 1px solid #c5e1a5;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+}
+
+.total-reembolso-box strong {
+    color: #256029;
+    font-size: 20px;
+}
+
+.historial-reembolsos {
+    margin-top: 18px;
+    border-top: 1px solid var(--color-borde);
+    padding-top: 14px;
+}
+
+.historial-reembolsos h3 {
+    color: var(--color-primario);
+    margin-bottom: 10px;
+}
+
+.reembolso-resumen {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 5px 12px;
+    padding: 10px;
+    border: 1px solid var(--color-borde);
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.reembolso-resumen small {
+    grid-column: 1 / -1;
+    color: var(--color-tex-claro);
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    border-top: 1px solid var(--color-borde);
+}
+
+.btn-secundario {
+    padding: 10px 20px;
+    border: 1px solid var(--color-borde);
+    background-color: white;
+    color: var(--color-tex-oscuro);
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-secundario:hover {
+    background-color: var(--color-fondo);
+}
+
+.modal-confirmar {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.modal-contenido {
+    background-color: white;
+    border-radius: 12px;
+    padding: 25px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal-contenido h3 {
+    color: var(--color-error);
+    margin-bottom: 12px;
+    font-size: 18px;
+}
+
+.modal-contenido p {
+    color: var(--color-tex-claro);
+    margin-bottom: 20px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.modal-botones {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.btn-cancelar {
+    padding: 10px 20px;
+    border: 1px solid var(--color-borde);
+    background-color: white;
+    color: var(--color-tex-oscuro);
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-cancelar:hover {
+    background-color: var(--color-fondo);
+}
+
+.btn-eliminar {
+    padding: 10px 20px;
+    background-color: var(--color-error);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-eliminar:hover {
+    background-color: #c82333;
+    transform: scale(1.02);
+}
+
+/* ==================== NOTIFICACIONES ==================== */
+#notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+    width: min(360px, calc(100vw - 32px));
+    pointer-events: none;
+}
+
+.notification {
+    width: 100%;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
+    animation: slideIn 0.3s ease;
+    pointer-events: auto;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* ==================== FILTROS AVANZADOS ==================== */
+.btn-toggle-filtros {
+    padding: 10px 16px;
+    border: 2px solid var(--color-primario);
+    background-color: white;
+    color: var(--color-primario);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-toggle-filtros:hover {
+    background-color: var(--color-primario);
+    color: white;
+    transform: scale(1.05);
+}
+
+.filtros-avanzados {
+    display: flex;
+    flex-direction: column;
+    background-color: #f9f9f9;
+    border: 2px dashed var(--color-primario);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+        max-height: 0;
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 500px;
+    }
+}
+
+.filtros-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.filtro-grupo {
+    display: flex;
+    flex-direction: column;
+}
+
+.filtro-grupo label {
+    font-weight: 600;
+    color: var(--color-tex-oscuro);
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+.input-filtro {
+    padding: 10px 12px;
+    border: 1px solid var(--color-borde);
+    border-radius: 8px;
+    font-size: 13px;
+    transition: border-color 0.3s ease;
+}
+
+.input-filtro:focus {
+    outline: none;
+    border-color: var(--color-primario);
+    box-shadow: 0 0 0 3px rgba(138, 155, 47, 0.1);
+}
+
+.filtro-grupo-acciones {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    grid-column: 1 / -1;
+}
+
+.btn-aplicar-filtros,
+.btn-limpiar-filtros {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.3s ease;
+}
+
+.btn-aplicar-filtros {
+    background-color: var(--color-primario);
+    color: white;
+}
+
+.btn-aplicar-filtros:hover {
+    background-color: var(--color-secundario);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(138, 155, 47, 0.3);
+}
+
+.btn-limpiar-filtros {
+    background-color: #e0e0e0;
+    color: var(--color-tex-oscuro);
+    border: 1px solid #bbb;
+}
+
+.btn-limpiar-filtros:hover {
+    background-color: #d0d0d0;
+}
+
+.filtros-activos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-borde);
+}
+
+.filtros-tag-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.filtro-tag {
+    display: inline-block;
+    background-color: var(--color-primario);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* ==================== PAPELERA Y NUEVOS BOTONES ==================== */
+.btn-papelera,
+.btn-volver-historial {
+    padding: 10px 16px;
+    border: none;
+    background-color: #ff9800;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-papelera:hover,
+.btn-volver-historial:hover {
+    background-color: #f57c00;
+    transform: scale(1.05);
+}
+
+.btn-recuperar-venta {
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-recuperar-venta:hover {
+    background-color: #45a049;
+    transform: scale(1.05);
+}
+
+.btn-eliminar-definitivo {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-eliminar-definitivo:hover {
+    background-color: #d32f2f;
+    transform: scale(1.05);
+}
+
+.fecha-eliminacion {
+    font-size: 11px;
+    color: #ff9800;
+    margin-top: 2px;
+    font-weight: 600;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 1024px) {
+    .lista-ventas {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    header {
+        padding: 1rem;
+    }
+
+    header .header-content {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    header h1 {
+        font-size: 22px;
+    }
+
+    .btn-volver {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+
+    .controles-historial {
+        grid-template-columns: 1fr;
+        margin-bottom: 20px;
+        gap: 12px;
+    }
+
+    .botones-control {
+        justify-content: stretch;
+        gap: 8px;
+    }
+
+    .botones-control button {
+        flex: 1;
+        font-size: 12px;
+        padding: 8px 12px;
+    }
+
+    .lista-ventas {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .tarjeta-venta {
+        padding: 0;
+    }
+
+    .tarjeta-encabezado {
+        padding: 12px;
+        flex-direction: column;
+    }
+
+    .tarjeta-acciones {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+        padding: 8px;
+    }
+
+    .btn-ver-detalle,
+    .btn-ver-factura,
+    .btn-reembolsar,
+    .btn-eliminar-venta {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+
+    .modal-detalle {
+        width: 95%;
+        max-height: 95vh;
+    }
+
+    .historial-container {
+        padding: 15px;
+    }
+
+    .modal-header {
+        padding: 16px;
+    }
+
+    .modal-body {
+        padding: 12px;
+    }
+
+    .tabla-detalle {
+        font-size: 12px;
+    }
+
+    .tabla-detalle th,
+    .tabla-detalle td {
+        padding: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    header {
+        padding: 0.75rem;
+    }
+
+    header .header-content {
+        gap: 8px;
+    }
+
+    header h1 {
+        font-size: 18px;
+    }
+
+    .btn-volver {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    main {
+        padding: 0 0.75rem;
+    }
+
+    .historial-container {
+        padding: 12px;
+        border-radius: 8px;
+    }
+
+    .controles-historial {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .input-buscar-venta {
+        font-size: 13px;
+        padding: 10px 12px;
+    }
+
+    .botones-control {
+        gap: 6px;
+    }
+
+    .btn-limpiar,
+    .btn-ordenar,
+    .btn-descargar {
+        padding: 6px 10px;
+        font-size: 11px;
+        flex: 1;
+    }
+
+    .lista-ventas {
+        gap: 12px;
+    }
+
+    .tarjeta-venta {
+        border-radius: 8px;
+    }
+
+    .tarjeta-encabezado {
+        padding: 10px;
+    }
+
+    .info-ticket h3 {
+        font-size: 16px;
+    }
+
+    .fecha {
+        font-size: 11px;
+    }
+
+    .total {
+        font-size: 16px;
+    }
+
+    .metodo-pago {
+        font-size: 11px;
+    }
+
+    .tarjeta-cuerpo {
+        padding: 10px;
+    }
+
+    .items-info {
+        font-size: 12px;
+    }
+
+    .tarjeta-acciones {
+        grid-template-columns: 1fr;
+        padding: 6px;
+        gap: 5px;
+    }
+
+    .btn-ver-detalle,
+    .btn-ver-factura,
+    .btn-reembolsar,
+    .btn-eliminar-venta {
+        padding: 6px 8px;
+        font-size: 10px;
+    }
+
+    .modal-detalle {
+        width: 95vw;
+        max-width: 95vw;
+        border-radius: 8px;
+    }
+
+    .modal-reembolso {
+        max-width: 95vw;
+    }
+
+    .modal-header {
+        padding: 12px;
+    }
+
+    .modal-header h2 {
+        font-size: 18px;
+    }
+
+    .modal-body {
+        padding: 10px;
+    }
+
+    .detalle-info {
+        padding: 10px;
+        margin-bottom: 12px;
+    }
+
+    .detalle-info p {
+        font-size: 12px;
+        margin: 4px 0;
+    }
+
+    .tabla-detalle {
+        font-size: 11px;
+        margin: 10px 0;
+    }
+
+    .tabla-detalle th,
+    .tabla-detalle td {
+        padding: 6px 4px;
+    }
+
+    .tabla-reembolso input[type="number"] {
+        width: 60px;
+        padding: 4px;
+    }
+
+    .motivo-reembolso textarea {
+        min-height: 60px;
+        font-size: 12px;
+    }
+
+    .total-reembolso-box {
+        padding: 10px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .total-reembolso-box strong {
+        font-size: 16px;
+    }
+
+    .modal-footer {
+        padding: 12px;
+        flex-direction: column;
+        gap: 8px;
+        justify-content: stretch;
+    }
+
+    .btn-secundario {
+        width: 100%;
+        padding: 8px 12px;
+    }
+
+    .modal-contenido {
+        width: 95vw;
+        padding: 12px;
+        border-radius: 8px;
+    }
+
+    .modal-contenido h3 {
+        font-size: 16px;
+        margin-bottom: 8px;
+    }
+
+    .modal-botones {
+        flex-direction: column;
+    }
+
+    .btn-cancelar,
+    .btn-confirmar {
+        width: 100%;
+        padding: 8px 12px;
+    }
+
+    .sin-ventas-container {
+        padding: 30px 16px;
+    }
+
+    .sin-ventas-container .icono {
+        font-size: 48px;
+    }
+
+    .sin-ventas-container p {
+        font-size: 16px;
+    }
+
+    .btn-primario {
+        padding: 8px 20px;
+    }
+}
+
+@media print {
+    header,
+    .controles-historial,
+    .btn-volver,
+    .tarjeta-acciones {
+        display: none;
+    }
+
+    body {
+        background-color: white;
+    }
+
+    .historial-container {
+        box-shadow: none;
+        padding: 0;
+    }
+
+    .lista-ventas {
+        grid-template-columns: 1fr;
+    }
+
+    .tarjeta-venta {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+}

@@ -1,0 +1,383 @@
+﻿:root {
+  --color-primario: #8a9b2f;
+  --color-secundario: #6f7d25;
+  --color-fondo: #f7f7f4;
+  --color-superficie: #ffffff;
+  --color-texto: #333333;
+  --color-borde: #d8ddc3;
+  --color-error: #b91c1c;
+  --sombra: 0 10px 28px rgba(0, 0, 0, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #ffffff 0%, var(--color-fondo) 55%);
+  color: var(--color-texto);
+  padding: clamp(1rem, 4%, 24px);
+}
+
+.acceso-wrapper {
+  min-height: calc(100vh - 48px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.acceso-card {
+  width: 100%;
+  max-width: 520px;
+  background: var(--color-superficie);
+  border-radius: 18px;
+  box-shadow: var(--sombra);
+  border: 1px solid var(--color-borde);
+  padding: clamp(1.5rem, 5%, 32px);
+}
+
+.oculto {
+  display: none;
+}
+
+.eyebrow {
+  color: var(--color-primario);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+h1,
+h2 {
+  margin-top: 8px;
+  margin-bottom: 8px;
+  color: var(--color-primario);
+  word-break: break-word;
+}
+
+.descripcion {
+  color: #5a5a5a;
+  margin-bottom: 20px;
+}
+
+.login-form {
+  display: grid;
+  gap: 12px;
+}
+
+label {
+  font-size: 0.92rem;
+  display: grid;
+  gap: 6px;
+}
+
+input {
+  border: 1px solid #cfd6b7;
+  border-radius: 10px;
+  padding: 11px 12px;
+  font-size: 0.95rem;
+}
+
+input:focus {
+  outline: 2px solid rgba(138, 155, 47, 0.2);
+  border-color: var(--color-primario);
+}
+
+.btn-primario,
+.btn-secundario,
+.btn-link {
+  border-radius: 10px;
+  padding: clamp(0.65rem, 2.5%, 11px) clamp(1rem, 4%, 14px);
+  font-weight: 600;
+  text-decoration: none;
+  text-align: center;
+  display: inline-block;
+  font-size: clamp(0.9rem, 2vw, 1rem);
+}
+
+.btn-primario {
+  border: none;
+  background: var(--color-primario);
+  color: #fff;
+  cursor: pointer;
+}
+
+.btn-primario:hover {
+  background: var(--color-secundario);
+}
+
+.btn-secundario {
+  border: 1px solid #d7dcc4;
+  background: #f7f7f4;
+  color: #2f2f2f;
+  cursor: pointer;
+}
+
+.btn-link {
+  margin-top: 14px;
+  color: var(--color-primario);
+  border: 1px solid #d7dcc4;
+  background: #f7f7f4;
+  transition: all 0.2s ease;
+}
+
+.btn-link:hover {
+  background: var(--color-primario);
+  color: #fff;
+  border-color: var(--color-primario);
+  transform: translateY(-1px);
+}
+
+.mensaje-error {
+  min-height: 20px;
+  color: var(--color-error);
+  font-size: 0.9rem;
+}
+
+.credenciales {
+  margin-top: 8px;
+  font-size: 0.88rem;
+  color: #646464;
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.menu-item {
+  border: 1px solid #d8ddc3;
+  border-radius: 12px;
+  padding: 16px;
+  background: #fcfcfa;
+  text-decoration: none;
+  color: var(--color-texto);
+  transition: all 0.2s ease;
+}
+
+.menu-item:hover {
+  border-color: var(--color-primario);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(138, 155, 47, 0.14);
+}
+
+.menu-item h3 {
+  color: var(--color-primario);
+  margin-bottom: 6px;
+}
+
+.menu-item p {
+  font-size: 0.9rem;
+  color: #575757;
+}
+
+.acciones-finales {
+  margin-top: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .acceso-wrapper {
+    min-height: calc(100vh - 32px);
+  }
+
+  .acceso-card {
+    padding: clamp(1rem, 4%, 24px);
+    border-radius: 12px;
+  }
+
+  h1, h2 {
+    font-size: clamp(1.3rem, 5vw, 1.8rem);
+  }
+
+  .menu-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .menu-item {
+    padding: 12px;
+    border-radius: 8px;
+  }
+
+  .menu-item h3 {
+    font-size: clamp(0.95rem, 3vw, 1.1rem);
+  }
+
+  .menu-item p {
+    font-size: clamp(0.8rem, 2vw, 0.9rem);
+  }
+
+  .acciones-finales {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .btn-primario,
+  .btn-secundario,
+  .btn-link {
+    width: 100%;
+  }
+
+  input {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 900px) {
+  /* Responsive layout del dashboard admin */
+  #dashboard-container {
+    flex-direction: column;
+    height: 100vh;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    width: 100% !important;
+    flex-direction: column;
+    padding: 10px 0;
+    border-right: 0;
+    border-bottom: 1px solid #e0e0e0;
+    max-height: none;
+  }
+
+  /* Menú compacto arriba (horizontal seleccionable) */
+  .sidebar-header {
+    padding: 0 18px 8px;
+    border-bottom: 0;
+    margin-bottom: 0;
+  }
+
+  .nav-menu {
+    flex: 0 0 auto;
+    padding: 0 10px 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    display: flex;
+    gap: 10px;
+  }
+
+  .nav-item {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    margin-bottom: 0;
+    padding: 9px 12px;
+  }
+
+  /* Botones sidebar (volver a tienda / cerrar sesión) más compactos en móvil */
+  .sidebar-footer {
+    padding: 10px 15px;
+  }
+
+  .btn-logout,
+  .sidebar-footer .nav-item {
+    padding: 8px 10px;
+    font-size: 0.92rem;
+  }
+
+
+  .sidebar-header {
+    padding: 0 18px 12px;
+    border-bottom: 0;
+    margin-bottom: 0;
+  }
+
+  .nav-menu {
+    padding: 0 10px;
+    overflow: auto;
+  }
+
+  /* Mantener header + iframe utilizables sin que se coma toda la pantalla */
+  .main-content {
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  /* iframe ocupa el resto del viewport debajo del top-bar */
+  #admin-frame {
+    width: 100%;
+    height: calc(100vh - 60px - 38vh);
+    min-height: 240px;
+  }
+}
+
+
+@media (max-width: 375px) {
+  body {
+    padding: 0.75rem;
+  }
+
+  .acceso-wrapper {
+    min-height: calc(100vh - 24px);
+  }
+
+  .acceso-card {
+    padding: 1rem;
+  }
+
+  .eyebrow {
+    font-size: 0.7rem;
+  }
+
+  h1, h2 {
+    font-size: 1.2rem;
+    margin: 4px 0;
+  }
+
+  .descripcion {
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+  }
+
+  label {
+    font-size: 0.85rem;
+    gap: 4px;
+  }
+
+  input {
+    padding: 9px 10px;
+    font-size: 16px;
+    border-radius: 8px;
+  }
+
+  .btn-primario,
+  .btn-secundario,
+  .btn-link {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+
+  .menu-grid {
+    gap: 8px;
+  }
+
+  .menu-item {
+    padding: 10px;
+  }
+
+  .menu-item h3 {
+    font-size: 0.95rem;
+  }
+
+  .menu-item p {
+    font-size: 0.8rem;
+  }
+
+  .acciones-finales {
+    gap: 8px;
+  }
+
+  .credenciales {
+    font-size: 0.8rem;
+  }
+}

@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestión de Categorías | Papel y Luna</title>
+    <link rel="stylesheet" href="stylecarrito.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Gestión de Categorías</h1>
+    </header>
+
+    <main>
+      <section class="admin-productos">
+        <div
+          style="
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+          "
+        >
+          <div
+            style="
+              display: flex;
+              gap: 10px;
+              align-items: center;
+              flex-wrap: wrap;
+            "
+          >
+            <button id="btn-nueva" type="button" class="btn-admin-primario">
+              + Crear categoría
+            </button>
+            <div style="display: flex; gap: 8px; align-items: center">
+              <input
+                id="cat-buscar"
+                type="text"
+                placeholder="Buscar categoría..."
+                style="
+                  padding: 10px 12px;
+                  border: 1px solid #ddd;
+                  border-radius: 10px;
+                  min-width: 220px;
+                "
+              />
+              <span
+                id="cat-contador"
+                style="color: #666; font-size: 13px"
+              ></span>
+            </div>
+          </div>
+        </div>
+
+        <form id="categoria-form" class="producto-form">
+          <h3 id="form-title">Crear Nueva Categoría</h3>
+          <div class="form-grid">
+            <label>
+              Nombre de la Categoría *
+              <input
+                type="text"
+                id="cat-nombre"
+                required
+                placeholder="Ej: Arte, Oficina..."
+              />
+            </label>
+          </div>
+          <div class="form-actions">
+            <button type="submit" id="btn-guardar" class="btn-admin-primario">
+              Guardar Categoría
+            </button>
+            <button
+              type="button"
+              id="btn-cancelar"
+              class="btn-admin-secundario"
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
+
+        <div class="tabla-wrapper">
+          <table class="tabla-productos">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="lista-categorias">
+              <!-- Cargado dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="admin-auth.js"></script>
+    <script src="../js/backend.js"></script>
+    <script src="../js/entidades-global.js"></script>
+    <script src="carrito.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+        // Verificar sesión
+        if (window.validarSesionAdmin && !window.validarSesionAdmin()) return;
+
+        const Entidades = window.Entidades;
+        if (!Entidades) return;
+
+        const form = document.getElementById("categoria-form");
+        const tbody = document.getElementById("lista-categorias");
+        const btnCancelar = document.getElementById("btn-cancelar");
+        const btnNueva = document.getElementById("btn-nueva");
+        const inputBuscar = document.getElementById("cat-buscar");
+        const contador = document.getElementById("cat-contador");
+        let editId = null;
+
+        const notify = (tipo, mensaje) => {
+          window.mostrarToast(tipo, "Categorías", mensaje);
+        };
+
+        const resetForm = () => {
+          form.reset();
+          editId = null;
+          document.getElementById("form-title").textContent =
+            "Crear Nueva Categoría";
+          document.getElementById("btn-guardar").textContent =
+            "Guardar Categoría";
+        };
+
+        const mostrarForm = () => {
+          form.style.display = "block";
+          document.getElementById("cat-nombre").focus();
+        };
+
+        const ocultarForm = () => {
+          form.style.display = "none";
+        };
+
+        const normalizarNombre = (valor) =>
+          String(valor || "")
+            .trim()
+            .toLowerCase();
+
+        const render = () => {
+          const cats = Entidades.obtener("categorias");
+          const q = normalizarNombre(inputBuscar.value);
+          const filtradas = q
+            ? cats.filter((c) => normalizarNombre(c.nombre).includes(q))
+            : cats;
+
+          tbody.innerHTML = filtradas
+            .map(
+              (c) => `
+                    <tr>
+                        <td><small>${c.id || "-"}</small></td>
+                        <td><strong>${c.nombre || "-"}</strong></td>
+                        <td>
+                            <button class="btn-admin" onclick="window.prepararEdicion('${c.id}', '${(c.nombre || "").replace(/'/g, "\\'")}')">Editar</button>
+                            <button class="btn-admin" style="background:#fee2e2; color:#b91c1c;" onclick="window.eliminarCat('${c.id}')">Eliminar</button>
+                        </td>
+                    </tr>
+                `,
+            )
+            .join("");
+
+          if (contador)
+            contador.textContent = `${filtradas.length}/${cats.length}`;
+        };
+
+        window.prepararEdicion = (id, nombre) => {
+          editId = id;
+          document.getElementById("cat-nombre").value = nombre;
+          document.getElementById("form-title").textContent =
+            "Editando Categoría: " + nombre;
+          document.getElementById("btn-guardar").textContent =
+            "Actualizar Cambios";
+          mostrarForm();
+        };
+
+        window.eliminarCat = (id) => {
+          window.mostrarConfirmacion("¿Estás seguro de eliminar esta categoría?", async () => {
+            try {
+              await Entidades.eliminar("categorias", id);
+              render();
+              window.dispatchEvent(new Event("categoriasActualizadas"));
+              notify("success", "Categoría eliminada correctamente.");
+            } catch (err) {
+              notify("error", err.message || "No se pudo eliminar la categoría.");
+            }
+          });
+        };
+
+        form.onsubmit = async (e) => {
+          e.preventDefault();
+          const data = {
+            nombre: document.getElementById("cat-nombre").value.trim(),
+          };
+
+          if (!data.nombre) {
+            notify("error", "El nombre es obligatorio.");
+            return;
+          }
+
+          const existentes = Entidades.obtener("categorias");
+          const nombreNorm = normalizarNombre(data.nombre);
+          const duplicada = existentes.find(
+            (c) =>
+              normalizarNombre(c.nombre) === nombreNorm &&
+              String(c.id) !== String(editId || ""),
+          );
+          if (duplicada) {
+            notify("error", "Ya existe una categoría con ese nombre.");
+            return;
+          }
+
+          try {
+            if (editId) {
+              await Entidades.actualizar("categorias", editId, data);
+              notify("success", "Categoría actualizada correctamente.");
+            } else {
+              await Entidades.crear("categorias", data);
+              notify("success", "Categoría creada correctamente.");
+            }
+          } catch (err) {
+            notify("error", err.message || "No se pudo guardar la categoría.");
+            return;
+          }
+
+          resetForm();
+          ocultarForm();
+          render();
+
+          // Notificar al CRUD de productos para refrescar el select de categorías
+          window.dispatchEvent(new Event("categoriasActualizadas"));
+        };
+
+        btnCancelar.onclick = () => {
+          resetForm();
+          ocultarForm();
+        };
+
+        btnNueva.onclick = () => {
+          resetForm();
+          mostrarForm();
+        };
+
+        inputBuscar.addEventListener("input", render);
+        window.addEventListener("categoriasActualizadas", render);
+
+        // Carga inicial
+        ocultarForm();
+        await Entidades.sincronizar("categorias").catch(() => {});
+        render();
+      });
+    </script>
+  </body>
+</html>
